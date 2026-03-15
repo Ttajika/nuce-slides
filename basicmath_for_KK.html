@@ -616,6 +616,14 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.appendChild(opt);
   });
   
+  // Auto-fill last updated date
+  const luEl = document.getElementById('lastUpdated');
+  if (luEl) {
+    const d = new Date(document.lastModified);
+    luEl.textContent = 'Last updated: ' + d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
   loadLocal();
   showSlide(current);
   bindCanvasEvents();
@@ -1169,7 +1177,7 @@ document.addEventListener('keydown', e => {
 <h1 style="font-size:2em;margin-bottom:0.3em;">金融公共分析手法入門1</h1>
 <p style="font-size:0.9em;color:#666;">2026年度版</p>
 <p style="margin-top:1.5em;">多鹿 智哉</p>
-<p style="font-size:0.8em;color:#888;margin-top:1em;"><code>Last updated: 2026</code></p>
+<p style="font-size:0.8em;color:#888;margin-top:1em;"><code id="lastUpdated"></code></p>
 </div>
 </template>
 
