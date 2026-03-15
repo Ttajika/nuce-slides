@@ -1066,15 +1066,21 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
 });
 
-// Touch swipe (only when not drawing)
+// Touch swipe (only when not drawing, single finger only)
 let touchStartX = 0;
 let touchStartY = 0;
+let touchIsSingle = false;
 document.addEventListener('touchstart', e => {
+  touchIsSingle = (e.touches.length === 1);
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 });
+document.addEventListener('touchmove', e => {
+  // If additional fingers appear during gesture, it's a pinch — cancel swipe
+  if (e.touches.length > 1) touchIsSingle = false;
+}, {passive:true});
 document.addEventListener('touchend', e => {
-  if (mode !== 'slide' || drawMode) return;
+  if (mode !== 'slide' || drawMode || !touchIsSingle) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
   if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
