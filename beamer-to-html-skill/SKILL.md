@@ -114,7 +114,7 @@ The output HTML has this structure:
 ### Drawing / Handwriting
 - Canvas overlay on the slide area (`pointer-events:none` by default, toggle to `auto`)
 - Store strokes per slide index: `strokes[slideIndex] = [{color, size, alpha, points:[{x,y}]}]`
-- Tools: pen, highlighter (alpha:0.3, 3x size), eraser (stroke-level)
+- Tools: pen, highlighter (alpha:0.3, 3x size), eraser (stroke-level), pointer (laser dot, not saved)
 - Redraw on slide change; disable touch-swipe navigation when drawing is active
 - Use getter functions (`getCanvas()`, `getCtx()`) rather than cached references, since canvas may be recreated after print mode
 
@@ -183,7 +183,7 @@ QR Generator:  https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js
 |-----|--------|
 | ← → | Slide navigation |
 | D | Toggle drawing mode |
-| P / H / E | Pen / Highlighter / Eraser (in draw mode) |
+| P / H / E / L | Pen / Highlighter / Eraser / Pointer (in draw mode) |
 | B | Toggle board space (in draw mode) |
 | N | Toggle notes panel |
 | R | Reveal/hide all phantom blanks |
@@ -204,6 +204,7 @@ QR Generator:  https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js
 10. **SVG glyphs disappear in print mode**: All slides share the DOM, so duplicate SVG `id` attributes (e.g., `glyph-0-0`) cause the browser to render only the first definition. Prefix each SVG's IDs with a unique per-slide string
 11. **`xlink:href` is a namespaced attribute**: `querySelectorAll('[xlink\\:href]')` does NOT match. Instead, select `<use>` elements directly and read/write with `getAttributeNS('http://www.w3.org/1999/xlink', 'href')`. Also set `el.setAttribute('href', ...)` for modern browsers
 12. **Inline math `$...$` touching Japanese text**: Add a space between closing `$` and CJK characters, and between CJK characters and opening `$`. Do NOT add space before punctuation (，。、（）「」). Use a post-processing script that matches CJK Unicode ranges `[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]` adjacent to `$`
+13. **Pinch-to-zoom triggers page swipe on iPad**: Touch swipe detection must check `e.touches.length === 1` at `touchstart` and cancel if additional fingers appear during `touchmove`. Track a `touchIsSingle` flag: set `true` at `touchstart` if single finger, set `false` in `touchmove` if `e.touches.length > 1`, and only trigger swipe navigation in `touchend` if flag is still `true`
 
 ## Deployment (GitHub Pages)
 

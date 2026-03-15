@@ -271,9 +271,33 @@ let strokes = {};  // { slideIndex: [stroke, ...] }
 // stroke = { color, size, alpha, points: [{x, y}, ...] }
 ```
 
+### Pointer tool (laser pointer):
+- A non-persistent visual indicator — shows a colored dot at cursor position, not saved as a stroke
+- `pointerPos` variable holds current position; set to `null` when mouse/touch ends
+- In `moveDraw`: update `pointerPos` and call `redrawStrokes()` even without `drawingNow` (pointer follows cursor without clicking)
+- In `redrawStrokes`: after drawing all strokes, if `pointerPos` is set, draw a semi-transparent circle (outer ring + inner bright dot)
+- CSS: `.draw-canvas.pointer { cursor:none; }` to hide the system cursor
+- Keyboard shortcut: `L`
+
 ### Touch handling:
 - When `drawMode` is ON, prevent touch events from triggering swipe navigation
 - Use `{passive: false}` for touch listeners and call `e.preventDefault()`
+- **Pinch-to-zoom protection**: Track a `touchIsSingle` flag to prevent pinch gestures from triggering swipe navigation:
+```javascript
+let touchIsSingle = false;
+document.addEventListener('touchstart', e => {
+  touchIsSingle = (e.touches.length === 1);
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) touchIsSingle = false;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  if (mode !== 'slide' || drawMode || !touchIsSingle) return;
+  // ... swipe detection ...
+});
+```
 
 ### Rebinding after print mode:
 ```javascript
