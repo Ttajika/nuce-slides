@@ -66,39 +66,13 @@ For approach A, see `scripts/compile_tikz.sh`.
 
 ### Step 4: Build the HTML
 
-The output HTML has this structure:
+**IMPORTANT**: Use the canonical layout template in `references/layout-template.md` for the exact CSS, HTML body structure, and JS patterns. That file is the single source of truth for the slide viewer design. Do not deviate from it.
 
-```
-<!DOCTYPE html>
-<html>
-<head>
-  MathJax config + CDN
-  QR code generator CDN
-  <style> ... all CSS ... </style>
-</head>
-<body>
-  Top navigation bar
-  Slide display area + drawing canvas
-  Notes panel
-  Drawing toolbar
-  Lightbox (figure zoom)
-  Video modal (Vimeo embed)
-  
-  <script> ... all JS ... </script>
-  
-  <!-- Slide data as <template> elements (human-editable) -->
-  <template class="slide-data" data-title="..." data-section="..." data-note="false">
-    ... slide HTML content ...
-  </template>
-  ...
-</body>
-</html>
-```
-
-**Key design decisions:**
+The output is a single `.html` file. Key design decisions:
 - **`<template>` for slide data**: Slides are stored as `<template class="slide-data">` elements, not JSON. This makes the file readable and directly editable in any text editor. JS reads them via `document.querySelectorAll('template.slide-data')` in `DOMContentLoaded`.
 - **Single file**: Everything (CSS, JS, SVGs, slide content) in one `.html` file for easy distribution via GitHub Pages etc.
-- **MathJax 3** over KaTeX: Better support for `\textcolor{red!50!black}{}`, mathtools, `\text{}` with CJK, and complex environments.
+- **MathJax 3** with mathtools extension: Better support for `\textcolor{red!50!black}{}`, `\coloneqq`, `\text{}` with CJK, and complex environments.
+- **Link separation**: Text links use plain `<a>` tags. QR links use `<a class="qr-link">🔗 QRリンク</a>`. Never put `qr-link` class on text links.
 
 ### Step 5: Escape `<` in Math
 

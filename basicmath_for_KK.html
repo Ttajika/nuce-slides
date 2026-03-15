@@ -336,7 +336,7 @@ a:hover { color:#1e40af; }
 /* ---- Section title slide ---- */
 .section-title-content {
   display:flex; align-items:center; justify-content:center;
-  min-height: 300px;
+  min-height: 0;
 }
 .section-title-content h2 {
   font-size: 36px;
@@ -1173,7 +1173,7 @@ document.addEventListener('keydown', e => {
 <!-- ===== Slide data ===== -->
 <!-- ===== Slide 1:  /  ===== -->
 <template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="80">
-<div style="text-align:center;padding-top:2em;">
+<div style="text-align:center;">
 <h1 style="font-size:2em;margin-bottom:0.3em;">金融公共分析手法入門1</h1>
 <p style="font-size:0.9em;color:#666;">2026年度版</p>
 <p style="margin-top:1.5em;">多鹿 智哉</p>
@@ -1662,7 +1662,10 @@ document.addEventListener('keydown', e => {
  <ul> 
   <li> ギリシャ文字の一覧
   
-    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \alpha $</td><td>$  A $</td><td>アルファ</td></tr><tr><td>$  \beta $</td><td>$  B $</td><td>ベータ</td></tr><tr><td>$  \gamma $</td><td>$  \Gamma $</td><td>ガンマ</td></tr><tr><td>$  \delta $</td><td>$  \Delta $</td><td>デルタ</td></tr><tr><td>$  \epsilon $</td><td>$  E $</td><td>エプシロン</td></tr><tr><td>$  \zeta $</td><td>$  Z $</td><td>ゼータ</td></tr><tr><td>$  \eta $</td><td>$  H $</td><td>エータ</td></tr><tr><td>$  \theta $</td><td>$  \Theta $</td><td>シータ</td></tr><tr><td>$  \iota $</td><td>$  I $</td><td>イオタ</td></tr><tr><td>$  \kappa $</td><td>$  K $</td><td>カッパ</td></tr><tr><td>$  \lambda $</td><td>$  \Lambda $</td><td>ラムダ</td></tr><tr><td>$  \mu $</td><td>$  M $</td><td>ミュー</td></tr><tr><td>$  \nu $</td><td>$  N $</td><td>ニュー</td></tr><tr><td>$  \xi $</td><td>$  \Xi $</td><td>クシー</td></tr><tr><td>$  o $</td><td>$  O $</td><td>オミクロン</td></tr><tr><td>$  \pi $</td><td>$  \Pi $</td><td>パイ</td></tr><tr><td>$  \rho $</td><td>$  P $</td><td>ロー</td></tr><tr><td>$  \sigma $</td><td>$  \Sigma $</td><td>シグマ</td></tr><tr><td>$  \tau $</td><td>$  T $</td><td>タウ</td></tr><tr><td>$  \upsilon $</td><td>$  Y $</td><td>イプシロン</td></tr><tr><td>$  \phi $</td><td>$  \Phi $</td><td>ファイ</td></tr><tr><td>$  \chi $</td><td>$  X $</td><td>カイ</td></tr><tr><td>$  \psi $</td><td>$  \Psi $</td><td>プサイ</td></tr><tr><td>$  \omega $</td><td>$  \Omega $</td><td>オメガ</td></tr></table>
+    <div style="display:flex;gap:12px;">
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \alpha $</td><td>$  A $</td><td>アルファ</td></tr><tr><td>$  \beta $</td><td>$  B $</td><td>ベータ</td></tr><tr><td>$  \gamma $</td><td>$  \Gamma $</td><td>ガンマ</td></tr><tr><td>$  \delta $</td><td>$  \Delta $</td><td>デルタ</td></tr><tr><td>$  \epsilon $</td><td>$  E $</td><td>エプシロン</td></tr><tr><td>$  \zeta $</td><td>$  Z $</td><td>ゼータ</td></tr><tr><td>$  \eta $</td><td>$  H $</td><td>エータ</td></tr><tr><td>$  \theta $</td><td>$  \Theta $</td><td>シータ</td></tr><tr><td>$  \iota $</td><td>$  I $</td><td>イオタ</td></tr><tr><td>$  \kappa $</td><td>$  K $</td><td>カッパ</td></tr><tr><td>$  \lambda $</td><td>$  \Lambda $</td><td>ラムダ</td></tr><tr><td>$  \mu $</td><td>$  M $</td><td>ミュー</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \nu $</td><td>$  N $</td><td>ニュー</td></tr><tr><td>$  \xi $</td><td>$  \Xi $</td><td>クシー</td></tr><tr><td>$  o $</td><td>$  O $</td><td>オミクロン</td></tr><tr><td>$  \pi $</td><td>$  \Pi $</td><td>パイ</td></tr><tr><td>$  \rho $</td><td>$  P $</td><td>ロー</td></tr><tr><td>$  \sigma $</td><td>$  \Sigma $</td><td>シグマ</td></tr><tr><td>$  \tau $</td><td>$  T $</td><td>タウ</td></tr><tr><td>$  \upsilon $</td><td>$  Y $</td><td>イプシロン</td></tr><tr><td>$  \phi $</td><td>$  \Phi $</td><td>ファイ</td></tr><tr><td>$  \chi $</td><td>$  X $</td><td>カイ</td></tr><tr><td>$  \psi $</td><td>$  \Psi $</td><td>プサイ</td></tr><tr><td>$  \omega $</td><td>$  \Omega $</td><td>オメガ</td></tr></table>
+    </div>
     </ul> 
 
    </div> 
