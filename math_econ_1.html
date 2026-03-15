@@ -386,6 +386,7 @@ body.print-mode .mode-toggle { bottom:12px; }
 }
 .draw-canvas.active { pointer-events:auto; cursor:crosshair; }
 .draw-canvas.eraser { cursor:cell; }
+.draw-canvas.pointer { cursor:none; }
 
 .board-space {
   width:100%; background:#fff;
@@ -471,6 +472,7 @@ body.print-mode .mode-toggle { bottom:12px; }
     <span class="tool-label">ツール:</span>
     <button class="draw-btn active" id="btnPen" onclick="setDrawTool('pen')" title="ペン (P)">✏️</button>
     <button class="draw-btn" id="btnHL" onclick="setDrawTool('highlight')" title="ハイライト (H)">🖍️</button>
+    <button class="draw-btn" id="btnPointer" onclick="setDrawTool('pointer')" title="ポインター (L)">🔴</button>
     <button class="draw-btn" id="btnEraser" onclick="setDrawTool('eraser')" title="消しゴム (E)">🧹</button>
   </div>
   <div class="tool-group">
@@ -570,6 +572,7 @@ let drawColor = '#e94560';
 let drawingNow = false;
 let strokes = {};      // slide index -> array of strokes
 let currentStroke = null;
+let pointerPos = null; // for pointer tool
 
 function getCanvas() { return document.getElementById('drawCanvas'); }
 function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
@@ -589,9 +592,13 @@ function setDrawTool(t) {
   drawTool = t;
   const canvas = document.getElementById('drawCanvas');
   canvas.classList.toggle('eraser', t === 'eraser');
+  canvas.classList.toggle('pointer', t === 'pointer');
   document.getElementById('btnPen').classList.toggle('active', t === 'pen');
   document.getElementById('btnHL').classList.toggle('active', t === 'highlight');
+  document.getElementById('btnPointer').classList.toggle('active', t === 'pointer');
   document.getElementById('btnEraser').classList.toggle('active', t === 'eraser');
+  // Clear pointer dot when switching away
+  if (t !== 'pointer') { pointerPos = null; redrawStrokes(); }
 }
 
 function setDrawColor(c, el) {
@@ -639,6 +646,17 @@ function redrawStrokes() {
     ctx.stroke();
     ctx.globalAlpha = 1;
   });
+  // Draw pointer dot
+  if (pointerPos) {
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(233, 69, 96, 0.7)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fill();
+  }
 }
 
 function startDraw(e) {
@@ -646,6 +664,7 @@ function startDraw(e) {
   e.preventDefault();
   drawingNow = true;
   const pos = getDrawPos(e);
+  if (drawTool === 'pointer') { pointerPos = pos; redrawStrokes(); return; }
   if (drawTool === 'eraser') { eraseAt(pos); return; }
   if (!strokes[current]) strokes[current] = [];
   const sz = parseInt(document.getElementById('sizeSlider').value);
@@ -659,9 +678,16 @@ function startDraw(e) {
 }
 
 function moveDraw(e) {
-  if (!drawingNow || !drawMode) return;
-  e.preventDefault();
+  if (!drawMode) return;
   const pos = getDrawPos(e);
+  if (drawTool === 'pointer') {
+    e.preventDefault();
+    pointerPos = pos;
+    redrawStrokes();
+    return;
+  }
+  if (!drawingNow) return;
+  e.preventDefault();
   if (drawTool === 'eraser') { eraseAt(pos); return; }
   if (currentStroke) {
     currentStroke.points.push(pos);
@@ -670,6 +696,7 @@ function moveDraw(e) {
 }
 
 function endDraw(e) {
+  if (drawTool === 'pointer') { pointerPos = null; redrawStrokes(); }
   if (drawingNow) scheduleSave();
   drawingNow = false;
   currentStroke = null;
@@ -1033,6 +1060,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'p' || e.key === 'P') { if (drawMode) setDrawTool('pen'); }
   else if (e.key === 'h' || e.key === 'H') { if (drawMode) setDrawTool('highlight'); }
   else if (e.key === 'e' || e.key === 'E') { if (drawMode) setDrawTool('eraser'); }
+  else if (e.key === 'l' || e.key === 'L') { if (drawMode) setDrawTool('pointer'); }
   else if (e.key === 'b' || e.key === 'B') { if (drawMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
