@@ -49,100 +49,85 @@ window.MathJax = {
 :root {
   --bg: #fafaf8;
   --surface: #ffffff;
-  --fg: #1a1a1a;
+  --text: #1a1a1a;
   --text-dim: #6b7280;
   --accent: #1d4ed8;
   --accent-light: #eff6ff;
   --border: #e2e2e0;
   --keyword-bg: #fef2f2;
-  --keyword-color: #dc2626;
+  --keyword: #dc2626;
   --note-bg: #fffbeb;
   --note-border: #fbbf24;
   --phantom-bg: #e0e7ff;
   --header-bg: #1e293b;
-  --panel-bg: #f9fafb;
-  --slide-max-width: 1100px;
+  --tikz-bg: #f0fdf4;
+  --tikz-border: #86efac;
 }
 
 body {
-  font-family: 'Noto Sans JP', "Hiragino Kaku Gothic ProN", sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
   background: var(--bg);
-  color: var(--fg);
+  color: var(--text);
   font-size: 15px;
   line-height: 1.7;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
-/* ---- Top bar ---- */
+/* ═══ SLIDE VIEW MODE ═══ */
+body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
 .topbar {
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 16px;
   background: var(--header-bg); color:#fff;
   flex-shrink:0; z-index:100;
 }
-.topbar .title {
-  font-weight: 700; font-size:14px; letter-spacing:0.3px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;
-}
-.topbar .section-name {
-  font-size:13px; color:rgba(255,255,255,0.7); margin-left:12px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.topbar .nav-group { display:flex; align-items:center; gap:6px; }
-.topbar button {
+.topbar-title { font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.topbar-nav { display:flex; align-items:center; gap:6px; }
+.nav-btn {
   background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
   color:#fff; padding:4px 10px; border-radius:4px; cursor:pointer;
   font-size:13px; font-family:inherit; transition:all 0.15s;
 }
-.topbar button:hover { background:rgba(255,255,255,0.25); }
-.topbar .slide-num {
+.nav-btn:hover { background:rgba(255,255,255,0.25); }
+.page-info {
   font-size:13px; color:rgba(255,255,255,0.7);
   font-family:'JetBrains Mono',monospace; min-width:70px; text-align:center;
 }
-.topbar select {
+.section-select {
   background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
   color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
   font-family:inherit; cursor:pointer; max-width:200px;
 }
-.topbar select option { background: var(--header-bg); color:#fff; }
+.section-select option { background:#1e293b; color:#fff; }
 
-/* ---- Main layout ---- */
-.slide-wrapper {
+/* Main layout */
+.main {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 .slide-area {
   flex:1; display:flex; align-items:stretch; justify-content:center;
-  overflow:auto; background:var(--bg); padding:24px 32px;
+  overflow:auto; background:var(--bg); padding:8px 32px;
   position: relative;
 }
-.slide-inner {
+.slide-content {
   max-width:860px; width:100%;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
-  padding:28px 36px;
+  padding:12px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
   overflow:auto;
 }
-.slide-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--accent);
-  border-bottom: 2px solid var(--accent);
-  padding-bottom: 8px;
-  margin-bottom: 16px;
+.slide-content .frame-title {
+  font-size:20px; font-weight:700; color:var(--accent);
+  border-bottom:2px solid var(--accent);
+  padding-bottom:8px; margin-bottom:16px;
 }
-.section-badge {
+.slide-content .section-badge {
   font-size:11px; color:var(--text-dim); margin-bottom:4px;
   text-transform:uppercase; letter-spacing:0.5px;
-}
-.slide-content {
-  font-size: 1em;
 }
 
 /* ---- Board popup ---- */
@@ -198,32 +183,26 @@ body {
 .size-range { width:70px; accent-color:var(--accent); }
 .tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
 
-/* ---- Notes panel ---- */
+/* Notes panel */
 .notes-panel {
   width:300px; background:var(--note-bg);
   border-left:3px solid var(--note-border);
   display:flex; flex-direction:column; flex-shrink:0;
   transition:width 0.2s;
-  z-index:90;
 }
 .notes-panel.collapsed { width:0; overflow:hidden; border-left:none; }
-.notes-panel .notes-header {
+.notes-header {
   padding:8px 12px; background:rgba(251,191,36,0.15);
   border-bottom:1px solid var(--note-border);
   display:flex; align-items:center; justify-content:space-between;
-  font-size:13px; font-weight:500; color:#92400e;
 }
-.notes-panel .notes-header button {
-  background:rgba(0,0,0,0.1); border:1px solid rgba(0,0,0,0.1);
-  color:#92400e; cursor:pointer; font-size:11px;
-  padding:2px 6px; border-radius:4px;
-}
-.notes-panel textarea {
-  flex:1; background:transparent; border:none; color:var(--fg);
+.notes-header h3 { font-size:13px; font-weight:500; color:#92400e; }
+.notes-textarea {
+  flex:1; background:transparent; border:none; color:var(--text);
   font-family:'Noto Sans JP',sans-serif; font-size:14px; line-height:1.8;
   padding:12px; resize:none; outline:none;
 }
-.notes-panel textarea::placeholder { color:#d4a017; opacity:0.6; }
+.notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
 
 /* ---- Columns layout ---- */
 .columns { display:flex; gap:24px; }
@@ -232,48 +211,30 @@ body {
 /* ---- Lists ---- */
 ul, ol { padding-left: 1.5em; margin:0.3em 0; }
 li { margin: 0.4em 0; }
-li.sub-item { list-style:none; margin-left:0.5em; }
+li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
-li.no-marker { list-style:none; }
-li.arrow-item { list-style:none; }
-li.custom-marker { list-style:none; }
 li.spacer { list-style:none; height:0.8em; }
-.marker { font-weight:600; margin-right:4px; }
-dl { margin-left:0; }
-dt { font-weight:700; margin-top:0.8em; }
-dd { margin-left:1.5em; }
+li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
+li.custom-label { list-style:none; }
+li.custom-label .label { font-weight:500; margin-right:4px; }
+ol.custom-enum { padding-left:1.5em; }
 
-/* ---- Table ---- */
 .slide-table {
-  border-collapse: collapse;
-  margin: 8px auto;
-  font-size: 0.92em;
+  border-collapse:collapse; margin:8px auto;
 }
-.slide-table td, .slide-table th {
-  border: 1px solid var(--border);
-  padding: 4px 12px;
-  text-align: center;
+.slide-table td {
+  border:1px solid var(--border); padding:4px 12px; text-align:center;
 }
-.slide-table tr:first-child td { font-weight: 600; background: var(--panel-bg); }
 
-/* ---- Keywords ---- */
 .keyword {
-  color: var(--keyword-color);
-  font-weight: 700;
-  background: var(--keyword-bg);
-  padding: 1px 4px;
-  border-radius: 3px;
+  color:var(--keyword); background:var(--keyword-bg);
+  padding:1px 4px; border-radius:3px; font-weight:700;
 }
 .accent { color:var(--accent); }
+.red { color:#9b2d86; }
+strong.keyword { font-weight:700; }
 
-/* ---- Icons ---- */
-.icon-arrow { color: var(--accent); font-weight:700; margin-right:2px; }
-
-/* ---- Math ---- */
-.math-display {
-  margin: 10px 0;
-  overflow-x: auto;
-}
+.math-display { margin:10px 0; overflow-x:auto; }
 
 /* ---- TikZ ---- */
 .tikz-figure {
@@ -283,10 +244,16 @@ dd { margin-left:1.5em; }
   transition: opacity 0.15s;
 }
 .tikz-figure:hover { opacity:0.85; }
-.tikz-figure svg { max-height: 260px; }
+.tikz-figure svg {
+  max-height:260px;
+}
+body.print-mode .tikz-figure svg {
+  max-height:180px;
+}
+body.print-mode .tikz-figure { cursor:default; }
 .tikz-placeholder {
-  background: #f0fdf4;
-  border: 2px dashed #86efac;
+  background:var(--tikz-bg);
+  border:2px dashed var(--tikz-border);
   padding: 20px;
   text-align: center;
   color: #166534;
@@ -308,10 +275,11 @@ a:hover { color:#1e40af; }
 }
 .qr-link:hover { background:#dbeafe; }
 .qr-link .qr-img {
-  display: none;
-  width:100%; margin-top:6px; padding:4px;
+  display:none; width:100%; margin-top:6px; padding:4px;
   background:#fff; border-radius:4px;
 }
+.qr-link.qr-open .qr-img { display:block; }
+.qr-link.qr-open { flex-direction:column; }
 
 /* ---- Phantom ---- */
 .phantom {
@@ -329,21 +297,21 @@ a:hover { color:#1e40af; }
   margin: 10px 0;
   background: var(--panel-bg);
 }
+.note-frame {
+  display:flex; align-items:center; justify-content:center;
+  min-height:200px; color:var(--text-dim); font-size:16px;
+}
+.note-frame::before { content:'📝 ノート用スペース'; }
+
 .framed { border:1px solid var(--border); padding:8px; border-radius:4px; margin:8px 0; }
 
 /* ---- Multicol ---- */
-.multicol { column-count:2; column-gap:24px; }
+.multicols { column-count:2; column-gap:24px; }
 
-/* ---- Section title slide ---- */
-.section-title-content {
-  display:flex; align-items:center; justify-content:center;
-  min-height: 0;
-}
-.section-title-content h2 {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: 'Noto Serif JP', serif;
+.section-title-big {
+  text-align:center; font-size:36px; font-weight:700;
+  color:var(--accent); padding:60px 0;
+  font-family:'Noto Serif JP',serif;
 }
 
 /* ---- Code ---- */
@@ -373,37 +341,52 @@ pre .copy-btn:hover { background: var(--accent-light); }
 pre .copy-btn.copied { background: #d1fae5; border-color: #6ee7b7; }
 code { font-family: 'JetBrains Mono', "SF Mono", "Fira Code", monospace; }
 
-/* ---- Lightbox ---- */
+/* ═══ LIGHTBOX ═══ */
 .lightbox {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.85); z-index:500;
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.85);
   align-items:center; justify-content:center;
   cursor:zoom-out;
 }
-.lightbox.show { display:flex; }
-.lightbox-content {
+.lightbox.open { display:flex; }
+.lightbox-inner {
   background:#fff; border-radius:8px; padding:20px;
   max-width:90vw; max-height:90vh; overflow:auto;
   box-shadow:0 8px 40px rgba(0,0,0,0.4);
   cursor:default;
 }
-.lightbox-content svg { max-height:none !important; width:100%; height:auto; max-height:80vh; display:block; }
-
-/* ---- Video modal ---- */
-.video-modal {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.9); z-index:600;
+.lightbox-inner svg { width:100%; height:auto; max-height:80vh; display:block; }
+.lightbox-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
   align-items:center; justify-content:center;
+}
+.lightbox.open + .lightbox-close { display:flex; }
+
+/* Video modal */
+.video-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.9); align-items:center; justify-content:center;
   cursor:pointer;
 }
-.video-modal.show { display:flex; }
-.video-modal iframe {
+.video-overlay.open { display:flex; }
+.video-container {
   width:min(80vw, 800px); aspect-ratio:16/9;
-  border:none; border-radius:8px;
   cursor:default;
 }
+.video-container iframe { width:100%; height:100%; border:none; border-radius:8px; }
+.video-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
+  align-items:center; justify-content:center;
+}
+.video-overlay.open ~ .video-close { display:flex; }
 
-/* ---- Keyboard hints ---- */
+/* ═══ KEYBOARD HINTS ═══ */
 .hints {
   position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
   background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:6px;
@@ -415,7 +398,7 @@ kbd {
   border:1px solid #4b5563; font-family:'JetBrains Mono',monospace; font-size:11px;
 }
 
-/* ---- Mode toggle ---- */
+/* ═══ MODE TOGGLE ═══ */
 .mode-toggle {
   position:fixed; bottom:12px; right:12px; z-index:200;
   background:var(--header-bg); color:#fff;
@@ -426,35 +409,59 @@ kbd {
 
 /* ---- Print mode ---- */
 body.print-mode {
-  height:auto; overflow:visible; display:block; background:#fff;
+  background:#fff;
 }
 body.print-mode .topbar,
-body.print-mode .draw-toolbar,
 body.print-mode .notes-panel,
-body.print-mode .hints { display:none !important; }
-body.print-mode .slide-wrapper { display:block; overflow:visible; }
+body.print-mode .nav-btn,
+body.print-mode .topbar-nav { display:none !important; }
+body.print-mode .main {
+  display:block; overflow:visible;
+}
 body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
-body.print-mode .print-slide {
-  page-break-inside:avoid;
+
+.print-slide {
+  page-break-inside:auto;
   border:1px solid #ccc;
-  padding:20px 28px;
+  padding:8px 28px;
+  margin:4px auto;
   max-width:780px;
-  margin:12px auto;
   background:#fff;
   position:relative;
   overflow:visible;
 }
-body.print-mode .print-slide .slide-number {
+.print-slide .slide-number {
   position:absolute; top:8px; right:12px;
   font-size:11px; color:#999;
   font-family:'JetBrains Mono',monospace;
 }
-body.print-mode .print-slide .slide-title { font-size:16px; }
-body.print-mode .print-note-area { border-bottom:1px dotted #ddd; }
+.print-slide .frame-title {
+  font-size:16px; font-weight:700; color:var(--accent);
+  border-bottom:1.5px solid var(--accent);
+  padding-bottom:4px; margin-bottom:10px;
+}
+.print-slide .section-badge {
+  font-size:10px; color:#999; margin-bottom:2px;
+}
+.print-slide-title {
+  padding-top:8px; padding-bottom:8px;
+}
+.print-slide-title .section-title-big {
+  padding:12px 0;
+}
+
+/* Print: figures get proper spacing */
+.print-slide .tikz-figure { margin:8px 0 12px; }
+.print-slide .tikz-figure svg { max-height:160px; }
+
+/* Print: QR codes always visible */
 body.print-mode .qr-link .qr-img { display:block !important; }
 body.print-mode .qr-link { flex-direction:column; }
-body.print-mode .tikz-figure svg { max-height:180px; }
-body.print-mode .tikz-figure { cursor:default; }
+
+.print-note-area {
+  margin-top:8px;
+}
+
 .print-header {
   text-align:center; padding:20px 0 10px;
   border-bottom:2px solid var(--accent);
@@ -466,36 +473,34 @@ body.print-mode .tikz-figure { cursor:default; }
 /* ---- Responsive ---- */
 @media (max-width:768px) {
   .slide-area { padding: 16px; }
-  .slide-inner { padding: 20px 16px; }
+  .slide-content { padding: 20px 16px; }
   .columns { flex-direction:column; gap:10px; }
   .notes-panel { width:100%; }
-  .topbar .title { max-width:120px; }
+  .topbar-title { max-width:120px; }
 }
 @media print {
   body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  .print-note-area { min-height:60px; }
   .topbar,.draw-toolbar,.notes-panel { display:none !important; }
 }
 </style>
 </head>
-<body>
+<body class="slide-mode">
 
 <!-- Top bar -->
 <div class="topbar" id="topbar">
-  <div style="display:flex;align-items:center;">
-    <span class="title">金融公共分析手法入門1</span>
-    <span class="section-name" id="sectionName"></span>
-  </div>
-  <div class="nav-group">
-    <select id="sectionSelect" onchange="goToSection(this.value)"></select>
-    <button onclick="goToSlide(0)">⏮</button>
-    <button onclick="prevSlide()">◀</button>
-    <span class="slide-num" id="slideNum">1 / 1</span>
-    <button onclick="nextSlide()">▶</button>
-    <button onclick="goToSlide(SLIDES.length-1)">⏭</button>
-    <button onclick="toggleNotes()">📝</button>
-    <button onclick="toggleDraw()" id="drawBtn">✏️</button>
-    <button onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
-    <button onclick="toggleHints()">?</button>
+  <span class="topbar-title">金融公共分析手法入門1</span>
+  <div class="topbar-nav">
+    <select class="section-select" id="sectionSelect" onchange="goToSection(this.value)"></select>
+    <button class="nav-btn" onclick="goToSlide(0)">⏮</button>
+    <button class="nav-btn" onclick="prevSlide()">◀</button>
+    <span class="page-info" id="slideNum">1 / 1</span>
+    <button class="nav-btn" onclick="nextSlide()">▶</button>
+    <button class="nav-btn" onclick="goToSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn" onclick="toggleNotes()">📝</button>
+    <button class="nav-btn" onclick="toggleDraw()" id="drawBtn">✏️</button>
+    <button class="nav-btn" onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
 </div>
 
@@ -528,21 +533,21 @@ body.print-mode .tikz-figure { cursor:default; }
 </div>
 
 <!-- Main layout -->
-<div class="slide-wrapper" id="slideWrapper">
+<div class="main" id="slideWrapper">
   <div class="slide-area" id="slideArea">
-    <div class="slide-inner" id="slideInner">
+    <div class="slide-content" id="slideInner">
       <div class="section-badge" id="sectionBadge"></div>
-      <div class="slide-title" id="slideTitle"></div>
-      <div class="slide-content" id="slideContent"></div>
+      <div class="frame-title" id="slideTitle"></div>
+      <div id="slideContent"></div>
     </div>
     <canvas class="draw-canvas" id="drawCanvas"></canvas>
   </div>
   <div class="notes-panel collapsed" id="notesPanel">
     <div class="notes-header">
-      <span>📝 メモ（スライド <span id="noteSlideNum">1</span>）</span>
-      <button onclick="clearNote()">クリア</button>
+      <h3>📝 メモ（スライド <span id="noteSlideNum">1</span>）</h3>
+      <button class="nav-btn" onclick="clearNote()" style="font-size:11px;padding:2px 6px;background:rgba(0,0,0,0.1);color:#92400e;border-color:rgba(0,0,0,0.1);">クリア</button>
     </div>
-    <textarea id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
+    <textarea class="notes-textarea" id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
   </div>
 </div>
 
@@ -562,12 +567,12 @@ body.print-mode .tikz-figure { cursor:default; }
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <div class="lightbox-content" id="lightboxContent" onclick="event.stopPropagation()"></div>
+  <div class="lightbox-inner" id="lightboxContent" onclick="event.stopPropagation()"></div>
 </div>
 
 <!-- Video modal -->
-<div class="video-modal" id="videoModal" onclick="closeVideo()">
-  <div onclick="event.stopPropagation()">
+<div class="video-overlay" id="videoModal" onclick="closeVideo()">
+  <div class="video-container" onclick="event.stopPropagation()">
     <iframe id="videoFrame" allow="autoplay"></iframe>
   </div>
 </div>
@@ -697,7 +702,7 @@ function showSlide(idx) {
 
   document.getElementById('slideTitle').textContent = s.title;
   document.getElementById('slideTitle').style.display = s.title ? '' : 'none';
-  document.getElementById('sectionName').textContent = s.section;
+  // section name shown in badge
   document.getElementById('slideNum').textContent = `${idx+1} / ${SLIDES.length}`;
   const noteNum = document.getElementById('noteSlideNum');
   if (noteNum) noteNum.textContent = idx + 1;
@@ -707,7 +712,7 @@ function showSlide(idx) {
 
   // Check if section title slide
   if (s.title === s.section && !s.html.trim()) {
-    content.innerHTML = `<div class="section-title-content"><h2>${s.title}</h2></div>`;
+    content.innerHTML = `<div class="section-title-big">${s.title}</div>`;
     if (badge) badge.style.display = 'none';
     document.getElementById('slideTitle').style.display = 'none';
   } else {
@@ -1157,21 +1162,21 @@ document.addEventListener('click', e => {
       clone.style.maxHeight = 'none';
       document.getElementById('lightboxContent').innerHTML = '';
       document.getElementById('lightboxContent').appendChild(clone);
-      document.getElementById('lightbox').classList.add('show');
+      document.getElementById('lightbox').classList.add('open');
     }
   }
 });
-function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 
 // ===== Video =====
 function openVideo(id, hash) {
   const src = `https://player.vimeo.com/video/${id}?autoplay=1${hash ? '&h='+hash : ''}`;
   document.getElementById('videoFrame').src = src;
-  document.getElementById('videoModal').classList.add('show');
+  document.getElementById('videoModal').classList.add('open');
 }
 function closeVideo() {
   document.getElementById('videoFrame').src = '';
-  document.getElementById('videoModal').classList.remove('show');
+  document.getElementById('videoModal').classList.remove('open');
 }
 
 // ===== Phantom ====
@@ -1193,20 +1198,21 @@ function enterPrintMode() {
   if (drawMode) toggleDraw();
   const na = document.getElementById('noteArea');
   if (na) notes[current] = na.value;
-  document.body.classList.add('print-mode');
+  document.body.className = 'print-mode';
   document.getElementById('modeToggle').textContent = '🖥 スライド表示';
   const area = document.getElementById('slideArea');
 
   let html = '<div class="print-header"><h1>金融公共分析手法入門1</h1><p>配布用ハンドアウト</p></div>';
   SLIDES.forEach((s, idx) => {
     if (s.is_note) return;
-    const isSectionTitle = s.title === s.section && !s.html.trim();
+    if (idx === 0) return;
+    const isSectionTitle = s.html.includes('section-title-big');
     const margin = s.printMargin;
-    html += `<div class="print-slide" data-idx="${idx}">`;
+    html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}" data-idx="${idx}">`;
     html += `<span class="slide-number" style="position:absolute;top:8px;right:12px;font-size:11px;color:#999;">${idx+1} / ${SLIDES.length}</span>`;
     if (s.section) html += `<div class="section-badge">${s.section}</div>`;
-    if (s.title) html += `<div class="slide-title">${s.title}</div>`;
-    html += `<div class="slide-content">${s.html}</div>`;
+    if (s.title) html += `<div class="frame-title">${s.title}</div>`;
+    html += s.html;
     if (margin > 0 && !isSectionTitle) {
       html += `<div class="print-note-area" style="min-height:${margin}px"></div>`;
     }
@@ -1241,14 +1247,14 @@ function enterPrintMode() {
 
 function enterSlideMode() {
   mode = 'slide';
-  document.body.classList.remove('print-mode');
+  document.body.className = 'slide-mode';
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
   const area = document.getElementById('slideArea');
   area.innerHTML = `
-    <div class="slide-inner" id="slideInner">
+    <div class="slide-content" id="slideInner">
       <div class="section-badge" id="sectionBadge"></div>
-      <div class="slide-title" id="slideTitle"></div>
-      <div class="slide-content" id="slideContent"></div>
+      <div class="frame-title" id="slideTitle"></div>
+      <div id="slideContent"></div>
     </div>
     <canvas class="draw-canvas" id="drawCanvas"></canvas>
   `;
@@ -1310,7 +1316,7 @@ document.addEventListener('keydown', e => {
 
 <!-- ===== Slide data ===== -->
 <!-- ===== Slide 1:  /  ===== -->
-<template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
 <div style="text-align:center;">
 <h1 style="font-size:2em;margin-bottom:0.3em;">金融公共分析手法入門1</h1>
 <p style="font-size:0.9em;color:#666;">2026年度版</p>
@@ -1320,7 +1326,7 @@ document.addEventListener('keydown', e => {
 </template>
 
 <!-- ===== Slide 2: はじめに / はじめに ===== -->
-<template class="slide-data" data-title="はじめに" data-section="はじめに" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="はじめに" data-section="はじめに" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
 <ul>
@@ -1358,7 +1364,7 @@ document.addEventListener('keydown', e => {
 </template>
 
 <!-- ===== Slide 3: はじめに / 諸注意 ===== -->
-<template class="slide-data" data-title="諸注意" data-section="はじめに" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="諸注意" data-section="はじめに" data-note="false" data-print-margin="0">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -1390,20 +1396,29 @@ document.addEventListener('keydown', e => {
 </template>
 
 <!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
-<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class = "columns">
+<div class = "column"> 
 <ul>
 <li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
 <li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）．
-<li class="no-marker"><a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
+<li class="spacer"><a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
 <li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
-
-<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
-<li class="no-marker"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
+</li>
 </ul>
+</div>  
+<div class = "column">
+<ul>
+<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
+<li class="spacer"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
+</li>
+</ul>
+</div>
+</div>
 </template>
 
 <!-- ===== Slide 5: はじめに / 成績評価方法 ===== -->
-<template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
 <ul>
 <li> 成績評価は以下の通り．
 
@@ -1422,8 +1437,8 @@ document.addEventListener('keydown', e => {
 </template>
 
 <!-- ===== Slide 6: はじめに / 講義計画 ===== -->
-<template class="slide-data" data-title="講義計画" data-section="はじめに" data-note="false" data-print-margin="80">
-<div class="multicol"> 
+<template class="slide-data" data-title="講義計画" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="multicols"> 
  <ol>
  <li> オリエンテーション 
  <li> 妥当な論証
@@ -1472,7 +1487,7 @@ document.addEventListener('keydown', e => {
 
 <!-- ===== Slide 7: 妥当な論証 / 妥当な論証 ===== -->
 <template class="slide-data" data-title="妥当な論証" data-section="妥当な論証" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>妥当な論証</h2></div>
+<div class="section-title-big">妥当な論証</div>
 </template>
 
 <!-- ===== Slide 8: 妥当な論証 / 前提・仮定と結論1 ===== -->
@@ -1495,7 +1510,7 @@ document.addEventListener('keydown', e => {
  </div> 
  <div class="column"> 
 <ul> 
-<li class="no-marker"> 
+<li class="spacer"> 
 
  <li> 注意点
  <li class="sub-item"><span class="icon-arrow">→</span> 前提・仮定はなるべく詳しく書くこと
@@ -1546,8 +1561,8 @@ document.addEventListener('keydown', e => {
 <li>  前提が正しくないときには何も言えない．
 <li class="sub-item"><span class="icon-arrow">→</span> 『「雨が降る」ならば「Aさんは傘をさす」』が正しくても，雨が降っていないときにAさんが傘をさすかどうか，それだけからはわからない．
 
-<li class="no-marker"><span class="icon-arrow">→</span>  正しくない前提のもとでの議論にはあまり意味がない．
-<li class="no-marker"><span class="icon-arrow">→</span>  前提が正しいかどうかをよく調べる必要がある．
+<li class="spacer"><span class="icon-arrow">→</span>  正しくない前提のもとでの議論にはあまり意味がない．
+<li class="spacer"><span class="icon-arrow">→</span>  前提が正しいかどうかをよく調べる必要がある．
 
 <li> 前提の正しさ，「前提ならば結論」という論証自体の正しさ，そして結論の正しさはそれぞれ別．
 <li class="sub-item"><span class="icon-arrow">→</span> まずは「前提ならば結論」という論証を正しくすること ← この講義の目的の一つ
@@ -1561,7 +1576,7 @@ document.addEventListener('keydown', e => {
  以下では妥当な論証方法の例を挙げる
  
  <ul> 
-<li class="no-marker">
+<li class="spacer">
 <li> 次の論証方法を<span class="keyword">モーダス・ポネンス</span>（前件肯定）と呼ぶ．
 <ol>
 <li> PならばQである．
@@ -1718,7 +1733,7 @@ document.addEventListener('keydown', e => {
   </div> 
  </div> 
 <ul>
-<li class="no-marker">
+<li class="spacer">
 <li> 注意点：「よって以降の結論」が正しくても論証として妥当でなければその議論は間違いである．
 <li class="sub-item"><span class="icon-arrow">→</span> 例：
  <ol>
@@ -1776,28 +1791,20 @@ document.addEventListener('keydown', e => {
  </div>
 </template>
 
-<!-- ===== Slide 17: 妥当な論証 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="妥当な論証" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 18: 四則演算 / 四則演算 ===== -->
 <template class="slide-data" data-title="四則演算" data-section="四則演算" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>四則演算</h2></div>
+<div class="section-title-big">四則演算</div>
 </template>
 
 <!-- ===== Slide 19: 四則演算 / 基礎の計算 ===== -->
 <template class="slide-data" data-title="基礎の計算" data-section="四則演算" data-note="false" data-print-margin="80">
-<div class="columns"> 
-  <div class="column"> 
   <ul> 
   <li> 数学の計算には文字を使う
   <li class="sub-item"><span class="icon-arrow">→</span> $  x,y,z,a,b,c $ 等のアルファベットがメイン
   <li class="sub-item"><span class="icon-arrow">→</span> ギリシャ文字なども使われる
-  </ul> 
-  </div> 
-  <div class="column"> 
- <ul> 
+
   <li> ギリシャ文字の一覧
   
     <div style="display:flex;gap:12px;">
@@ -1876,7 +1883,7 @@ document.addEventListener('keydown', e => {
   
   <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ ならば $  a\cdot c=b\cdot c $ 
   
-  <li class="no-marker">注意： $  ac=bc $ ならば $  a=b $ とは限らない
+  <li class="spacer">注意： $  ac=bc $ ならば $  a=b $ とは限らない
   
     <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ かつ $  b=c $ ならば $  a=c $ 
 
@@ -1918,7 +1925,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 </template>
 
 <!-- ===== Slide 24: 四則演算 / 式変形による証明 ===== -->
-<template class="slide-data" data-title="式変形による証明" data-section="四則演算" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="式変形による証明" data-section="四則演算" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -1933,14 +1940,11 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  </div>
 </template>
 
-<!-- ===== Slide 25: 四則演算 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="四則演算" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 26: 一次関数と市場メカニズム / 一次関数と市場メカニズム ===== -->
 <template class="slide-data" data-title="一次関数と市場メカニズム" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>一次関数と市場メカニズム</h2></div>
+<div class="section-title-big">一次関数と市場メカニズム</div>
 </template>
 
 <!-- ===== Slide 27: 一次関数と市場メカニズム / 定義式 ===== -->
@@ -2006,7 +2010,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 </template>
 
 <!-- ===== Slide 30: 一次関数と市場メカニズム / 経済学で出る関数:需要関数1 ===== -->
-<template class="slide-data" data-title="経済学で出る関数:需要関数1" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="経済学で出る関数:需要関数1" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2031,7 +2035,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 <li> 需要関数が以下のような形とする．
 <div class="math-display">\[\begin{aligned}D(p)=20000-10p\end{aligned}\]</div>
 <li class="sub-item"><span class="icon-arrow">→</span> 読み方
-<li class="no-marker">
+<li class="spacer">
 <li> 逆に考えて，適当な量が与えられたとき，その量が需要量となるような価格を考えたい．
 <li class="sub-item"><span class="icon-arrow">→</span> 逆需要関数： $ P(q) $ とは需要量が $ q $ となるような価格を出力する関数
 </ul>
@@ -2046,7 +2050,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 </template>
 
 <!-- ===== Slide 32: 一次関数と市場メカニズム / 合成関数 ===== -->
-<template class="slide-data" data-title="合成関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="合成関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2056,7 +2060,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  </div> 
  <div class="column"> 
 <ul> 
- <li> 例：需要量が\(q\)のとき，売上高は以下のように書ける．<div class="math-display">\[\text{Sales}(p,q)=p\cdot q\]</div>
+ <li> 例：需要量が $q$ のとき，売上高は以下のように書ける．<div class="math-display">\[\text{Sales}(p,q)=p\cdot q\]</div>
  <li class="sub-item"><span class="icon-arrow">→</span> 需要関数が $  D(p)=10-3p $ とする．
 <li class="sub-item"><span class="icon-arrow">→</span> 価格が $  p $ のときの売上高を $  p $ の関数として書いてみよう．
  </ul> 
@@ -2064,20 +2068,21 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  </div>
 </template>
 
-<!-- ===== Slide 33: 一次関数と市場メカニズム / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="一次関数と市場メカニズム" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 34: 一次関数と市場メカニズム / 方程式 ===== -->
-<template class="slide-data" data-title="方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
- <li> 「<span class="keyword">方程式を解く</span>」とは変数を含む等式が与えられたときにそれを満たす変数を{{すべて}}リストアップすること．
+ <li> 「<span class="keyword">方程式を解く</span>」とは変数を含む等式が与えられたときにそれを満たす変数を<strong>すべて</strong >リストアップすること．
  
  <li class="sub-item"><span class="icon-arrow">→</span> 例：
- <li class="no-marker">
+ <li class="spacer">
+ <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
  
  <li class="sub-item"><span class="icon-arrow">→</span> 方程式を満たす変数を<span class="keyword">解</span>あるいは<span class="keyword">根</span>という．
  </ul> 
@@ -2091,12 +2096,12 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 </template>
 
 <!-- ===== Slide 35: 一次関数と市場メカニズム / 場合分け ===== -->
-<template class="slide-data" data-title="場合分け" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="場合分け" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 36: 一次関数と市場メカニズム / 応用：市場均衡 ===== -->
-<template class="slide-data" data-title="応用：市場均衡" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用：市場均衡" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2117,9 +2122,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <div class="column"> 
 <ul> 
  <li> 価格が $  p $ のときの需要量を記号で $  D(p) $ と書く
- <li class="no-marker">
+ <li class="spacer">
  <li> 価格が $  p $ のときの供給量を記号で $  S(p) $ と書く
-  <li class="no-marker">
+  <li class="spacer">
   <li> <span class="keyword">市場均衡</span>とは以下が成立すること
   <div class="math-display">\[\begin{aligned}D(p)=S(p)\end{aligned}\]</div>
   <li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">市場均衡価格</span>: 市場均衡を成立させる価格
@@ -2136,14 +2141,14 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 38: 一次関数と市場メカニズム / 連立方程式 ===== -->
-<template class="slide-data" data-title="連立方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="連立方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
  <li> 「<span class="keyword">連立方程式を解く</span>」とは変数を含む<span class="keyword">複数の</span>等式が与えられたときにそれら全てを満たす変数を<strong>すべて</strong>リストアップすること．
  
  <li class="sub-item"><span class="icon-arrow">→</span> 例：
- <li class="no-marker">
+ <li class="spacer">
  
 
  </ul> 
@@ -2181,9 +2186,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <ul> 
  <li> 複数の財があるケースを考える．
  <li class="sub-item"><span class="icon-arrow">→</span> その財自身の価格だけでなく，他の財価格の影響もある．
- <li class="no-marker">
+ <li class="spacer">
  <li> 複数の財についての市場均衡
- <li class="no-marker"><span class="icon-arrow">→</span>  全ての財について需要と供給が一致すること
+ <li class="spacer"><span class="icon-arrow">→</span>  全ての財について需要と供給が一致すること
  <li class="sub-item"><span class="icon-arrow">→</span> 例（２財のケース）
  <div class="math-display">\[\begin{aligned}D_1(p_1,p_2)=S_1(p_1,p_2)\\
   D_2(p_1,p_2)=S_2(p_1,p_2)\end{aligned}\]</div>
@@ -2195,13 +2200,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  </div>
 </template>
 
-<!-- ===== Slide 40: 一次関数と市場メカニズム / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="一次関数と市場メカニズム" data-note="true" data-print-margin="80">
-
-</template>
 
 <!-- ===== Slide 41: 一次関数と市場メカニズム / 需要関数 ===== -->
-<template class="slide-data" data-title="需要関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="需要関数（復習）" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2219,7 +2220,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 42: 一次関数と市場メカニズム / 供給関数 ===== -->
-<template class="slide-data" data-title="供給関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="供給関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2237,7 +2238,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 43: 一次関数と市場メカニズム / 市場均衡と余剰 ===== -->
-<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2253,7 +2254,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 44: 一次関数と市場メカニズム / 市場均衡と余剰 ===== -->
-<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2275,21 +2276,22 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 45: 一次関数と市場メカニズム / 応用例: 価格規制 ===== -->
-<template class="slide-data" data-title="応用例: 価格規制" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用例: 価格規制" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 <ul>
-<li> キャベツの価格が高すぎると不満が出た．政府は価格を一玉120円までにするよう規制した．これによって市場均衡と余剰はどうなるか？消費者余剰は常に増加するか？
+<li> キャベツの価格が高すぎると不満が出た．
+  
+  <li>政府は価格を一玉120円までにするよう規制した．
+    
+    <li class="sub-item"> これによって市場均衡と余剰はどうなるか？ </li>
+    
+     <li class="sub-item"> 消費者余剰は常に増加するか？ </li>
 
 </ul>
 </template>
 
-<!-- ===== Slide 46: 一次関数と市場メカニズム / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="一次関数と市場メカニズム" data-note="true" data-print-margin="80">
-
-</template>
-
 <!-- ===== Slide 47: 一変数関数の微分 / 一変数関数の微分 ===== -->
 <template class="slide-data" data-title="一変数関数の微分" data-section="一変数関数の微分" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>一変数関数の微分</h2></div>
+<div class="section-title-big">一変数関数の微分</div>
 </template>
 
 <!-- ===== Slide 48: 一変数関数の微分 / 3.a. 微分の意味と計算公式: 微分の意味 ===== -->
@@ -2302,7 +2304,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   </div> 
  <div class="column"> 
  
-<div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="173.36" height="98.25" viewBox="0 0 173.36 98.25">
+<div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="273.36" height="198.25" viewBox="0 0 173.36 98.25">
 <defs>
 <g>
 <g id="glyph-0-0">
@@ -2352,55 +2354,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </g>
 </svg>
 </div>
-<div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="173.36" height="98.25" viewBox="0 0 173.36 98.25">
-<defs>
-<g>
-<g id="glyph-0-0">
-<path d="M 6.234375 -7.453125 L 6.234375 -1.21875 L 6.34375 -1.21875 C 6.59375 -1.21875 6.859375 -1.375 6.859375 -1.453125 L 6.859375 -7.078125 C 7.09375 -7.09375 7.1875 -7.203125 7.203125 -7.34375 Z M 8.359375 -8.109375 L 8.359375 -0.28125 C 8.359375 -0.125 8.3125 -0.046875 8.109375 -0.046875 C 7.90625 -0.046875 6.8125 -0.140625 6.8125 -0.140625 L 6.8125 0.015625 C 7.296875 0.078125 7.546875 0.15625 7.71875 0.265625 C 7.84375 0.390625 7.90625 0.546875 7.9375 0.75 C 8.875 0.65625 8.984375 0.3125 8.984375 -0.21875 L 8.984375 -7.71875 C 9.234375 -7.75 9.328125 -7.859375 9.359375 -8 Z M 4.8125 -8.28125 C 3.90625 -7.78125 2.09375 -7.15625 0.578125 -6.859375 L 0.609375 -6.703125 C 1.40625 -6.765625 2.21875 -6.890625 2.984375 -7.03125 L 2.984375 -5.234375 L 0.578125 -5.234375 L 0.65625 -4.9375 L 2.734375 -4.9375 C 2.21875 -3.5 1.359375 -2.046875 0.265625 -0.984375 L 0.390625 -0.859375 C 1.46875 -1.65625 2.34375 -2.671875 2.984375 -3.828125 L 2.984375 0.765625 L 3.078125 0.765625 C 3.390625 0.765625 3.625 0.609375 3.625 0.546875 L 3.625 -4.03125 C 4.140625 -3.515625 4.75 -2.765625 4.921875 -2.171875 C 5.625 -1.65625 6.078125 -3.171875 3.625 -4.21875 L 3.625 -4.9375 L 5.640625 -4.9375 C 5.78125 -4.9375 5.890625 -4.984375 5.921875 -5.09375 C 5.59375 -5.40625 5.078125 -5.828125 5.078125 -5.828125 L 4.625 -5.234375 L 3.625 -5.234375 L 3.625 -7.15625 C 4.1875 -7.296875 4.703125 -7.421875 5.109375 -7.5625 C 5.359375 -7.46875 5.546875 -7.46875 5.640625 -7.5625 Z M 4.8125 -8.28125 "/>
-</g>
-<g id="glyph-0-1">
-<path d="M 1.078125 -8.171875 L 0.984375 -8.09375 C 1.390625 -7.796875 1.875 -7.296875 2.03125 -6.84375 C 2.734375 -6.453125 3.140625 -7.8125 1.078125 -8.171875 Z M 0.46875 -6.046875 L 0.390625 -5.96875 C 0.765625 -5.703125 1.203125 -5.234375 1.3125 -4.828125 C 1.984375 -4.40625 2.4375 -5.78125 0.46875 -6.046875 Z M 0.875 -2 C 0.765625 -2 0.4375 -2 0.4375 -2 L 0.4375 -1.796875 C 0.65625 -1.765625 0.796875 -1.734375 0.921875 -1.65625 C 1.125 -1.515625 1.171875 -0.734375 1.03125 0.265625 C 1.046875 0.578125 1.171875 0.765625 1.328125 0.765625 C 1.65625 0.765625 1.828125 0.5 1.84375 0.09375 C 1.875 -0.703125 1.625 -1.1875 1.609375 -1.609375 C 1.609375 -1.859375 1.671875 -2.15625 1.734375 -2.4375 C 1.84375 -2.875 2.46875 -4.9375 2.796875 -6.046875 L 2.59375 -6.109375 C 1.25 -2.546875 1.25 -2.546875 1.09375 -2.21875 C 1.015625 -2 0.984375 -2 0.875 -2 Z M 4.96875 -6.109375 L 4.96875 -5.109375 L 3.546875 -5.109375 L 3.546875 -6.109375 Z M 4.96875 -6.375 L 3.546875 -6.375 L 3.546875 -7.375 L 4.96875 -7.375 Z M 2.953125 -7.65625 L 2.953125 0.765625 L 3.0625 0.765625 C 3.34375 0.765625 3.546875 0.609375 3.546875 0.515625 L 3.546875 -4.828125 L 4.96875 -4.828125 L 4.96875 -4.296875 L 5.046875 -4.296875 C 5.25 -4.296875 5.53125 -4.4375 5.546875 -4.5 L 5.546875 -7.265625 C 5.734375 -7.3125 5.890625 -7.390625 5.953125 -7.453125 L 5.21875 -8.03125 L 4.875 -7.65625 L 3.59375 -7.65625 L 2.953125 -7.984375 Z M 6.90625 -6.109375 L 8.421875 -6.109375 L 8.421875 -5.109375 L 6.90625 -5.109375 Z M 6.90625 -6.375 L 6.90625 -7.375 L 8.421875 -7.375 L 8.421875 -6.375 Z M 6.3125 -7.65625 L 6.3125 -4.34375 L 6.40625 -4.34375 C 6.65625 -4.34375 6.90625 -4.484375 6.90625 -4.546875 L 6.90625 -4.828125 L 8.421875 -4.828125 L 8.421875 -0.21875 C 8.421875 -0.0625 8.375 0.015625 8.171875 0.015625 C 7.96875 0.015625 6.90625 -0.0625 6.90625 -0.0625 L 6.90625 0.09375 C 7.375 0.140625 7.625 0.234375 7.78125 0.328125 C 7.921875 0.421875 7.984375 0.59375 8.015625 0.765625 C 8.9375 0.6875 9.03125 0.34375 9.03125 -0.140625 L 9.03125 -7.25 C 9.234375 -7.296875 9.40625 -7.375 9.46875 -7.453125 L 8.671875 -8.078125 L 8.328125 -7.65625 L 6.953125 -7.65625 L 6.3125 -7.953125 Z M 4.25 -2.4375 L 4.3125 -2.15625 L 5.53125 -2.15625 L 5.53125 -0.953125 L 3.921875 -0.953125 L 4 -0.65625 L 7.859375 -0.65625 C 7.984375 -0.65625 8.078125 -0.703125 8.109375 -0.8125 C 7.828125 -1.09375 7.359375 -1.46875 7.359375 -1.46875 L 6.9375 -0.953125 L 6.140625 -0.953125 L 6.140625 -2.15625 L 7.609375 -2.15625 C 7.734375 -2.15625 7.828125 -2.203125 7.859375 -2.3125 C 7.578125 -2.578125 7.140625 -2.953125 7.140625 -2.953125 L 6.75 -2.4375 L 6.140625 -2.4375 L 6.140625 -3.46875 L 7.671875 -3.46875 C 7.796875 -3.46875 7.890625 -3.515625 7.921875 -3.625 C 7.640625 -3.890625 7.171875 -4.265625 7.171875 -4.265625 L 6.78125 -3.765625 L 4.109375 -3.765625 L 4.1875 -3.46875 L 5.53125 -3.46875 L 5.53125 -2.4375 Z M 4.25 -2.4375 "/>
-</g>
-<g id="glyph-0-2">
-<path d="M 2.546875 -7.9375 C 2.078125 -6.171875 1.21875 -4.46875 0.34375 -3.40625 L 0.484375 -3.3125 C 1.171875 -3.890625 1.8125 -4.671875 2.359375 -5.609375 L 4.578125 -5.609375 L 4.578125 -3.09375 L 1.53125 -3.09375 L 1.609375 -2.8125 L 4.578125 -2.8125 L 4.578125 0.0625 L 0.421875 0.0625 L 0.5 0.34375 L 9.25 0.34375 C 9.390625 0.34375 9.46875 0.296875 9.5 0.203125 C 9.140625 -0.125 8.5625 -0.578125 8.5625 -0.578125 L 8.046875 0.0625 L 5.25 0.0625 L 5.25 -2.8125 L 8.296875 -2.8125 C 8.4375 -2.8125 8.53125 -2.859375 8.5625 -2.96875 C 8.203125 -3.28125 7.640625 -3.734375 7.640625 -3.734375 L 7.125 -3.09375 L 5.25 -3.09375 L 5.25 -5.609375 L 8.65625 -5.609375 C 8.796875 -5.609375 8.890625 -5.640625 8.921875 -5.75 C 8.5625 -6.109375 8 -6.515625 8 -6.515625 L 7.484375 -5.890625 L 5.25 -5.890625 L 5.25 -7.875 C 5.5 -7.921875 5.578125 -8.015625 5.609375 -8.15625 L 4.578125 -8.265625 L 4.578125 -5.890625 L 2.515625 -5.890625 C 2.78125 -6.375 3 -6.890625 3.21875 -7.421875 C 3.4375 -7.40625 3.546875 -7.5 3.59375 -7.609375 Z M 2.546875 -7.9375 "/>
-</g>
-<g id="glyph-0-3">
-<path d="M 3.140625 -6.859375 L 3.03125 -6.8125 C 3.28125 -6.4375 3.546875 -5.859375 3.578125 -5.40625 C 4.171875 -4.875 4.859375 -6.109375 3.140625 -6.859375 Z M 1.015625 -7.15625 L 1.109375 -6.875 L 8.78125 -6.875 C 8.90625 -6.875 9 -6.90625 9.03125 -7.015625 C 8.703125 -7.328125 8.171875 -7.71875 8.171875 -7.71875 L 7.71875 -7.15625 L 5.28125 -7.15625 L 5.28125 -7.9375 C 5.515625 -7.984375 5.59375 -8.078125 5.609375 -8.203125 L 4.640625 -8.28125 L 4.640625 -7.15625 Z M 5.21875 -4.703125 L 5.21875 -3.453125 L 3.65625 -3.453125 C 3.796875 -3.703125 3.921875 -3.953125 4.03125 -4.21875 C 4.25 -4.21875 4.359375 -4.296875 4.390625 -4.40625 L 3.46875 -4.703125 C 3.203125 -3.625 2.703125 -2.609375 2.1875 -1.984375 L 2.328125 -1.875 C 2.75 -2.1875 3.15625 -2.625 3.484375 -3.171875 L 5.21875 -3.171875 L 5.21875 -1.75 L 3.03125 -1.75 L 3.109375 -1.46875 L 5.21875 -1.46875 L 5.21875 0.140625 L 1.875 0.140625 L 1.96875 0.421875 L 9.140625 0.421875 C 9.28125 0.421875 9.375 0.375 9.40625 0.28125 C 9.0625 -0.046875 8.53125 -0.4375 8.53125 -0.4375 L 8.078125 0.140625 L 5.859375 0.140625 L 5.859375 -1.46875 L 8.25 -1.46875 C 8.375 -1.46875 8.46875 -1.515625 8.5 -1.625 C 8.1875 -1.90625 7.6875 -2.296875 7.6875 -2.296875 L 7.25 -1.75 L 5.859375 -1.75 L 5.859375 -3.171875 L 8.4375 -3.171875 C 8.578125 -3.171875 8.671875 -3.21875 8.6875 -3.328125 C 8.359375 -3.640625 7.859375 -4.015625 7.859375 -4.015625 L 7.40625 -3.453125 L 5.859375 -3.453125 L 5.859375 -4.34375 C 6.078125 -4.375 6.15625 -4.453125 6.1875 -4.59375 Z M 1.40625 -5.234375 L 1.40625 -4.046875 C 1.40625 -2.5625 1.296875 -0.828125 0.328125 0.640625 L 0.453125 0.765625 C 1.921875 -0.65625 2.03125 -2.71875 2.03125 -4.046875 L 2.03125 -4.9375 L 9.15625 -4.9375 C 9.296875 -4.9375 9.390625 -4.984375 9.421875 -5.09375 C 9.09375 -5.40625 8.546875 -5.8125 8.546875 -5.8125 L 8.078125 -5.21875 L 6.078125 -5.21875 C 6.4375 -5.59375 6.828125 -6.046875 7.046875 -6.40625 C 7.265625 -6.375 7.375 -6.46875 7.421875 -6.59375 L 6.4375 -6.859375 C 6.296875 -6.375 6.046875 -5.6875 5.828125 -5.21875 L 2.03125 -5.21875 L 2.171875 -5.234375 L 1.40625 -5.5625 Z M 1.40625 -5.234375 "/>
-</g>
-<g id="glyph-0-4">
-<path d="M 0.515625 -4.859375 L 0.609375 -4.5625 L 9.109375 -4.5625 C 9.25 -4.5625 9.34375 -4.625 9.359375 -4.734375 C 9.046875 -5.015625 8.53125 -5.40625 8.53125 -5.40625 L 8.078125 -4.859375 Z M 7.0625 -6.484375 L 7.0625 -5.78125 L 2.765625 -5.78125 L 2.765625 -6.484375 Z M 7.0625 -6.78125 L 2.765625 -6.78125 L 2.765625 -7.453125 L 7.0625 -7.453125 Z M 2.125 -7.75 L 2.125 -5.0625 L 2.21875 -5.0625 C 2.484375 -5.0625 2.765625 -5.21875 2.765625 -5.265625 L 2.765625 -5.5 L 7.0625 -5.5 L 7.0625 -5.125 L 7.15625 -5.125 C 7.375 -5.125 7.6875 -5.265625 7.703125 -5.328125 L 7.703125 -7.34375 C 7.90625 -7.375 8.0625 -7.453125 8.125 -7.53125 L 7.328125 -8.15625 L 6.96875 -7.75 L 2.828125 -7.75 L 2.125 -8.0625 Z M 7.203125 -2.609375 L 7.203125 -1.859375 L 5.234375 -1.859375 L 5.234375 -2.609375 Z M 7.203125 -2.90625 L 5.234375 -2.90625 L 5.234375 -3.625 L 7.203125 -3.625 Z M 2.6875 -2.609375 L 4.59375 -2.609375 L 4.59375 -1.859375 L 2.6875 -1.859375 Z M 2.6875 -2.90625 L 2.6875 -3.625 L 4.59375 -3.625 L 4.59375 -2.90625 Z M 1.25 -0.828125 L 1.328125 -0.546875 L 4.59375 -0.546875 L 4.59375 0.265625 L 0.5 0.265625 L 0.59375 0.546875 L 9.15625 0.546875 C 9.3125 0.546875 9.40625 0.5 9.421875 0.390625 C 9.078125 0.09375 8.546875 -0.34375 8.546875 -0.34375 L 8.078125 0.265625 L 5.234375 0.265625 L 5.234375 -0.546875 L 8.515625 -0.546875 C 8.640625 -0.546875 8.75 -0.59375 8.765625 -0.703125 C 8.46875 -0.984375 7.96875 -1.359375 7.96875 -1.359375 L 7.53125 -0.828125 L 5.234375 -0.828125 L 5.234375 -1.578125 L 7.203125 -1.578125 L 7.203125 -1.28125 L 7.296875 -1.28125 C 7.5 -1.28125 7.828125 -1.4375 7.859375 -1.5 L 7.859375 -3.5 C 8.046875 -3.546875 8.21875 -3.625 8.28125 -3.703125 L 7.453125 -4.328125 L 7.09375 -3.921875 L 2.734375 -3.921875 L 2.03125 -4.25 L 2.03125 -1.109375 L 2.140625 -1.109375 C 2.390625 -1.109375 2.6875 -1.25 2.6875 -1.3125 L 2.6875 -1.578125 L 4.59375 -1.578125 L 4.59375 -0.828125 Z M 1.25 -0.828125 "/>
-</g>
-<g id="glyph-1-0">
-<path d="M 4.46875 -4.265625 C 4.46875 -4.296875 4.4375 -4.359375 4.375 -4.359375 C 4.265625 -4.359375 3.875 -3.96875 3.703125 -3.671875 C 3.484375 -4.21875 3.09375 -4.375 2.78125 -4.375 C 1.609375 -4.375 0.390625 -2.90625 0.390625 -1.46875 C 0.390625 -0.5 0.984375 0.109375 1.703125 0.109375 C 2.125 0.109375 2.515625 -0.125 2.875 -0.484375 C 2.78125 -0.140625 2.453125 1.203125 2.421875 1.28125 C 2.34375 1.5625 2.265625 1.609375 1.71875 1.609375 C 1.578125 1.609375 1.484375 1.609375 1.484375 1.8125 C 1.484375 1.8125 1.484375 1.921875 1.609375 1.921875 C 1.921875 1.921875 2.28125 1.890625 2.59375 1.890625 C 2.9375 1.890625 3.296875 1.921875 3.625 1.921875 C 3.671875 1.921875 3.796875 1.921875 3.796875 1.71875 C 3.796875 1.609375 3.703125 1.609375 3.546875 1.609375 C 3.0625 1.609375 3.0625 1.546875 3.0625 1.453125 C 3.0625 1.390625 3.078125 1.328125 3.109375 1.234375 Z M 1.734375 -0.109375 C 1.140625 -0.109375 1.09375 -0.875 1.09375 -1.03125 C 1.09375 -1.515625 1.390625 -2.59375 1.546875 -3 C 1.859375 -3.734375 2.375 -4.15625 2.78125 -4.15625 C 3.421875 -4.15625 3.5625 -3.359375 3.5625 -3.28125 C 3.5625 -3.21875 3.015625 -1.0625 2.984375 -1.015625 C 2.84375 -0.734375 2.28125 -0.109375 1.734375 -0.109375 Z M 1.734375 -0.109375 "/>
-</g>
-<g id="glyph-2-0">
-<path d="M 2.234375 -1.71875 C 2.796875 -1.96875 3.0625 -2.0625 3.234375 -2.15625 C 3.359375 -2.203125 3.421875 -2.234375 3.421875 -2.375 C 3.421875 -2.484375 3.34375 -2.59375 3.21875 -2.59375 C 3.15625 -2.59375 3.15625 -2.59375 3.0625 -2.53125 L 2.125 -1.890625 L 2.234375 -2.921875 C 2.25 -3.046875 2.234375 -3.21875 2.015625 -3.21875 C 1.9375 -3.21875 1.8125 -3.15625 1.8125 -3.015625 C 1.8125 -2.953125 1.828125 -2.734375 1.84375 -2.671875 C 1.859375 -2.546875 1.90625 -2.0625 1.921875 -1.890625 L 0.984375 -2.53125 C 0.90625 -2.5625 0.890625 -2.59375 0.828125 -2.59375 C 0.703125 -2.59375 0.609375 -2.484375 0.609375 -2.375 C 0.609375 -2.234375 0.703125 -2.1875 0.765625 -2.171875 L 1.8125 -1.734375 C 1.234375 -1.484375 0.984375 -1.390625 0.8125 -1.296875 C 0.671875 -1.25 0.609375 -1.21875 0.609375 -1.09375 C 0.609375 -0.96875 0.703125 -0.859375 0.828125 -0.859375 C 0.875 -0.859375 0.890625 -0.859375 0.96875 -0.921875 L 1.921875 -1.5625 L 1.8125 -0.4375 C 1.8125 -0.296875 1.9375 -0.234375 2.015625 -0.234375 C 2.109375 -0.234375 2.234375 -0.296875 2.234375 -0.4375 C 2.234375 -0.5 2.203125 -0.71875 2.203125 -0.78125 C 2.1875 -0.90625 2.140625 -1.390625 2.125 -1.5625 L 2.953125 -1 C 3.140625 -0.859375 3.15625 -0.859375 3.21875 -0.859375 C 3.34375 -0.859375 3.421875 -0.96875 3.421875 -1.09375 C 3.421875 -1.21875 3.34375 -1.265625 3.28125 -1.28125 Z M 2.234375 -1.71875 "/>
-</g>
-</g>
-</defs>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -0.0000830153 L 0.000117366 56.234531 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
-<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.197334 1.59399 C -1.094997 0.995708 -0.000769466 0.0982844 0.298372 -0.000117366 C -0.000769466 -0.0985191 -1.094997 -0.995943 -1.197334 -1.594225 " transform="matrix(0, -0.992424, -0.992424, 0, 18.464727, 21.233611)"/>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="8.577205" y="16.514932"/>
-<use xlink:href="#glyph-0-1" x="18.46433" y="16.514932"/>
-</g>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -0.0000830153 L 112.929865 -0.0000830153 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
-<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.19566 1.594025 C -1.097259 0.995742 0.000904504 0.0983187 0.300046 -0.0000830153 C 0.000904504 -0.0984847 -1.097259 -0.995908 -1.19566 -1.594191 " transform="matrix(0.992424, 0, 0, -0.992424, 130.538165, 77.042886)"/>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-2" x="134.486068" y="80.805167"/>
-<use xlink:href="#glyph-0-3" x="144.373194" y="80.805167"/>
-<use xlink:href="#glyph-0-4" x="154.26032" y="80.805167"/>
-</g>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -9.068785 L 1.88943 -4.6289 L 3.778743 -0.377946 L 5.668056 3.684077 L 7.557369 7.557169 L 9.446682 11.241329 L 11.335995 14.740494 L 13.225308 18.046792 L 15.114621 21.160222 L 17.003934 24.088657 L 18.893247 26.828161 L 20.78256 29.38267 L 22.671873 31.744311 L 24.561186 33.920957 L 26.450499 35.9008 L 28.339812 37.699583 L 30.229125 39.301563 L 32.118438 40.722484 L 34.007751 41.950537 L 35.897064 42.993595 L 37.786377 43.843786 L 39.67569 44.50111 L 41.565003 44.973438 L 43.454316 45.260771 L 45.343629 45.355237 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 45.355437 45.355237 L 48.189406 45.284387 L 51.023376 45.07184 L 53.857345 44.717594 L 56.691315 44.221649 L 59.525284 43.584006 L 62.359254 42.804664 L 65.193223 41.883624 L 68.027193 40.820885 L 70.861162 39.616448 L 73.695132 38.270313 L 76.529101 36.786415 L 79.363071 35.156883 L 82.19704 33.385652 L 85.03101 31.472722 L 87.864979 29.418094 L 90.698948 27.221768 L 93.532918 24.883743 L 96.366887 22.40402 L 99.200857 19.782598 L 102.034826 17.019478 L 104.868796 14.118595 L 107.702765 11.072078 L 110.536735 7.883863 L 113.370704 4.553948 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-dasharray="0.3985 1.99255" stroke-miterlimit="10" d="M 45.355437 45.355237 L 45.355437 -0.0000830153 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-0" x="58.818682" y="87.34425"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-2-0" x="63.58728" y="83.756636"/>
-</g>
-</svg>
+
 </div>
 
   </div> 
@@ -2414,11 +2368,15 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
    <ul>
 <li> 二点  $ (a, b) $  と  $ (a',b') $  を通る直線は唯一つ 
 <div class="math-display">\[\begin{aligned}y=\frac{b'-b}{a'-a}(x-a)+b\end{aligned}\]</div>
-<li class="no-marker"><span class="icon-arrow">→</span>   $ \dfrac{b'-b}{a'-a} $  の部分はこの直線の<span class="keyword">傾き</span>とよばれる
+<li class="spacer"><span class="icon-arrow">→</span>   $ \dfrac{b'-b}{a'-a} $  の部分はこの直線の<span class="keyword">傾き</span>とよばれる
+
+<li class="spacer"></li>
+<li class="spacer"></li>
+
 
 <li> 直線の傾き  $ \dfrac{b'-b}{a'-a} $  は  $ y $ 軸方向の変化量を  $ x $ 軸方向の変化量で割ったもの
 
-<li> 傾きの意味：「 $  x $ が増えたとき， $  y $ が『 $  x $ の増加分の何倍』増えるか」を指す．
+<li> 傾きの意味：傾きが $\alpha $ なら $ x $ が増えたとき， $  y $ が『 $  x $ の増加分の $\alpha$ 倍』増えることを指す．
 
   </ul> 
   </div> 
@@ -2455,13 +2413,13 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 51: 一変数関数の微分 / 現実で出てくる微分の例： ===== -->
-<template class="slide-data" data-title="現実で出てくる微分の例：" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="現実で出てくる微分の例：" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <ul> 
    <li> 限界税率
    <li class="sub-item"><span class="icon-arrow">→</span> 追加の所得にどれだけの税率がかかるか？
    <li> 限界税率の例（実際はもう少し複雑 & 計算しやすいように単純化）
    <table class="slide-table"><tr><td>所得</td><td>&lt;200</td><td>&lt;300</td><td>&lt;700</td><td>&lt;900</td><td>&lt;1800</td><td>&lt;4000</td><td>≧ 4000</td></tr><tr><td>税率</td><td>5%</td><td>10%</td><td>20%</td><td>25%</td><td>30%</td><td>40%</td><td>45%</td></tr></table>
-<li> 以上の表において，所得が1000万円のときに支払う税額はいくらか？
+<li> 以上の表において，所得が1000万円のときに支払う税の総額はいくらか？
   <li class="sub-item"><span class="icon-arrow">→</span>
     <li class="spacer"> </li>
   <li class="spacer"> </li>
@@ -2484,7 +2442,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 52: 一変数関数の微分 /  ===== -->
-<template class="slide-data" data-title="" data-section="一変数関数の微分" data-note="true" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="一変数関数の微分" data-note="true" data-print-margin="180">
 
 </template>
 
@@ -2511,7 +2469,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 54: 一変数関数の微分 / 計算公式② ===== -->
-<template class="slide-data" data-title="計算公式②" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="計算公式②" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
   <div class="column"> 
 <ul>
@@ -2536,7 +2494,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li class="sub-item"><span class="icon-arrow">→</span> 実際には，  $  \textcolor{red!50!black}{x} $ も  $  \textcolor{blue}{x} $ も $  \Delta $ 増える
 <ul>
 <li class="custom-marker"><span class="marker">▸</span>  $  x $ が $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red!50!black}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
-<li class="no-marker"> <span class="icon-arrow">→</span>  微分係数は $  2x $ 
+<li class="spacer"> <span class="icon-arrow">→</span>  微分係数は $  2x $ 
 
 </ul>
 </ul>
@@ -2550,7 +2508,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 55: 一変数関数の微分 / 計算公式③ ===== -->
-<template class="slide-data" data-title="計算公式③" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="計算公式③" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
   <div class="column"> 
 <ul>
@@ -2568,7 +2526,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 56: 一変数関数の微分 / 計算公式④ ===== -->
-<template class="slide-data" data-title="計算公式④" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="計算公式④" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2584,7 +2542,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 57: 一変数関数の微分 / 計算公式⑤ ===== -->
-<template class="slide-data" data-title="計算公式⑤" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="計算公式⑤" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2600,10 +2558,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
    </div>
 </template>
 
-<!-- ===== Slide 58: 一変数関数の微分 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="一変数関数の微分" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 59: 一変数関数の微分 / 関数の最大化・最小化 ===== -->
 <template class="slide-data" data-title="関数の最大化・最小化" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
@@ -2612,7 +2567,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
 <li> 経済学で使う数学のメインの使いみちは何かしらの最大化（あるいは最小化）
 <li class="sub-item"><span class="icon-arrow">→</span> （例）
-<li class="no-marker">
+<li class="spacer">
  <li> 経済学で微分を使う最も大きい理由の一つは関数の最大化・最小化問題を簡単にできるから
 
  
@@ -2623,7 +2578,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
    <li>  $ x $ が定義域の中にあり, 定義域のすべての数 $ y $ について $ f(x)\ge f(y) $ となるとき, 関数 $ f $ は $ x $ で<span class="keyword">最大値をとる</span>という
    
    
-   <li class="no-marker">
+   <li class="spacer">
    
    <li class="sub-item"><span class="icon-arrow">→</span> このときの $ f(x) $ の値を<span class="keyword">最大値</span>という
    <li class="sub-item"><span class="icon-arrow">→</span> このときの $ x $ を<span class="keyword">最大化解</span>という
@@ -2634,7 +2589,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 60: 一変数関数の微分 / 最大化の必要条件（一階の条件） ===== -->
-<template class="slide-data" data-title="最大化の必要条件（一階の条件）" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="最大化の必要条件（一階の条件）" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
 <div class="columns"> 
  <div class="column"> 
 <ul>
@@ -2647,9 +2602,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <div class="column"> 
  <ul> 
     <li>  $ f'(x^{*})=0 $ になるのは $ f $ が $ x^{*} $ で最大値（あるいは最小値）をとるときだけでは無い. 
- <li class="no-marker">例
+ <li class="spacer">例
  
- <div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="155.921" height="96.527" viewBox="0 0 155.921 96.527">
+ <div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="255.921" height="196.527" viewBox="0 0 155.921 96.527">
 <defs>
 <g>
 <g id="glyph-0-0">
@@ -2706,7 +2661,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 61: 一変数関数の微分 / 凹関数 ===== -->
-<template class="slide-data" data-title="凹関数" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="凹関数" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2730,7 +2685,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 62: 一変数関数の微分 / 応用例: 独占市場① ===== -->
-<template class="slide-data" data-title="応用例: 独占市場①" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用例: 独占市場①" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2747,7 +2702,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 63: 一変数関数の微分 / 応用例: 独占市場② ===== -->
-<template class="slide-data" data-title="応用例: 独占市場②" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用例: 独占市場②" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2772,14 +2727,11 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </div>
 </template>
 
-<!-- ===== Slide 65: 一変数関数の微分 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="一変数関数の微分" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 66: 多変数関数の微分 / 多変数関数の微分 ===== -->
 <template class="slide-data" data-title="多変数関数の微分" data-section="多変数関数の微分" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>多変数関数の微分</h2></div>
+<div class="section-title-big">多変数関数の微分</div>
 </template>
 
 <!-- ===== Slide 67: 多変数関数の微分 / 多変数関数 ===== -->
@@ -2788,7 +2740,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <div class="column">
 <ul>
  <li> <span class="keyword">多変数関数</span>：
- <li class="no-marker">
+<li class="spacer">
 <li class="custom-marker"><span class="marker">例</span> 
 <ol>
 <li>  $ f(x,y)=x+y $ 
@@ -2826,7 +2778,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
  <li> <span class="keyword">偏微分</span>：
 
-<li class="no-marker">
+<li class="spacer">
 <li>  二変数関数 $ f(x,y) $ を考える．
 
 </ul> 
@@ -2837,7 +2789,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li>  $ f(x,y) $ を $ x $ で偏微分することを記号で書くと
 <div class="math-display">\[\begin{aligned}\pd{f(x,y)}{x}\end{aligned}\]</div>
 
-<li class="sub-item"><span class="icon-arrow">→</span> {{ $ \partial $ }} は「ラウンドディー」, 「ラウンド」あるいは「パーシャル」と読む
+<li class="sub-item"><span class="icon-arrow">→</span>  $ \partial $  は「ラウンドディー」, 「ラウンド」あるいは「パーシャル」と読む
 <li> 
  $  \pd{f(2,3)}{x} $ は  $  f $  を  $  x $  で偏微分した後に  $  x=2 $ ， $  y=3 $  を代入したもの
 </ul> 
@@ -2911,7 +2863,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 74: 多変数関数の微分 / まずは手計算でやってみよう ===== -->
-<template class="slide-data" data-title="まずは手計算でやってみよう" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="まずは手計算でやってみよう" data-section="多変数関数の微分" data-note="false" data-print-margin="280">
 <div class="columns"><div class="column">
 <ul>
 <li> データ
@@ -2959,18 +2911,15 @@ sympy.solve([eq1,eq2],(a,b))
 </code></pre>
 </template>
 
-<!-- ===== Slide 76: 多変数関数の微分 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="多変数関数の微分" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 77: 累乗，数列とその和 / 累乗，数列とその和 ===== -->
 <template class="slide-data" data-title="累乗，数列とその和" data-section="累乗，数列とその和" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>累乗，数列とその和</h2></div>
+<div class="section-title-big">累乗，数列とその和</div>
 </template>
 
 <!-- ===== Slide 78: 累乗，数列とその和 / 指数 ===== -->
-<template class="slide-data" data-title="指数" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="指数" data-section="累乗，数列とその和" data-note="false" data-print-margin="280">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2992,18 +2941,33 @@ sympy.solve([eq1,eq2],(a,b))
  <div class="column"> 
 <ul> 
  <li> <span class="keyword">指数法則</span>
-  </ul> 
+  
 
- <ol>
+ <ul>
  <li>
   $  x^ax^b=x^{a+b} $ 
- <li class="no-marker">
+ <li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+
  <li>
   $  (x^a)^b=x^{ab} $ 
- <li class="no-marker">
+ <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
  <li> 
   $  (xy)^a=x^ay^a $  
- </ol>
+ </ul>
+  <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+ </ul> 
   </div> 
  </div>
 </template>
@@ -3018,7 +2982,6 @@ sympy.solve([eq1,eq2],(a,b))
 </div>
 <div class="column">
 <ul>
-<li> 
 
 </ul>
 </div>
@@ -3027,14 +2990,34 @@ sympy.solve([eq1,eq2],(a,b))
 
 <!-- ===== Slide 80: 累乗，数列とその和 / 他の例 ===== -->
 <template class="slide-data" data-title="他の例" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
-<ul>
-<li> 例：割引現在価値
 
-<li class="no-marker">
-<li class="no-marker">
-<li class="no-marker">
-<li> 例：利子
-
+<div class="columns">
+  <div class="column">
+  <ul>
+  <li> 例：<span class="keyword">割引現在価値</span>（$1$ 年後に貰う $X$ 万円の価値は今すぐ貰うときの $Y$ 万円の価値）
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li> <span class="keyword">割引因子</span>とは？
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li> <span class="keyword">割引率</span>とは？
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+  </li>
+  </ul>
+</div>
+<div class="column">
+  <ul>
+<li> $n$ 年後に貰う $X$ 万円の価値はいくらか？
+</li>
+</ul>
+</div>
 </ul>
 </template>
 
@@ -3066,19 +3049,18 @@ sympy.solve([eq1,eq2],(a,b))
 </template>
 
 <!-- ===== Slide 83: 累乗，数列とその和 / 応用：割引現在価値の和 ===== -->
-<template class="slide-data" data-title="応用：割引現在価値の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用：割引現在価値の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="180">
 <div class="columns">
 <div class="column">
 <ul>
 <li> 利付債: 最終年度に償還される他に何年かごとに一定金額の振り込みが行われる債権
-<li class="no-marker">
-<li class="no-marker">
+<li class="spacer">
+<li class="spacer">
 </ul>
 </div>
 <div class="column">
 <ul>
-<li> 10年後にもらう3万円と今すぐもらう3万円は同じ価値か？
-
+<li> 5年後に10万円が償還されるが，毎年1万円が受け取れる利付債の割引現在価値の和はいくらか
 </ul>
 </div>
 </div>
@@ -3089,14 +3071,11 @@ sympy.solve([eq1,eq2],(a,b))
 
 </template>
 
-<!-- ===== Slide 85: 累乗，数列とその和 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="累乗，数列とその和" data-note="true" data-print-margin="80">
 
-</template>
 
 <!-- ===== Slide 86: 確率 / 確率 ===== -->
 <template class="slide-data" data-title="確率" data-section="確率" data-note="false" data-print-margin="0">
-<div class="section-title-content"><h2>確率</h2></div>
+<div class="section-title-big">確率</div>
 </template>
 
 <!-- ===== Slide 87: 確率 / 確率の定義 ===== -->
@@ -3196,9 +3175,8 @@ sympy.solve([eq1,eq2],(a,b))
 </template>
 
 <!-- ===== Slide 92: 確率 / 期待値 ===== -->
-<template class="slide-data" data-title="期待値" data-section="確率" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
+<template class="slide-data" data-title="期待値" data-section="確率" data-note="false" data-print-margin="280">
+
  <ul> 
   <li> 標本が数字であるときに，平均的な値がどれだけであるか？
   
@@ -3209,8 +3187,6 @@ sympy.solve([eq1,eq2],(a,b))
 <li class="sub-item"><span class="icon-arrow">→</span> $ x_1,\dots, x_n $ の加重和(weighted sum)
 
  </ul> 
- </div> 
- <div class="column"> 
 <ul> 
  <li> 例：宝くじの期待値
  
@@ -3218,8 +3194,7 @@ sympy.solve([eq1,eq2],(a,b))
 
 くじは全部で５億本とする
  </ul> 
-  </div> 
- </div>
+
 </template>
 
 <!-- ===== Slide 93: 確率 / 条件付き確率 ===== -->
@@ -3258,10 +3233,7 @@ sympy.solve([eq1,eq2],(a,b))
  </div>
 </template>
 
-<!-- ===== Slide 95: 確率 / Notes ===== -->
-<template class="slide-data" data-title="Notes" data-section="確率" data-note="true" data-print-margin="80">
 
-</template>
 
 </body>
 </html>

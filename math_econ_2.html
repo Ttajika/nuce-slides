@@ -134,7 +134,7 @@ body.print-mode { background:#fff; }
 body.print-mode .topbar, body.print-mode .notes-panel, body.print-mode .nav-btn, body.print-mode .topbar-nav, body.print-mode .draw-toolbar, body.print-mode .hints { display:none !important; }
 body.print-mode .main { display:block; overflow:visible; }
 body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
-.print-slide { page-break-inside:avoid; border:1px solid #ccc; padding:20px 28px; margin:12px auto; max-width:780px; background:#fff; position:relative; overflow:visible; }
+.print-slide { page-break-inside:auto; border:1px solid #ccc; padding:20px 28px; margin:12px auto; max-width:780px; background:#fff; position:relative; overflow:visible; }
 .print-slide .slide-number { position:absolute; top:8px; right:12px; font-size:11px; color:#999; font-family:'JetBrains Mono',monospace; }
 .print-slide .frame-title { font-size:16px; font-weight:700; color:var(--accent); border-bottom:1.5px solid var(--accent); padding-bottom:4px; margin-bottom:10px; }
 .print-slide .section-badge { font-size:10px; color:#999; margin-bottom:2px; }
@@ -758,6 +758,7 @@ function enterPrintMode() {
   let html = '<div class="print-header"><h1>経済数学II — 2025年度版</h1><p>多鹿 智哉 | 最終更新: ' + document.lastModified + '</p></div>';
   SLIDES.forEach((s, idx) => {
     if (s.is_note) return;
+    if (idx === 0) return;
     const margin = s.printMargin || 80;
     html += '<div class="print-slide">';
     html += '<div class="slide-number">' + (idx+1) + ' / ' + SLIDES.length + '</div>';
