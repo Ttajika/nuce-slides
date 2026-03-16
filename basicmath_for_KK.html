@@ -595,6 +595,7 @@ body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
         <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
         <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
         <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
+        <button id="boardEraserBtn" onclick="toggleBoardEraser()" title="消しゴム">🧹</button>
         <button onclick="undoBoardStroke()">↩️</button>
         <button onclick="clearBoardStrokes()">🗑️</button>
         <button onclick="toggleBoard()">✕</button>
@@ -836,6 +837,7 @@ let boardStrokes = {};
 let boardColor = '#333';
 let boardDrawing = false;
 let boardCurrentStroke = null;
+let boardEraser = false;
 
 function toggleBoard() {
   boardMode = !boardMode;
@@ -846,6 +848,8 @@ function toggleBoard() {
   if (boardMode) {
     document.getElementById('boardSlideNum').textContent = current + 1;
     setTimeout(() => { resizeBoardCanvas(); redrawBoardStrokes(); }, 50);
+  } else if (boardEraser) {
+    toggleBoardEraser();
   }
 }
 
@@ -872,17 +876,38 @@ function getBoardPos(e) {
   return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
 }
 
+function toggleBoardEraser() {
+  boardEraser = !boardEraser;
+  const btn = document.getElementById('boardEraserBtn');
+  if (btn) btn.style.background = boardEraser ? 'var(--accent)' : '';
+  const c = document.getElementById('boardCanvas');
+  if (c) c.style.cursor = boardEraser ? 'cell' : 'crosshair';
+}
+
+function eraseBoardAt(pos) {
+  const sl = boardStrokes[current] || [];
+  const r = parseInt(document.getElementById('boardSizeSlider').value) * 4;
+  boardStrokes[current] = sl.filter(s =>
+    !s.points.some(p => Math.abs(p.x - pos.x) < r && Math.abs(p.y - pos.y) < r)
+  );
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
 function startBoardDraw(e) {
   e.preventDefault();
-  boardDrawing = true;
   const p = getBoardPos(e);
+  if (boardEraser) { eraseBoardAt(p); boardDrawing = true; return; }
+  boardDrawing = true;
   const size = parseInt(document.getElementById('boardSizeSlider').value);
   boardCurrentStroke = { color: boardColor, size, points: [p] };
 }
 
 function moveBoardDraw(e) {
-  if (!boardDrawing || !boardCurrentStroke) return;
+  if (!boardDrawing) return;
   e.preventDefault();
+  if (boardEraser) { eraseBoardAt(getBoardPos(e)); return; }
+  if (!boardCurrentStroke) return;
   boardCurrentStroke.points.push(getBoardPos(e));
   redrawBoardStrokes(boardCurrentStroke);
 }
