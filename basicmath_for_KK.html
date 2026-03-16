@@ -748,9 +748,13 @@ function showSlide(idx) {
     pre.appendChild(btn);
   });
 
-  MathJax.typesetPromise([content]).then(() => {
-    initQRCodes();
-  });
+  if (typeof MathJax.typesetPromise === 'function') {
+    MathJax.typesetPromise([content]).then(() => {
+      initQRCodes();
+      resizeDrawCanvas();
+      redrawStrokes();
+    });
+  }
 
   // Update section select
   const secSel = document.getElementById('sectionSelect');
@@ -805,9 +809,9 @@ function toggleDraw() {
   document.getElementById('drawBtn').style.background = drawMode ? 'var(--accent)' : '';
   if (!drawMode) {
     pointerPos = null;
-    setTimeout(resizeDrawCanvas, 50);
   }
   if (drawMode) currentTool = 'pen';
+  setTimeout(resizeDrawCanvas, 50);
   updateToolButtons();
 }
 
@@ -939,8 +943,8 @@ function bindBoardCanvasEvents() {
 }
 
 function resizeDrawCanvas() {
-  const c = getCanvas();
   const area = document.getElementById('slideArea');
+  const c = getCanvas();
   if (!c || !area) return;
   c.width = area.scrollWidth;
   c.height = area.scrollHeight;
@@ -1256,7 +1260,9 @@ function enterPrintMode() {
     });
   });
   
-  MathJax.typesetPromise([area]).then(initQRCodes);
+  if (typeof MathJax.typesetPromise === 'function') {
+    MathJax.typesetPromise([area]).then(initQRCodes);
+  }
 }
 
 function enterSlideMode() {
