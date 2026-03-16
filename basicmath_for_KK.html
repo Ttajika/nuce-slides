@@ -145,14 +145,15 @@ body {
   font-size: 1em;
 }
 
-/* ---- Board space ---- */
-.board-space {
-  width:100%; background:#fff;
-  border-top:2px dashed var(--border);
-  margin-top:16px; display:none;
-  min-height: 0;
-}
-.board-space.show { display:block; }
+/* ---- Board popup ---- */
+.board-popup { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; z-index:300; align-items:center; justify-content:center; }
+.board-popup.show { display:flex; }
+.board-popup-inner { position:relative; width:min(900px,90vw); height:min(600px,80vh); background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.3); overflow:hidden; }
+.board-popup-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--header-bg); color:#fff; font-size:13px; }
+.board-popup-header button { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:4px; cursor:pointer; padding:4px 8px; font-size:13px; }
+.board-popup-header button:hover { background:rgba(255,255,255,0.3); }
+.board-popup-canvas-wrap { position:relative; width:100%; height:calc(100% - 40px); }
+.board-popup-canvas-wrap canvas { position:absolute; top:0; left:0; width:100%; height:100%; cursor:crosshair; }
 
 /* ---- Drawing canvas ---- */
 .draw-canvas {
@@ -485,7 +486,7 @@ body.print-mode .tikz-figure { cursor:default; }
     <span class="section-name" id="sectionName"></span>
   </div>
   <div class="nav-group">
-    <select id="slideSelect" onchange="goToSlide(parseInt(this.value))"></select>
+    <select id="sectionSelect" onchange="goToSection(this.value)"></select>
     <button onclick="goToSlide(0)">⏮</button>
     <button onclick="prevSlide()">◀</button>
     <span class="slide-num" id="slideNum">1 / 1</span>
@@ -534,7 +535,6 @@ body.print-mode .tikz-figure { cursor:default; }
       <div class="slide-title" id="slideTitle"></div>
       <div class="slide-content" id="slideContent"></div>
     </div>
-    <div class="board-space" id="boardSpace"></div>
     <canvas class="draw-canvas" id="drawCanvas"></canvas>
   </div>
   <div class="notes-panel collapsed" id="notesPanel">
@@ -572,6 +572,27 @@ body.print-mode .tikz-figure { cursor:default; }
   </div>
 </div>
 
+<div class="board-popup" id="boardPopup" onclick="if(event.target===this)toggleBoard()">
+  <div class="board-popup-inner">
+    <div class="board-popup-header">
+      <span>📋 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="color-dot" style="background:#e63946;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#e63946',this)"></div>
+        <div class="color-dot" style="background:#2563eb;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#2563eb',this)"></div>
+        <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
+        <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
+        <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
+        <button onclick="undoBoardStroke()">↩️</button>
+        <button onclick="clearBoardStrokes()">🗑️</button>
+        <button onclick="toggleBoard()">✕</button>
+      </div>
+    </div>
+    <div class="board-popup-canvas-wrap">
+      <canvas id="boardCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== Data =====
 let SLIDES = [];
@@ -579,7 +600,6 @@ let current = 0;
 let mode = 'slide'; // 'slide' or 'print'
 let drawMode = false;
 let boardMode = false;
-let boardHeight = 400;
 let currentTool = 'pen';
 let drawColor = '#e94560';
 let drawingNow = false;
@@ -606,13 +626,19 @@ document.addEventListener('DOMContentLoaded', () => {
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
   
-  // Build slide select
-  const sel = document.getElementById('slideSelect');
+  // Build section select
+  const sel = document.getElementById('sectionSelect');
+  const seenSections = [];
   SLIDES.forEach((s, i) => {
-    if (s.is_note) return;
+    if (!s.section || s.is_note) return;
+    if (seenSections.length === 0 || seenSections[seenSections.length-1].section !== s.section) {
+      seenSections.push({ section: s.section, slide: i });
+    }
+  });
+  seenSections.forEach(s => {
     const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${i+1}. ${s.title || s.section || '(無題)'}`;
+    opt.value = s.slide;
+    opt.textContent = s.section;
     sel.appendChild(opt);
   });
   
@@ -627,6 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLocal();
   showSlide(current);
   bindCanvasEvents();
+  bindBoardCanvasEvents();
+  window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
   initQRCodes();
   
   // Touch navigation
@@ -711,8 +739,13 @@ function showSlide(idx) {
     initQRCodes();
   });
 
-  // Update select
-  document.getElementById('slideSelect').value = idx;
+  // Update section select
+  const secSel = document.getElementById('sectionSelect');
+  let secVal = '';
+  for (let i = secSel.options.length - 1; i >= 0; i--) {
+    if (idx >= parseInt(secSel.options[i].value)) { secVal = secSel.options[i].value; break; }
+  }
+  secSel.value = secVal;
 
   // Notes
   if (na) na.value = notes[idx] || '';
@@ -725,6 +758,11 @@ function showSlide(idx) {
     resizeDrawCanvas();
     redrawStrokes();
   }, 50);
+
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = idx+1;
+    redrawBoardStrokes();
+  }
 
   scheduleSave();
 }
@@ -740,6 +778,7 @@ function prevSlide() {
   if (prev >= 0) showSlide(prev);
 }
 function goToSlide(idx) { showSlide(idx); }
+function goToSection(v) { if (v !== '') showSlide(parseInt(v)); }
 
 // ===== Drawing =====
 function toggleDraw() {
@@ -752,9 +791,6 @@ function toggleDraw() {
   document.getElementById('drawToolbar').classList.toggle('show', drawMode);
   document.getElementById('drawBtn').style.background = drawMode ? 'var(--accent)' : '';
   if (!drawMode) {
-    boardMode = false;
-    document.getElementById('boardSpace').classList.remove('show');
-    document.getElementById('boardSpace').style.minHeight = '0';
     pointerPos = null;
     setTimeout(resizeDrawCanvas, 50);
   }
@@ -779,13 +815,114 @@ function updateToolButtons() {
   });
 }
 
+let boardStrokes = {};
+let boardColor = '#333';
+let boardDrawing = false;
+let boardCurrentStroke = null;
+
 function toggleBoard() {
   boardMode = !boardMode;
-  const board = document.getElementById('boardSpace');
-  board.classList.toggle('show', boardMode);
-  board.style.minHeight = boardMode ? boardHeight + 'px' : '0';
-  if (boardMode && !drawMode) toggleDraw();
-  setTimeout(resizeDrawCanvas, 50);
+  const popup = document.getElementById('boardPopup');
+  popup.classList.toggle('show', boardMode);
+  const btn = document.getElementById('boardBtn');
+  if (btn) btn.classList.toggle('active', boardMode);
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = current + 1;
+    setTimeout(() => { resizeBoardCanvas(); redrawBoardStrokes(); }, 50);
+  }
+}
+
+function resizeBoardCanvas() {
+  const c = document.getElementById('boardCanvas');
+  const wrap = c.parentElement;
+  if (!c || !wrap) return;
+  c.width = wrap.clientWidth;
+  c.height = wrap.clientHeight;
+  redrawBoardStrokes();
+}
+
+function setBoardColor(col, el) {
+  boardColor = col;
+  document.querySelectorAll('#boardPopup .color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function getBoardPos(e) {
+  const c = document.getElementById('boardCanvas');
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+  return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
+}
+
+function startBoardDraw(e) {
+  e.preventDefault();
+  boardDrawing = true;
+  const p = getBoardPos(e);
+  const size = parseInt(document.getElementById('boardSizeSlider').value);
+  boardCurrentStroke = { color: boardColor, size, points: [p] };
+}
+
+function moveBoardDraw(e) {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  e.preventDefault();
+  boardCurrentStroke.points.push(getBoardPos(e));
+  redrawBoardStrokes(boardCurrentStroke);
+}
+
+function endBoardDraw() {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  boardDrawing = false;
+  if (!boardStrokes[current]) boardStrokes[current] = [];
+  boardStrokes[current].push(boardCurrentStroke);
+  boardCurrentStroke = null;
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function redrawBoardStrokes(tempStroke) {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const all = (boardStrokes[current] || []).concat(tempStroke ? [tempStroke] : []);
+  all.forEach(s => {
+    if (s.points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    ctx.stroke();
+  });
+}
+
+function undoBoardStroke() {
+  if (boardStrokes[current] && boardStrokes[current].length) {
+    boardStrokes[current].pop();
+    redrawBoardStrokes();
+    scheduleSave();
+  }
+}
+
+function clearBoardStrokes() {
+  boardStrokes[current] = [];
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function bindBoardCanvasEvents() {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  c.addEventListener('mousedown', startBoardDraw);
+  c.addEventListener('mousemove', moveBoardDraw);
+  c.addEventListener('mouseup', endBoardDraw);
+  c.addEventListener('mouseleave', endBoardDraw);
+  c.addEventListener('touchstart', startBoardDraw, {passive:false});
+  c.addEventListener('touchmove', moveBoardDraw, {passive:false});
+  c.addEventListener('touchend', endBoardDraw);
 }
 
 function resizeDrawCanvas() {
@@ -1113,7 +1250,6 @@ function enterSlideMode() {
       <div class="slide-title" id="slideTitle"></div>
       <div class="slide-content" id="slideContent"></div>
     </div>
-    <div class="board-space" id="boardSpace"></div>
     <canvas class="draw-canvas" id="drawCanvas"></canvas>
   `;
   bindCanvasEvents();
@@ -1123,7 +1259,7 @@ function enterSlideMode() {
 // ===== Local storage =====
 function saveLocal() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, lastSlide: current }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, lastSlide: current }));
   } catch(e) {}
 }
 function loadLocal() {
@@ -1132,6 +1268,7 @@ function loadLocal() {
     if (!data) return;
     if (data.notes) notes = data.notes;
     if (data.strokes) strokes = data.strokes;
+    if (data.boardStrokes) boardStrokes = data.boardStrokes;
     if (typeof data.lastSlide === 'number') current = data.lastSlide;
   } catch(e) {}
 }
@@ -1144,6 +1281,7 @@ function clearStorage() {
     localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
+    boardStrokes = {};
     document.getElementById('noteArea').value = '';
     redrawStrokes();
   }
@@ -1163,9 +1301,9 @@ document.addEventListener('keydown', e => {
     case 'h': case 'H': if (drawMode) setTool('highlighter'); break;
     case 'e': case 'E': if (drawMode) setTool('eraser'); break;
     case 'l': case 'L': if (drawMode) setTool('pointer'); break;
-    case 'b': case 'B': if (drawMode) toggleBoard(); break;
+    case 'b': case 'B': if (drawMode || boardMode) toggleBoard(); break;
     case 'z': if (e.ctrlKey || e.metaKey) { undoStroke(); e.preventDefault(); } break;
-    case 'Escape': closeLightbox(); closeVideo(); break;
+    case 'Escape': if (boardMode) { toggleBoard(); return; } closeLightbox(); closeVideo(); break;
   }
 });
 </script>
@@ -1993,7 +2131,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 37: 一次関数と市場メカニズム / 市場均衡の図解 ===== -->
-<template class="slide-data" data-title="市場均衡の図解" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="市場均衡の図解" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
 
 </template>
 
@@ -2270,7 +2408,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 49: 一変数関数の微分 / 復習・直線の傾き ===== -->
-<template class="slide-data" data-title="復習・直線の傾き" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="復習・直線の傾き" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
    <ul>
@@ -2672,7 +2810,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 68: 多変数関数の微分 / 多変数関数の傾き ===== -->
-<template class="slide-data" data-title="多変数関数の傾き" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="多変数関数の傾き" data-section="多変数関数の微分" data-note="false" data-print-margin="180">
 <ul>
 <li> <a href="https://www.geogebra.org/m/tkjbbp3f">図解</a>
 
@@ -3009,7 +3147,7 @@ sympy.solve([eq1,eq2],(a,b))
 </template>
 
 <!-- ===== Slide 89: 確率 / 事象の図示 ===== -->
-<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="280">
 <div class="columns"><div class="column">
 <ul>
 <li> 確率とは事象の面積のようなもの
@@ -3026,7 +3164,7 @@ sympy.solve([eq1,eq2],(a,b))
 </template>
 
 <!-- ===== Slide 90: 確率 / 事象の図示 ===== -->
-<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="180">
 <div class="columns"><div class="column">
 <ul>
 <li>  $ A $ と $ B $ の和事象  $ A\cup B $ とは

@@ -388,12 +388,14 @@ body.print-mode .mode-toggle { bottom:12px; }
 .draw-canvas.eraser { cursor:cell; }
 .draw-canvas.pointer { cursor:none; }
 
-.board-space {
-  width:100%; background:#fff;
-  border-top:2px dashed var(--border);
-  margin-top:16px; display:none;
-}
-.board-space.show { display:block; }
+.board-popup { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; z-index:300; align-items:center; justify-content:center; }
+.board-popup.show { display:flex; }
+.board-popup-inner { position:relative; width:min(900px,90vw); height:min(600px,80vh); background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.3); overflow:hidden; }
+.board-popup-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--header-bg); color:#fff; font-size:13px; }
+.board-popup-header button { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:4px; cursor:pointer; padding:4px 8px; font-size:13px; }
+.board-popup-header button:hover { background:rgba(255,255,255,0.3); }
+.board-popup-canvas-wrap { position:relative; width:100%; height:calc(100% - 40px); }
+.board-popup-canvas-wrap canvas { position:absolute; top:0; left:0; width:100%; height:100%; cursor:crosshair; }
 
 .draw-toolbar {
   display:none; align-items:center; gap:6px;
@@ -455,7 +457,6 @@ body.print-mode .mode-toggle { bottom:12px; }
 <div class="main" id="mainArea">
   <div class="slide-area" id="slideArea">
     <div class="slide-content" id="slideContent"></div>
-    <div class="board-space" id="boardSpace"></div>
     <canvas class="draw-canvas" id="drawCanvas"></canvas>
   </div>
   <div class="notes-panel collapsed" id="notesPanel">
@@ -518,6 +519,27 @@ body.print-mode .mode-toggle { bottom:12px; }
 </div>
 <button class="video-close" onclick="closeVideo()">✕</button>
 
+<div class="board-popup" id="boardPopup" onclick="if(event.target===this)toggleBoard()">
+  <div class="board-popup-inner">
+    <div class="board-popup-header">
+      <span>📋 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="color-dot" style="background:#e63946;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#e63946',this)"></div>
+        <div class="color-dot" style="background:#2563eb;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#2563eb',this)"></div>
+        <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
+        <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
+        <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
+        <button onclick="undoBoardStroke()">↩️</button>
+        <button onclick="clearBoardStrokes()">🗑️</button>
+        <button onclick="toggleBoard()">✕</button>
+      </div>
+    </div>
+    <div class="board-popup-canvas-wrap">
+      <canvas id="boardCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
 <script>
 // SLIDES is populated from <template> elements after DOM is ready
 let SLIDES = [];
@@ -532,7 +554,7 @@ const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 
 function saveLocal() {
   try {
-    const data = { notes: notes, strokes: strokes, lastSlide: current };
+    const data = { notes: notes, strokes: strokes, boardStrokes: boardStrokes, lastSlide: current };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch(e) { /* quota exceeded or unavailable */ }
 }
@@ -544,6 +566,7 @@ function loadLocal() {
     const data = JSON.parse(raw);
     if (data.notes) notes = data.notes;
     if (data.strokes) strokes = data.strokes;
+    if (data.boardStrokes) boardStrokes = data.boardStrokes;
     if (typeof data.lastSlide === 'number') current = data.lastSlide;
   } catch(e) { /* parse error */ }
 }
@@ -553,6 +576,7 @@ function clearLocal() {
     localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
+    boardStrokes = {};
     document.getElementById('noteArea').value = '';
     redrawStrokes();
   }
@@ -727,21 +751,114 @@ function clearStrokes() {
 
 // ═══ BOARD MODE ═══
 let boardMode = false;
-let boardHeight = 400; // px
+let boardStrokes = {};
+let boardColor = '#333';
+let boardDrawing = false;
+let boardCurrentStroke = null;
 
 function toggleBoard() {
   boardMode = !boardMode;
-  const board = document.getElementById('boardSpace');
+  const popup = document.getElementById('boardPopup');
+  popup.classList.toggle('show', boardMode);
   const btn = document.getElementById('btnBoard');
-  if (board) {
-    board.classList.toggle('show', boardMode);
-    board.style.minHeight = boardMode ? boardHeight + 'px' : '0';
-  }
   if (btn) btn.classList.toggle('active', boardMode);
-  // Enable drawing if not already
-  if (boardMode && !drawMode) toggleDraw();
-  // Resize canvas to cover board area too
-  setTimeout(resizeDrawCanvas, 50);
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = current + 1;
+    setTimeout(() => { resizeBoardCanvas(); redrawBoardStrokes(); }, 50);
+  }
+}
+
+function resizeBoardCanvas() {
+  const c = document.getElementById('boardCanvas');
+  const wrap = c.parentElement;
+  if (!c || !wrap) return;
+  c.width = wrap.clientWidth;
+  c.height = wrap.clientHeight;
+  redrawBoardStrokes();
+}
+
+function setBoardColor(col, el) {
+  boardColor = col;
+  document.querySelectorAll('#boardPopup .color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function getBoardPos(e) {
+  const c = document.getElementById('boardCanvas');
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+  return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
+}
+
+function startBoardDraw(e) {
+  e.preventDefault();
+  boardDrawing = true;
+  const p = getBoardPos(e);
+  const size = parseInt(document.getElementById('boardSizeSlider').value);
+  boardCurrentStroke = { color: boardColor, size, points: [p] };
+}
+
+function moveBoardDraw(e) {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  e.preventDefault();
+  boardCurrentStroke.points.push(getBoardPos(e));
+  redrawBoardStrokes(boardCurrentStroke);
+}
+
+function endBoardDraw() {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  boardDrawing = false;
+  if (!boardStrokes[current]) boardStrokes[current] = [];
+  boardStrokes[current].push(boardCurrentStroke);
+  boardCurrentStroke = null;
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function redrawBoardStrokes(tempStroke) {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const all = (boardStrokes[current] || []).concat(tempStroke ? [tempStroke] : []);
+  all.forEach(s => {
+    if (s.points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    ctx.stroke();
+  });
+}
+
+function undoBoardStroke() {
+  if (boardStrokes[current] && boardStrokes[current].length) {
+    boardStrokes[current].pop();
+    redrawBoardStrokes();
+    scheduleSave();
+  }
+}
+
+function clearBoardStrokes() {
+  boardStrokes[current] = [];
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function bindBoardCanvasEvents() {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  c.addEventListener('mousedown', startBoardDraw);
+  c.addEventListener('mousemove', moveBoardDraw);
+  c.addEventListener('mouseup', endBoardDraw);
+  c.addEventListener('mouseleave', endBoardDraw);
+  c.addEventListener('touchstart', startBoardDraw, {passive:false});
+  c.addEventListener('touchmove', moveBoardDraw, {passive:false});
+  c.addEventListener('touchend', endBoardDraw);
 }
 
 // Canvas events - bind via function for rebinding after print mode
@@ -757,8 +874,9 @@ function bindCanvasEvents() {
   c.addEventListener('touchend', endDraw);
 }
 bindCanvasEvents();
+bindBoardCanvasEvents();
 
-window.addEventListener('resize', () => { if (drawMode) resizeDrawCanvas(); });
+window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
 
 // Init sections (populated in DOMContentLoaded)
 const sel = document.getElementById('sectionSelect');
@@ -826,6 +944,10 @@ function showSlide(idx) {
     const c = getCanvas(); const ctx = getCtx();
     if (drawMode) resizeDrawCanvas();
     else if (c && ctx) { c.width = c.parentElement.scrollWidth; c.height = c.parentElement.scrollHeight; redrawStrokes(); }
+    if (boardMode) {
+      document.getElementById('boardSlideNum').textContent = idx+1;
+      redrawBoardStrokes();
+    }
   }, 50);
 }
 
@@ -1043,13 +1165,15 @@ function enterSlideMode() {
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
   
   const area = document.getElementById('slideArea');
-  area.innerHTML = '<div class="slide-content" id="slideContent"></div><div class="board-space" id="boardSpace"></div><canvas class="draw-canvas" id="drawCanvas"></canvas>';
+  area.innerHTML = '<div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas>';
   bindCanvasEvents();
+  bindBoardCanvasEvents();
   showSlide(current);
 }
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
   if (e.key === 'Escape') { closeLightbox(); closeVideo(); return; }
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   if (mode !== 'slide') return;
@@ -1061,7 +1185,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'h' || e.key === 'H') { if (drawMode) setDrawTool('highlight'); }
   else if (e.key === 'e' || e.key === 'E') { if (drawMode) setDrawTool('eraser'); }
   else if (e.key === 'l' || e.key === 'L') { if (drawMode) setDrawTool('pointer'); }
-  else if (e.key === 'b' || e.key === 'B') { if (drawMode) toggleBoard(); }
+  else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
 });
