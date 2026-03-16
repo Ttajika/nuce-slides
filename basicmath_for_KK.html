@@ -469,6 +469,14 @@ body.print-mode .qr-link { flex-direction:column; }
 }
 .print-header h1 { font-size:22px; color:var(--accent); }
 .print-header p { font-size:12px; color:#666; }
+.print-header .page-break-toggle {
+  margin-top:8px; padding:4px 12px;
+  font-size:12px; cursor:pointer;
+  border:1px solid #ccc; border-radius:4px;
+  background:#f5f5f5; color:#333;
+}
+.print-header .page-break-toggle:hover { background:#e8e8e8; }
+body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 
 /* ---- Responsive ---- */
 @media (max-width:768px) {
@@ -934,9 +942,8 @@ function resizeDrawCanvas() {
   const c = getCanvas();
   const area = document.getElementById('slideArea');
   if (!c || !area) return;
-  c.width = area.offsetWidth;
+  c.width = area.scrollWidth;
   c.height = area.scrollHeight;
-  c.style.height = area.scrollHeight + 'px';
   redrawStrokes();
 }
 
@@ -1188,6 +1195,13 @@ document.addEventListener('click', e => {
 });
 
 // ===== Print mode =====
+function togglePageBreak() {
+  document.body.classList.toggle('page-break-on');
+  const on = document.body.classList.contains('page-break-on');
+  const btn = document.querySelector('.page-break-toggle');
+  if (btn) btn.textContent = '改ページ区切り: ' + (on ? 'ON' : 'OFF');
+}
+
 function togglePrintMode() {
   if (mode === 'slide') enterPrintMode();
   else enterSlideMode();
@@ -1202,7 +1216,7 @@ function enterPrintMode() {
   document.getElementById('modeToggle').textContent = '🖥 スライド表示';
   const area = document.getElementById('slideArea');
 
-  let html = '<div class="print-header"><h1>金融公共分析手法入門1</h1><p>配布用ハンドアウト</p></div>';
+  let html = '<div class="print-header"><h1>金融公共分析手法入門1</h1><p>配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
   SLIDES.forEach((s, idx) => {
     if (s.is_note) return;
     if (idx === 0) return;
@@ -1339,10 +1353,8 @@ document.addEventListener('keydown', e => {
 
 <li class="sub-item"><span class="icon-arrow">→</span> 連絡先 ✉ <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
 <li class="sub-item"><span class="icon-arrow">→</span> 研究室<br>2号館 807号室
-<li class="sub-item"><span class="icon-arrow">→</span> オフィスアワー<br> 月曜午後（だいたい15〜16時まで）
-<ol>
-<li> オフィスアワーはアポなしで来て良い
-<li> zoomなどが良ければ事前に連絡すること
+<li class="sub-item">»  オフィスアワー：以下から予約
+<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
 </ol>
 </ul> 
 </div>
@@ -1401,8 +1413,7 @@ document.addEventListener('keydown', e => {
 <div class = "column"> 
 <ul>
 <li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
-<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）．
-<li class="spacer"><a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
+<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）<a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
 <li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
 </li>
 </ul>
@@ -1497,6 +1508,12 @@ document.addEventListener('keydown', e => {
  <ul> 
   <li> 経済学（に限らず多くの学問）では論理的な論証がなされる．
  <li class="sub-item"><span class="icon-arrow">→</span> 多くの論理的な論証は「前提・仮定から結論を導く」という形をしている．
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+
  <li> 例：
  <li class="sub-item"><span class="icon-arrow">→</span> 前提：
  <ol>
@@ -1506,15 +1523,6 @@ document.addEventListener('keydown', e => {
  <li> 「授業中に居眠りしない」から得られる利益は $  0 $ 
  </ol>
  <li class="sub-item"><span class="icon-arrow">→</span> 結論：授業中に居眠りしない
- </ul> 
- </div> 
- <div class="column"> 
-<ul> 
-<li class="spacer"> 
-
- <li> 注意点
- <li class="sub-item"><span class="icon-arrow">→</span> 前提・仮定はなるべく詳しく書くこと
- <li class="sub-item"><span class="icon-arrow">→</span> 結論が前提・仮定からどう導かれるのかも丁寧に書くこと
 
  
  </ul> 
@@ -1585,17 +1593,19 @@ document.addEventListener('keydown', e => {
 
 </ol>
 <li class="sub-item"><span class="icon-arrow">→</span> Pを前件，Qを後件と呼ぶ．
+
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul>
 <li> 例：
  <ol>
  <li> 「雨が降る」ならば「Aさんは傘をさす」
  <li> 「雨が降っている」
  <li> よって「Aさんは傘をさす」
- </ol>
-
- </ul> 
- </div> 
- <div class="column"> 
-
+ </ol>  
+</ul>
   </div> 
  </div>
 </template>
@@ -1613,16 +1623,19 @@ document.addEventListener('keydown', e => {
  
  </ol>
 
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul>
 <li>  例：
 <ol>
  <li> 「雨が降る」ならば「Aさんは傘をさす」
  <li> 「Aさんは傘をさしていない」
  <li> よって「雨は降っていない」
  </ol> 
- </ul> 
- </div> 
- <div class="column"> 
 
+</ul>
   </div> 
  </div>
 </template>
@@ -1829,14 +1842,15 @@ document.addEventListener('keydown', e => {
 <div class="math-display">\[\begin{aligned}a+(b+c)=(a+b)+c\end{aligned}\]</div>
  <li class="custom-marker"><span class="marker">結合法則（乗法）</span>  全ての数 $  a,b,c $ について
 <div class="math-display">\[\begin{aligned}a\cdot(b\cdot c)=(a\cdot b)\cdot c\end{aligned}\]</div>
- <li class="custom-marker"><span class="marker">交換法則（加法）</span>  全ての数 $  a,b $ について
-<div class="math-display">\[\begin{aligned}a+b=b+a\end{aligned}\]</div>
- <li class="custom-marker"><span class="marker">交換法則（乗法）</span>  全ての数 $  a,b $ について
-<div class="math-display">\[\begin{aligned}a\cdot b=b\cdot a\end{aligned}\]</div> 
+
   </dl>
  </div>
  <div class="column">
 <dl>
+ <li class="custom-marker"><span class="marker">交換法則（加法）</span>  全ての数 $  a,b $ について
+<div class="math-display">\[\begin{aligned}a+b=b+a\end{aligned}\]</div>
+ <li class="custom-marker"><span class="marker">交換法則（乗法）</span>  全ての数 $  a,b $ について
+<div class="math-display">\[\begin{aligned}a\cdot b=b\cdot a\end{aligned}\]</div> 
 <li class="custom-marker"><span class="marker">分配法則</span>  全ての数 $  a,b,c $ について
 <div class="math-display">\[\begin{aligned}a\cdot (b+c)=ab+ac\end{aligned}\]</div>
 
@@ -1854,14 +1868,18 @@ document.addEventListener('keydown', e => {
 <div class="math-display">\[\begin{aligned}a+0=0+a=a\end{aligned}\]</div>
 <li class="custom-marker"><span class="marker">単位元（乗法）</span> 全ての数 $  a $ について
 <div class="math-display">\[\begin{aligned}a\cdot 1=1\cdot a=a\end{aligned}\]</div>
-<li class="custom-marker"><span class="marker">逆元（加法）</span> 全ての数 $  a $ について
-<div class="math-display">\[\begin{aligned}a+(-a)=0\end{aligned}\]</div>
-<li class="custom-marker"><span class="marker">逆元（乗法）</span> 全ての数 $  a\ne 0 $ について
-<div class="math-display">\[\begin{aligned}a\cdot \frac{1}{a}=1\end{aligned}\]</div>
+
 </dl>
   </div> 
   <div class="column"> 
  <ul> 
+  <dl>
+    <li class="custom-marker"><span class="marker">逆元（加法）</span> 全ての数 $  a $ について
+<div class="math-display">\[\begin{aligned}a+(-a)=0\end{aligned}\]</div>
+<li class="custom-marker"><span class="marker">逆元（乗法）</span> 全ての数 $  a\ne 0 $ について
+<div class="math-display">\[\begin{aligned}a\cdot \frac{1}{a}=1\end{aligned}\]</div>
+</li>
+</dl>
   <li>  以上で計算のルールを定める．
 
   </ul> 
@@ -2715,7 +2733,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 </template>
 
 <!-- ===== Slide 64: 一変数関数の微分 / 応用例: 独占市場③ ===== -->
-<template class="slide-data" data-title="応用例: 独占市場③" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="応用例: 独占市場③" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 <ul>

@@ -145,6 +145,14 @@ body.print-mode .tikz-figure { cursor:default; }
 .print-header { text-align:center; padding:20px 0 10px; border-bottom:2px solid var(--accent); margin:0 auto 20px; max-width:780px; }
 .print-header h1 { font-size:22px; color:var(--accent); }
 .print-header p { font-size:12px; color:#666; }
+.print-header .page-break-toggle {
+  margin-top:8px; padding:4px 12px;
+  font-size:12px; cursor:pointer;
+  border:1px solid #ccc; border-radius:4px;
+  background:#f5f5f5; color:#333;
+}
+.print-header .page-break-toggle:hover { background:#e8e8e8; }
+body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 @media print { body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; } .print-note-area { min-height:60px; } }
 .hints { position:fixed; bottom:12px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:6px; font-size:11px; color:#ccc; display:none; z-index:200; white-space:nowrap; }
 .hints.show { display:block; }
@@ -749,13 +757,20 @@ function toggleMode() {
   else enterSlideMode();
 }
 
+function togglePageBreak() {
+  document.body.classList.toggle('page-break-on');
+  const on = document.body.classList.contains('page-break-on');
+  const btn = document.querySelector('.page-break-toggle');
+  if (btn) btn.textContent = '改ページ区切り: ' + (on ? 'ON' : 'OFF');
+}
+
 function enterPrintMode() {
   mode = 'print';
   document.body.classList.remove('slide-mode');
   document.body.classList.add('print-mode');
   document.getElementById('modeToggle').textContent = '📊 スライド表示';
   const area = document.getElementById('slideArea');
-  let html = '<div class="print-header"><h1>経済数学II — 2025年度版</h1><p>多鹿 智哉 | 最終更新: ' + document.lastModified + '</p></div>';
+  let html = '<div class="print-header"><h1>経済数学II — 2025年度版</h1><p>多鹿 智哉 | 最終更新: ' + document.lastModified + '</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
   SLIDES.forEach((s, idx) => {
     if (s.is_note) return;
     if (idx === 0) return;
