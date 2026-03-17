@@ -554,6 +554,26 @@ body.print-mode .geogebra-embed .print-label {
   border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
 }
 </style>
+<script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
+<style>
+/* SageMath Cell styling */
+.sage-cell { margin:12px 0; }
+.sage-cell .sagecell_editor { border-radius:6px; }
+.sage-cell .sagecell_evalButton {
+  background:var(--accent) !important; color:#fff !important; border:none !important;
+  border-radius:4px !important; padding:6px 16px !important; font-family:inherit !important;
+  cursor:pointer !important; font-size:13px !important;
+}
+.sage-cell .sagecell_evalButton:hover { background:#1e40af !important; }
+.sage-cell .sagecell_output { border-radius:6px; margin-top:8px; }
+.sage-cell-label { font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+body.print-mode .sage-cell { display:none; }
+body.print-mode .sage-cell-print {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
+.sage-cell-print { display:none; }
+</style>
 </head>
 <body class="slide-mode">
 
@@ -860,6 +880,7 @@ function showSlide(idx) {
   if (typeof MathJax.typesetPromise === 'function') {
     MathJax.typesetPromise([content]).then(() => {
       initQRCodes();
+      initSageCells();
       resizeDrawCanvas();
       redrawStrokes();
     });
@@ -1444,6 +1465,21 @@ document.getElementById('noteArea').addEventListener('input', () => {
 });
 
 // ===== QR Codes =====
+function initSageCells() {
+  const cells = document.querySelectorAll('#slideContent .sage-cell');
+  if (cells.length === 0 || typeof sagecell === 'undefined') return;
+  cells.forEach(cell => {
+    // Skip if already initialized
+    if (cell.querySelector('.sagecell_editor')) return;
+    sagecell.makeSagecell({
+      inputLocation: cell,
+      evalButtonText: '▶ 実行',
+      languages: ['python'],
+      hide: ['permalink'],
+    });
+  });
+}
+
 function initQRCodes() {
   document.querySelectorAll('.qr-link:not(.qr-init)').forEach(el => {
     el.classList.add('qr-init');
@@ -3244,30 +3280,32 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <!-- ===== Slide 75: 多変数関数の微分 / 実際にやってみよう ===== -->
 <template class="slide-data" data-title="実際にやってみよう" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
 <ul> 
- <li> プログラミング言語を使ってやってみる（パソコン推奨）
+ <li> プログラミング言語を使ってやってみる
  
  <li class="sub-item"><span class="icon-arrow">→</span> より洗練された方法は「経済データ分析」や「計量経済学」で！
  
- <li class="sub-item"><span class="icon-arrow">→</span> <a  href="https://colab.research.google.com/?hl=ja" target="_blank">https://colab.research.google.com/?hl=ja</a>
+ <li class="sub-item"><span class="icon-arrow">→</span> 以下のコードは直接実行できます（▶ 実行 ボタンを押してください）
  </ul> 
- Pythonとsympyを使った方法
- 
-<pre><code>
+ <div class="sage-cell-label">Python + SymPy — 最小二乗法</div>
+ <div class="sage-cell"><script type="text/x-sage">
 import sympy
-sympy.var(&#x27;a b&#x27;) #variables
+sympy.var('a b')  # variables
 
-price = [] #input the price data
-demand = [] #input the demand data
+price = [1, 2, 3, 4, 5]       # input the price data
+demand = [10, 8, 7, 4, 2]     # input the demand data
 n = len(price)
 
-def f(a,b):
-  return sum([(price[i]*a+b-demand[i])**2 for i in range(n)])
+def f(a, b):
+    return sum([(price[i]*a + b - demand[i])**2 for i in range(n)])
 
-eq1 = sympy.Eq(sympy.diff(f(a,b),a), 0)
-eq2 = sympy.Eq(sympy.diff(f(a,b),b), 0)
+eq1 = sympy.Eq(sympy.diff(f(a,b), a), 0)
+eq2 = sympy.Eq(sympy.diff(f(a,b), b), 0)
 
-sympy.solve([eq1,eq2],(a,b))  
-</code></pre>
+result = sympy.solve([eq1, eq2], (a, b))
+print("解:", result)
+print(f"回帰直線: y = {result[a]}x + {result[b]}")
+</script></div>
+ <div class="sage-cell-print">🧮 SageMath Cell: 最小二乗法の計算（オンラインで実行）</div>
 </template>
 
 
@@ -3470,16 +3508,24 @@ sympy.solve([eq1,eq2],(a,b))
 <ul>
 <li> サイコロを振る
 <li class="sub-item"><span class="icon-arrow">→</span> 標本の例
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="sub-item"><span class="icon-arrow">→</span> 事象の例
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul></div><div class="column">
 <ul>
 <li> トランプのカードを1枚づつ二人に配る
 <li class="sub-item"><span class="icon-arrow">→</span> 標本の例
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="sub-item"><span class="icon-arrow">→</span> 事象の例（標本は必ずしも観察できるとは限らない）
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div></div>
 </template>
@@ -3493,8 +3539,10 @@ sympy.solve([eq1,eq2],(a,b))
 <li class="sub-item"><span class="icon-arrow">→</span> 全事象の確率を $ 1 $ とする．
 <li class="sub-item"><span class="icon-arrow">→</span> 確率は $ 0 $ 以上 $ 1 $ 以下
 
-<li> ベン図
-
+<li> ベン図 </li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div><div class="column">
 
@@ -3506,12 +3554,16 @@ sympy.solve([eq1,eq2],(a,b))
 <div class="columns"><div class="column">
 <ul>
 <li>  $ A $ と $ B $ の和事象  $ A\cup B $ とは
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div><div class="column">
 <ul>
 <li> もし事象 $ A $ と $ B $ に被りがなければ  $ P(A\cup B)=P(A)+P(B) $ 
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 
 </div></div>
@@ -3522,12 +3574,17 @@ sympy.solve([eq1,eq2],(a,b))
 <div class="columns"><div class="column">
 <ul>
 <li>  $ A $ と $ B $ の積事象  $ A\cap B $ とは
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 
 </div><div class="column">
 <ul>
 <li>  $ A $ の余事象  $ \Omega\setminus A $ とは
+  <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 
 </div></div>
