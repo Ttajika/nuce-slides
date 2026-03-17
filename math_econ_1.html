@@ -109,7 +109,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   position:relative;
 }
 .slide-content {
-  max-width:860px; width:100%;
+  max-width:1100px; width:100%;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
@@ -440,6 +440,69 @@ body.print-mode .mode-toggle { bottom:12px; }
 
 .size-range { width:70px; accent-color:var(--accent); }
 .tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar {
+  display:flex; gap:6px; justify-content:center; padding:8px 0;
+  border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--surface); z-index:4;
+}
+.understanding-btn {
+  padding:5px 14px; border-radius:16px; border:1.5px solid var(--border);
+  background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit;
+  transition:all 0.15s; color:var(--text-dim);
+}
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn {
+  position:absolute; top:8px; right:8px; background:none; border:none;
+  font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s;
+  z-index:5; padding:4px;
+}
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+.slide-content { position:relative; }
+
+/* ═══ STATUS BADGE (topbar) ═══ */
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-left:6px; vertical-align:middle;
+}
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  display:none; align-items:center; gap:6px; padding:4px 16px;
+  background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px;
+}
+.filter-bar.show { display:flex; }
+.filter-chip {
+  padding:3px 10px; border-radius:12px; border:1px solid var(--border);
+  background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s;
+}
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar,
+body.print-mode .bookmark-btn,
+body.print-mode .filter-bar { display:none !important; }
+
+/* ═══ GEOGEBRA EMBED ═══ */
+.geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
+.geogebra-embed .print-label { display:none; }
+body.print-mode .geogebra-embed iframe { display:none; }
+body.print-mode .geogebra-embed .print-label {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
 </style>
 </head>
 <body class="slide-mode">
@@ -458,24 +521,27 @@ body.print-mode .mode-toggle { bottom:12px; }
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
 </div>
 
-<div class="main" id="mainArea">
-  <div class="slide-area" id="slideArea">
-    <div class="slide-content" id="slideContent"></div>
-    <canvas class="draw-canvas" id="drawCanvas"></canvas>
-  </div>
-  <div class="notes-panel collapsed" id="notesPanel">
-    <div class="notes-header">
-      <h3>📝 メモ（スライド <span id="noteSlideNum">1</span>）</h3>
-      <button class="nav-btn" onclick="clearNote()" style="font-size:11px;padding:2px 6px;background:rgba(0,0,0,0.1);color:#92400e;border-color:rgba(0,0,0,0.1);">クリア</button>
-    </div>
-    <textarea class="notes-textarea" id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
-  </div>
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
 </div>
 
+<!-- Draw toolbar — below topbar/filter, above main -->
 <div class="draw-toolbar" id="drawToolbar">
   <div class="tool-group">
     <span class="tool-label">ツール:</span>
@@ -502,6 +568,21 @@ body.print-mode .mode-toggle { bottom:12px; }
     <button class="draw-btn" id="btnBoard" onclick="toggleBoard()" title="板書スペース (B)">📋</button>
   </div>
 </div>
+
+<div class="main" id="mainArea">
+  <div class="slide-area" id="slideArea">
+    <div class="slide-content" id="slideContent"></div>
+    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+  </div>
+  <div class="notes-panel collapsed" id="notesPanel">
+    <div class="notes-header">
+      <h3>📝 メモ（スライド <span id="noteSlideNum">1</span>）</h3>
+      <button class="nav-btn" onclick="clearNote()" style="font-size:11px;padding:2px 6px;background:rgba(0,0,0,0.1);color:#92400e;border-color:rgba(0,0,0,0.1);">クリア</button>
+    </div>
+    <textarea class="notes-textarea" id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
+  </div>
+</div>
+
 
 <div class="hints" id="hints">
   <kbd>←</kbd><kbd>→</kbd> スライド移動 &nbsp;
@@ -557,13 +638,17 @@ const SECTIONS = [{"title": "はじめに", "slide": 1}, {"title": "妥当な論
 let current = 0;
 let notes = {};
 let mode = 'slide';
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null; // null = no filter active
 
 // ═══ LOCAL STORAGE ═══
 const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 
 function saveLocal() {
   try {
-    const data = { notes: notes, strokes: strokes, boardStrokes: boardStrokes, lastSlide: current };
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch(e) { /* quota exceeded or unavailable */ }
 }
@@ -576,18 +661,23 @@ function loadLocal() {
     if (data.notes) notes = data.notes;
     if (data.strokes) strokes = data.strokes;
     if (data.boardStrokes) boardStrokes = data.boardStrokes;
+    if (data.understanding) understanding = data.understanding;
+    if (data.bookmarks) bookmarks = data.bookmarks;
     if (typeof data.lastSlide === 'number') current = data.lastSlide;
   } catch(e) { /* parse error */ }
 }
 
 function clearLocal() {
-  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「印刷用表示」からPDF保存してください。')) {
+  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
     localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
     boardStrokes = {};
+    understanding = {};
+    bookmarks = {};
     document.getElementById('noteArea').value = '';
     redrawStrokes();
+    showSlide(current);
   }
 }
 
@@ -922,6 +1012,9 @@ function renderSlide(idx) {
     MathJax.typesetClear([el]);
   }
   let html = '';
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  html += `<button class="bookmark-btn${isBM ? ' active' : ''}" onclick="toggleBookmark(${idx})" title="ブックマーク">⭐</button>`;
   if (s.section) {
     html += `<div class="section-badge">${s.section}</div>`;
   }
@@ -933,11 +1026,19 @@ function renderSlide(idx) {
   } else {
     html += s.html;
   }
+  // Understanding bar
+  const u = understanding[idx] || '';
+  html += '<div class="understanding-bar">';
+  html += `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>`;
+  html += `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>`;
+  html += `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
+  html += '</div>';
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
   setupFigureZoom(el);
   setupLinks(el);
+  updateStatusDot(idx);
 }
 
 function renderMath(el) {
@@ -961,7 +1062,12 @@ function showSlide(idx) {
   scheduleSave();
   current = idx;
   renderSlide(idx);
-  document.getElementById('pageInfo').textContent = (idx+1) + ' / ' + SLIDES.length;
+  let pageText = (idx+1) + ' / ' + SLIDES.length;
+  if (filteredIndices && filteredIndices.length > 0) {
+    const pos = filteredIndices.indexOf(idx);
+    if (pos >= 0) pageText = (pos+1) + '/' + filteredIndices.length + ' [' + (idx+1) + ']';
+  }
+  document.getElementById('pageInfo').textContent = pageText;
   document.getElementById('noteSlideNum').textContent = idx+1;
   document.getElementById('noteArea').value = notes[idx] || '';
   // Update section select
@@ -984,8 +1090,14 @@ function showSlide(idx) {
   }, 50);
 }
 
-function nextSlide() { showSlide(current + 1); }
-function prevSlide() { showSlide(current - 1); }
+function nextSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { nextFiltered(); return; }
+  showSlide(current + 1);
+}
+function prevSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { prevFiltered(); return; }
+  showSlide(current - 1);
+}
 function goSlide(i) { showSlide(parseInt(i)); }
 function goToSection(v) { if (v !== '') showSlide(parseInt(v)); }
 
@@ -1265,7 +1377,197 @@ window.addEventListener('beforeunload', () => {
   saveLocal();
 });
 
-// Export notes
+// ═══ UNDERSTANDING ═══
+function setUnderstanding(idx, level) {
+  if (understanding[idx] === level) {
+    delete understanding[idx]; // toggle off
+  } else {
+    understanding[idx] = level;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+function updateStatusDot(idx) {
+  // Update the dot next to page info
+  let dot = document.getElementById('statusDot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.id = 'statusDot';
+    dot.className = 'status-dot';
+    document.getElementById('pageInfo').after(dot);
+  }
+  const u = understanding[idx];
+  dot.className = 'status-dot' + (u ? ' ' + u : '');
+}
+
+// ═══ BOOKMARKS ═══
+function toggleBookmark(idx) {
+  if (bookmarks[idx]) {
+    delete bookmarks[idx];
+  } else {
+    bookmarks[idx] = true;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+// ═══ FILTER ═══
+function toggleFilter() {
+  document.getElementById('filterBar').classList.toggle('show');
+}
+
+function setFilter(type, el) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (type === 'all') {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < SLIDES.length; i++) {
+      if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
+      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
+      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
+      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
+      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
+    }
+  }
+  updateFilterCount();
+  // Jump to first matching if current doesn't match
+  if (filteredIndices && filteredIndices.length > 0 && !filteredIndices.includes(current)) {
+    showSlide(filteredIndices[0]);
+  }
+}
+
+function updateFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  if (!filteredIndices) {
+    el.textContent = '';
+    return;
+  }
+  el.textContent = filteredIndices.length + ' / ' + SLIDES.length + ' スライド';
+}
+
+function nextFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { nextSlide(); return; }
+  const next = filteredIndices.find(i => i > current);
+  if (next !== undefined) showSlide(next);
+  else showSlide(filteredIndices[0]); // wrap
+}
+
+function prevFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { prevSlide(); return; }
+  const prev = [...filteredIndices].reverse().find(i => i < current);
+  if (prev !== undefined) showSlide(prev);
+  else showSlide(filteredIndices[filteredIndices.length - 1]); // wrap
+}
+
+// ═══ EXPORT / IMPORT ═══
+function exportData() {
+  notes[current] = document.getElementById('noteArea').value;
+  // Normalize stroke coordinates to 0-1 range for portability
+  const canvas = getCanvas();
+  const cw = canvas ? canvas.width : 1;
+  const ch = canvas ? canvas.height : 1;
+
+  const normalizeStrokes = (src) => {
+    const out = {};
+    for (const [k, arr] of Object.entries(src || {})) {
+      out[k] = arr.map(s => ({
+        ...s,
+        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
+      }));
+    }
+    return out;
+  };
+
+  const data = {
+    version: 1,
+    title: document.querySelector('.topbar-title')?.textContent || '',
+    exportDate: new Date().toISOString(),
+    slideCount: SLIDES.length,
+    canvasSize: { w: cw, h: ch },
+    notes,
+    understanding,
+    bookmarks,
+    strokes: normalizeStrokes(strokes),
+    boardStrokes: normalizeStrokes(boardStrokes),
+    lastSlide: current,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.download = `math_econ_study_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) { alert('形式が不正です'); return; }
+
+      const merge = confirm(
+        '読み込みモードを選んでください:\n\n' +
+        '「OK」→ 既存データに上書き（マージ）\n' +
+        '「キャンセル」→ 読み込み中止'
+      );
+      if (!merge) return;
+
+      // Denormalize strokes from 0-1 to current canvas size
+      const canvas = getCanvas();
+      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
+      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
+
+      const denormalizeStrokes = (src) => {
+        const out = {};
+        for (const [k, arr] of Object.entries(src || {})) {
+          out[k] = arr.map(s => ({
+            ...s,
+            points: s.points.map(p => ({
+              x: p.x <= 1.5 ? p.x * cw : p.x,  // detect if already normalized
+              y: p.y <= 1.5 ? p.y * ch : p.y,
+            }))
+          }));
+        }
+        return out;
+      };
+
+      if (data.notes) Object.assign(notes, data.notes);
+      if (data.understanding) Object.assign(understanding, data.understanding);
+      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+      if (data.strokes) {
+        const dn = denormalizeStrokes(data.strokes);
+        Object.assign(strokes, dn);
+      }
+      if (data.boardStrokes) {
+        const dn = denormalizeStrokes(data.boardStrokes);
+        Object.assign(boardStrokes, dn);
+      }
+
+      saveLocal();
+      showSlide(current);
+      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset file input
+}
+
+// Export notes as Markdown (keep existing feature)
 function exportNotes() {
   notes[current] = document.getElementById('noteArea').value;
   let text = '# 経済数学 I メモ\n\n';
@@ -1333,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li> 学位：博士（経済学）
 <li> 研究分野：ミクロ経済学・ゲーム理論
 </ol>
-<li class="sub-item">»  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp" target="_blank" class="url-link">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item">»  連絡先 ✉  <a href="/cdn-cgi/l/email-protection#6014010a090b014e140f0d0f1901200e09080f0e4d154e01034e0a10" target="_blank" class="url-link"><span class="__cf_email__" data-cfemail="90e4f1faf9fbf1bee4fffdffe9f1d0fef9f8fffebde5bef1f3befae0">[email&#160;protected]</span></a>
 <li class="sub-item">»  研究室<br>
 2号館 8-7室
 <li class="sub-item">»  オフィスアワー：以下から予約
@@ -2341,8 +2643,11 @@ document.addEventListener('DOMContentLoaded', () => {
  <div class="column"> 
  <ul> 
   <li> （図示）以下URLを参照<br>
-<a href="https://vimeo.com/804148111" target="_blank" class="url-link">https://vimeo.com/804148111</a>
-<a href="https://vimeo.com/804148111" target="_blank" class="qr-link">🔗 QRリンク</a>
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/calculator/a2vavmry?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: 微分の図示（オンラインで表示）</div>
+</div>
+<a href="https://www.geogebra.org/calculator/a2vavmry" target="_blank" class="qr-link">🔗 QRリンク</a>
   </ul>  
   </div> 
   </div>
@@ -2580,7 +2885,12 @@ $f(x)=h(g(x))$ のとき,
  <div class="math-display">\[\begin{aligned}f(x)=f(0)+f'(0)x+\frac{f''(0)}{2 }x^{2}+\cdots + \frac{f^{(n)}(0)}{ n!}x^{n}+\cdots\end{aligned}\]</div>  
  ※$f^{(n)}(x)$ は $f(x)$ を $n$ 回微分した関数. 
  <li> <strong class="keyword">マクローリン展開</strong>
- 
+
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/calculator/qed66kgf?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: マクローリン展開（オンラインで表示）</div>
+</div>
+
  <a href="https://www.geogebra.org/calculator/qed66kgf" target="_blank" class="qr-link">🔗 QRリンク</a>
  </ul>
 </template>
@@ -2625,8 +2935,36 @@ $f(x)=h(g(x))$ のとき,
 <ul>
  <li class="jarm-item"><strong>定理</strong> 
   関数 $f$ が微分可能であるとき, $f$ が $x^{*}$ で最大値をとるならば $f'(x^{*})=0$ が成立する. 
+ <li >最適化のための<span class="keyword">１階条件</span>ともいう</li> 
   <li class="jarm-item"><strong>証明</strong> 
+ <li class="spacer">
+ <li class="spacer">
  
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ <li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer">
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer">
  </ul> 
   </div> 
  <div class="column"> 
@@ -2684,6 +3022,7 @@ $f(x)=h(g(x))$ のとき,
 </g>
 </svg>
 </div>
+<li class="spacer"></li>
   </ul>  
   </div> 
   </div>
@@ -3046,6 +3385,22 @@ $f(x)=h(g(x))$ のとき,
  <li> 効用を最大化する $q$ を求めるには？
  
  <li class="sub-item">»   効用の値 $u(q)=v(q)-p\cdot q$ についての一階条件を考える
+  <li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer">
  </ul> 
  </div>
  <div class="column">
@@ -3137,6 +3492,29 @@ $f(x)=h(g(x))$ のとき,
  <div class="column">
  <ul>
  <li> 利潤を最大化する $q$ を求めるには？
+  <li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer">
+  <li class="spacer">
+ <li class="spacer">
+ <li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer"><li class="spacer">
+ <li class="spacer">
+ 
+ <li class="spacer">
+ <li class="spacer">
  </ul> 
  </div>
  <div class="column">
@@ -4270,16 +4648,10 @@ $f(x)=h(g(x))$ のとき,
 <ul>
 <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，すべての $x$ について、$F(x)\ge G(x)$ をみたすとき、$G$ が $F$ を<strong class="keyword">一次確率支配</strong>するという。
  
- <li class="sub-item">»  $G$ が $F$ を<strong class="keyword">一次確率支配</strong>するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり，$ u$ は $ u'>0$ を満たす関数である．
+ <li class="sub-item">»  $G$ が $F$ を<strong class="keyword">一次確率支配</strong>するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり， $ u$ は $ u'>0$ を満たす関数である．
  <div class="math-display">\[\begin{aligned}\int_a^b u(x)g(x)dx\ge \int_a^b u(x)f(x)dx\end{aligned}\]</div>
 </ul>
  </div>
  <div class="column">
  </div>
  </div>
-</template>
-
-
-
-</body>
-</html>

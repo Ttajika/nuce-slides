@@ -112,7 +112,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   position: relative;
 }
 .slide-content {
-  max-width:860px; width:100%;
+  max-width:1200px; width:100%;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
@@ -491,6 +491,68 @@ body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
   .print-note-area { min-height:60px; }
   .topbar,.draw-toolbar,.notes-panel { display:none !important; }
 }
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar {
+  display:flex; gap:6px; justify-content:center; padding:8px 0;
+  border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--surface); z-index:4;
+}
+.understanding-btn {
+  padding:5px 14px; border-radius:16px; border:1.5px solid var(--border);
+  background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit;
+  transition:all 0.15s; color:var(--text-dim);
+}
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn {
+  position:absolute; top:8px; right:8px; background:none; border:none;
+  font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s;
+  z-index:5; padding:4px;
+}
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+
+/* ═══ STATUS DOT ═══ */
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-left:6px; vertical-align:middle;
+}
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  display:none; align-items:center; gap:6px; padding:4px 16px;
+  background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px;
+}
+.filter-bar.show { display:flex; }
+.filter-chip {
+  padding:3px 10px; border-radius:12px; border:1px solid var(--border);
+  background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s;
+}
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar,
+body.print-mode .bookmark-btn,
+body.print-mode .filter-bar { display:none !important; }
+
+/* ═══ GEOGEBRA EMBED ═══ */
+.geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
+.geogebra-embed .print-label { display:none; }
+body.print-mode .geogebra-embed iframe { display:none; }
+body.print-mode .geogebra-embed .print-label {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
 </style>
 </head>
 <body class="slide-mode">
@@ -508,8 +570,24 @@ body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" onclick="toggleDraw()" id="drawBtn">✏️</button>
     <button class="nav-btn" onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
 </div>
 
 <!-- Draw toolbar -->
@@ -620,6 +698,10 @@ let drawingNow = false;
 let currentStroke = null;
 let strokes = {};
 let notes = {};
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null;
 let pointerPos = null;
 let touchIsSingle = false;
 let touchStartX = 0, touchStartY = 0;
@@ -712,7 +794,12 @@ function showSlide(idx) {
   document.getElementById('slideTitle').textContent = s.title;
   document.getElementById('slideTitle').style.display = s.title ? '' : 'none';
   // section name shown in badge
-  document.getElementById('slideNum').textContent = `${idx+1} / ${SLIDES.length}`;
+  let pageText = `${idx+1} / ${SLIDES.length}`;
+  if (filteredIndices && filteredIndices.length > 0) {
+    const pos = filteredIndices.indexOf(idx);
+    if (pos >= 0) pageText = `${pos+1}/${filteredIndices.length} [${idx+1}]`;
+  }
+  document.getElementById('slideNum').textContent = pageText;
   const noteNum = document.getElementById('noteSlideNum');
   if (noteNum) noteNum.textContent = idx + 1;
 
@@ -727,6 +814,27 @@ function showSlide(idx) {
   } else {
     content.innerHTML = s.html;
   }
+
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  const bmBtn = document.createElement('button');
+  bmBtn.className = 'bookmark-btn' + (isBM ? ' active' : '');
+  bmBtn.textContent = '⭐';
+  bmBtn.title = 'ブックマーク';
+  bmBtn.onclick = () => { toggleBookmark(idx); };
+  content.style.position = 'relative';
+  content.prepend(bmBtn);
+
+  // Understanding bar
+  const u = understanding[idx] || '';
+  const ubar = document.createElement('div');
+  ubar.className = 'understanding-bar';
+  ubar.innerHTML =
+    `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>` +
+    `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>` +
+    `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
+  content.appendChild(ubar);
+  updateStatusDot(idx);
 
   // Setup phantoms
   content.querySelectorAll('.phantom').forEach(p => {
@@ -785,12 +893,14 @@ function showSlide(idx) {
   scheduleSave();
 }
 
-function nextSlide() { 
+function nextSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { nextFiltered(); return; }
   let next = current + 1;
   while (next < SLIDES.length && SLIDES[next].is_note) next++;
   if (next < SLIDES.length) showSlide(next);
 }
 function prevSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { prevFiltered(); return; }
   let prev = current - 1;
   while (prev >= 0 && SLIDES[prev].is_note) prev--;
   if (prev >= 0) showSlide(prev);
@@ -1135,6 +1245,186 @@ function clearNote() {
   notes[current] = '';
   scheduleSave();
 }
+// ═══ UNDERSTANDING ═══
+function setUnderstanding(idx, level) {
+  if (understanding[idx] === level) {
+    delete understanding[idx];
+  } else {
+    understanding[idx] = level;
+  }
+  showSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+function updateStatusDot(idx) {
+  let dot = document.getElementById('statusDot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.id = 'statusDot';
+    dot.className = 'status-dot';
+    document.getElementById('slideNum').after(dot);
+  }
+  const u = understanding[idx];
+  dot.className = 'status-dot' + (u ? ' ' + u : '');
+}
+
+// ═══ BOOKMARKS ═══
+function toggleBookmark(idx) {
+  if (bookmarks[idx]) {
+    delete bookmarks[idx];
+  } else {
+    bookmarks[idx] = true;
+  }
+  showSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+// ═══ FILTER ═══
+function toggleFilter() {
+  document.getElementById('filterBar').classList.toggle('show');
+}
+
+function setFilter(type, el) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (type === 'all') {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < SLIDES.length; i++) {
+      if (SLIDES[i].is_note) continue;
+      if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
+      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
+      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
+      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
+      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
+    }
+  }
+  updateFilterCount();
+  if (filteredIndices && filteredIndices.length > 0 && !filteredIndices.includes(current)) {
+    showSlide(filteredIndices[0]);
+  }
+}
+
+function updateFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  if (!filteredIndices) { el.textContent = ''; return; }
+  el.textContent = filteredIndices.length + ' / ' + SLIDES.length + ' スライド';
+}
+
+function nextFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { nextSlide(); return; }
+  const next = filteredIndices.find(i => i > current);
+  if (next !== undefined) showSlide(next);
+  else showSlide(filteredIndices[0]);
+}
+
+function prevFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { prevSlide(); return; }
+  const prev = [...filteredIndices].reverse().find(i => i < current);
+  if (prev !== undefined) showSlide(prev);
+  else showSlide(filteredIndices[filteredIndices.length - 1]);
+}
+
+// ═══ EXPORT / IMPORT ═══
+function exportData() {
+  const na = document.getElementById('noteArea');
+  if (na) notes[current] = na.value;
+
+  const canvas = getCanvas();
+  const cw = canvas ? canvas.width : 1;
+  const ch = canvas ? canvas.height : 1;
+
+  const normalizeStrokes = (src) => {
+    const out = {};
+    for (const [k, arr] of Object.entries(src || {})) {
+      out[k] = arr.map(s => ({
+        ...s,
+        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
+      }));
+    }
+    return out;
+  };
+
+  const data = {
+    version: 1,
+    title: document.querySelector('.topbar-title')?.textContent || '',
+    exportDate: new Date().toISOString(),
+    slideCount: SLIDES.length,
+    canvasSize: { w: cw, h: ch },
+    notes,
+    understanding,
+    bookmarks,
+    strokes: normalizeStrokes(strokes),
+    boardStrokes: normalizeStrokes(boardStrokes),
+    lastSlide: current,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.download = `basicmath_study_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) { alert('形式が不正です'); return; }
+
+      const merge = confirm(
+        '読み込みモードを選んでください:\n\n' +
+        '「OK」→ 既存データに上書き（マージ）\n' +
+        '「キャンセル」→ 読み込み中止'
+      );
+      if (!merge) return;
+
+      const canvas = getCanvas();
+      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
+      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
+
+      const denormalizeStrokes = (src) => {
+        const out = {};
+        for (const [k, arr] of Object.entries(src || {})) {
+          out[k] = arr.map(s => ({
+            ...s,
+            points: s.points.map(p => ({
+              x: p.x <= 1.5 ? p.x * cw : p.x,
+              y: p.y <= 1.5 ? p.y * ch : p.y,
+            }))
+          }));
+        }
+        return out;
+      };
+
+      if (data.notes) Object.assign(notes, data.notes);
+      if (data.understanding) Object.assign(understanding, data.understanding);
+      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+      if (data.strokes) Object.assign(strokes, denormalizeStrokes(data.strokes));
+      if (data.boardStrokes) Object.assign(boardStrokes, denormalizeStrokes(data.boardStrokes));
+
+      saveLocal();
+      showSlide(current);
+      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 function exportNotes() {
   let md = '# Lecture Notes\n\n';
   SLIDES.forEach((s, i) => {
@@ -1310,7 +1600,7 @@ function enterSlideMode() {
 // ===== Local storage =====
 function saveLocal() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, lastSlide: current }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }));
   } catch(e) {}
 }
 function loadLocal() {
@@ -1320,6 +1610,8 @@ function loadLocal() {
     if (data.notes) notes = data.notes;
     if (data.strokes) strokes = data.strokes;
     if (data.boardStrokes) boardStrokes = data.boardStrokes;
+    if (data.understanding) understanding = data.understanding;
+    if (data.bookmarks) bookmarks = data.bookmarks;
     if (typeof data.lastSlide === 'number') current = data.lastSlide;
   } catch(e) {}
 }
@@ -1328,13 +1620,16 @@ function scheduleSave() {
   saveTimer = setTimeout(saveLocal, 1000);
 }
 function clearStorage() {
-  if (confirm('保存されたノート・描画データをすべて削除しますか？')) {
+  if (confirm('保存されたデータをすべて削除しますか？\n\n※ 残したい内容があれば先に「💾」で書き出してください。')) {
     localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
     boardStrokes = {};
+    understanding = {};
+    bookmarks = {};
     document.getElementById('noteArea').value = '';
     redrawStrokes();
+    showSlide(current);
   }
 }
 window.addEventListener('beforeunload', saveLocal);
@@ -1382,7 +1677,7 @@ document.addEventListener('keydown', e => {
 <li> 研究分野：ミクロ経済学・ゲーム理論
 </ol>
 
-<li class="sub-item"><span class="icon-arrow">→</span> 連絡先 ✉ <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item"><span class="icon-arrow">→</span> 連絡先 ✉ <a href="/cdn-cgi/l/email-protection#2e5a4f4447454f005a414341574f6e4047464140035b004f4d00445e"><span class="__cf_email__" data-cfemail="cdb9aca7a4a6ace3b9a2a0a2b4ac8da3a4a5a2a3e0b8e3acaee3a7bd">[email&#160;protected]</span></a>
 <li class="sub-item"><span class="icon-arrow">→</span> 研究室<br>2号館 807号室
 <li class="sub-item">»  オフィスアワー：以下から予約
 <a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
@@ -2453,9 +2748,12 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   </div> 
  <div class="column"> 
  <ul> 
-  <li> （図示）以下URLを参照<br><a href="https://vimeo.com/804148111" target="_blank">https://vimeo.com/804148111</a>
-
-<a class="qr-link" href="https://vimeo.com/804148111" target="_blank">🔗 QRリンク</a>
+  <li> （図示）以下URLを参照<br>
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/calculator/a2vavmry?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: 微分の図示（オンラインで表示）</div>
+</div>
+<a href="https://www.geogebra.org/calculator/a2vavmry" target="_blank" class="qr-link">🔗 QRリンク</a>
   </ul>  
   </div> 
   </div>
@@ -2529,22 +2827,28 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li>   $ f(x)= x^2 = \textcolor{blue}{x}\cdot \textcolor{red!50!black}{x} $ での説明
 <li class="sub-item"><span class="icon-arrow">→</span> $  \textcolor{red!50!black}{x} $ を変数と思えば傾きは $   \textcolor{blue}{x} $ 
 <ul>
-<li class="custom-marker"><span class="marker">▸</span>    $  \textcolor{red!50!black}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{blue}{x}\cdot\Delta $ だけ増える  
+<li class="custom-marker"> $  \textcolor{red!50!black}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{blue}{x}\cdot\Delta $ だけ増える  
 
 </ul>
 
 <li class="sub-item"><span class="icon-arrow">→</span> $   \textcolor{blue}{x} $ を変数と思えば傾きは $   \textcolor{red!50!black}{x} $ 
 
 <ul>
-<li class="custom-marker"><span class="marker">▸</span>  $  \textcolor{blue}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{red!50!black}{x}\cdot\Delta $ だけ増える  
+<li class="custom-marker"> $  \textcolor{blue}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{red!50!black}{x}\cdot\Delta $ だけ増える  
+
+
 
 </ul>
 
 <li class="sub-item"><span class="icon-arrow">→</span> 実際には，  $  \textcolor{red!50!black}{x} $ も  $  \textcolor{blue}{x} $ も $  \Delta $ 増える
 <ul>
-<li class="custom-marker"><span class="marker">▸</span>  $  x $ が $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red!50!black}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
+<li class="custom-marker">  $  x $ が $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red!50!black}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
 <li class="spacer"> <span class="icon-arrow">→</span>  微分係数は $  2x $ 
-
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </ul>
   </div> 
@@ -2645,7 +2949,10 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <li class="custom-marker"><span class="marker">定理</span> 
   関数 $ f $ が微分可能であるとき,  $ f $ が $ x^{*} $ で最大値をとるならば $ f'(x^{*})=0 $ が成立する. 
   <li class="custom-marker"><span class="marker">証明</span> 
- 
+  <li class="spacer"></li>  
+   <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li> 
+     <li class="spacer"></li>  
+   <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>  
  </ul> 
   </div> 
  <div class="column"> 
@@ -2813,9 +3120,12 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <!-- ===== Slide 68: 多変数関数の微分 / 多変数関数の傾き ===== -->
 <template class="slide-data" data-title="多変数関数の傾き" data-section="多変数関数の微分" data-note="false" data-print-margin="180">
 <ul>
-<li> <a href="https://www.geogebra.org/m/tkjbbp3f">図解</a>
-
-<a class="qr-link" href="https://www.geogebra.org/m/tkjbbp3f" target="_blank">🔗 QRリンク</a>
+<li> 図解
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/3d/tkjbbp3f?embed" width="800" height="500" allowfullscreen style="border:1px solid #e4e4e4;border-radius:4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: 多変数関数の傾き（オンラインで表示）</div>
+</div>
+<a class="qr-link" href="https://www.geogebra.org/3d/tkjbbp3f?embed" target="_blank">🔗 QRリンク</a>
 
 </ul>
 </template>
@@ -3272,17 +3582,8 @@ sympy.solve([eq1,eq2],(a,b))
 <div class="columns"> 
  <div class="column"> 
  <ul> 
-  <li> 1%の人が罹患している病気に精度95%の検査で陽性が出た．罹患している確率はいくらか？
-
- </ul> 
- </div> 
- <div class="column"> 
-
-  </div> 
- </div>
+  <li> 1%の人が罹患している病気に精度95%の検査で陽性になったとき，実際に罹患している確率はいくらか？</li>
+  </ul>
+</div>
+</div>
 </template>
-
-
-
-</body>
-</html>
