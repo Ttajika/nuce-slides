@@ -292,14 +292,7 @@ kbd { background:#374151; padding:1px 5px; border-radius:3px; border:1px solid #
 </div>
 
 <script>
-const SECTIONS = [
-  {title:"はじめに",slide:1},
-  {title:"ベクトルと行列",slide:4},
-  {title:"多変数の微分",slide:57},
-  {title:"制約付き最適化問題",slide:75},
-  {title:"シャドウ・プライス",slide:85},
-  {title:"一般均衡理論",slide:90},
-];
+let SECTIONS = [];
 let SLIDES = [];
 let current = 0, mode = 'slide';
 let notes = {}, strokes = {};
@@ -918,6 +911,14 @@ document.addEventListener('DOMContentLoaded', () => {
     is_note: t.dataset.note === 'true',
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
+  // Build sections dynamically from slide data
+  let lastSection = '';
+  SLIDES.forEach((s, i) => {
+    if (s.section && s.section !== lastSection) {
+      SECTIONS.push({ title: s.section, slide: i });
+      lastSection = s.section;
+    }
+  });
   // Populate section select
   const sel = document.getElementById('sectionSelect');
   SECTIONS.forEach(s => {

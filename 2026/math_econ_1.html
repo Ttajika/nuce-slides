@@ -633,7 +633,7 @@ body.print-mode .geogebra-embed .print-label {
 <script>
 // SLIDES is populated from <template> elements after DOM is ready
 let SLIDES = [];
-const SECTIONS = [{"title": "はじめに", "slide": 1}, {"title": "妥当な論証", "slide": 6}, {"title": "集合", "slide": 18}, {"title": "関数と連続性", "slide": 24}, {"title": "微分の意味と計算公式", "slide": 40}, {"title": "テイラー展開", "slide": 53}, {"title": "最大化・最小化", "slide": 60}, {"title": "凹関数・凸関数", "slide": 66}, {"title": "応用：市場メカニズム", "slide": 72}, {"title": "積分", "slide": 79}, {"title": "応用：確率分布", "slide": 93}];
+let SECTIONS = [];
 
 let current = 0;
 let notes = {};
@@ -1593,6 +1593,14 @@ document.addEventListener('DOMContentLoaded', () => {
     is_note: t.dataset.note === 'true',
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
+  // Build sections dynamically from slide data
+  let lastSection = '';
+  SLIDES.forEach((s, i) => {
+    if (s.section && s.section !== lastSection) {
+      SECTIONS.push({ title: s.section, slide: i });
+      lastSection = s.section;
+    }
+  });
   // Populate section selector
   SECTIONS.forEach(s => {
     const o = document.createElement('option');
