@@ -422,6 +422,37 @@ kbd {
 
 .size-range { width:70px; accent-color:var(--accent); }
 .tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar { display:flex; gap:6px; justify-content:center; padding:8px 0; border-top:1px solid var(--border); position:sticky; bottom:0; background:var(--surface); z-index:4; }
+.understanding-btn { padding:5px 14px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.15s; color:var(--text-dim); }
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn { position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s; z-index:5; padding:4px; }
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+.slide-content { position:relative; }
+
+/* ═══ STATUS BADGE (topbar) ═══ */
+.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-left:6px; vertical-align:middle; }
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar { display:none; align-items:center; gap:6px; padding:4px 16px; background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px; }
+.filter-bar.show { display:flex; }
+.filter-chip { padding:3px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s; }
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar, body.print-mode .bookmark-btn, body.print-mode .filter-bar { display:none !important; }
 ```
 
 ---
@@ -446,11 +477,27 @@ kbd {
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
 </div>
 
-<!-- Draw toolbar — bar style, below topbar -->
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
+</div>
+
+<!-- Draw toolbar — bar style, below topbar/filter -->
 <div class="draw-toolbar" id="drawToolbar">
   <div class="tool-group">
     <span class="tool-label">ツール:</span>
@@ -529,29 +576,58 @@ kbd {
 
 The JS has these sections. See `math_econ_1.html` for the full working implementation. Key points:
 
-### SECTIONS array
+### SECTIONS array (dynamic — do NOT hardcode)
 ```javascript
-// Generated from the LaTeX source. Each entry is {title, slide} where slide is the 0-based index.
-const SECTIONS = {{SECTIONS_JSON}};
+// SECTIONS is built dynamically at runtime from slide data-section attributes.
+// Do NOT hardcode page numbers — they go stale when slides are added/removed.
+let SECTIONS = [];
+
+// In DOMContentLoaded, after building SLIDES:
+let lastSection = '';
+SLIDES.forEach((s, i) => {
+  if (s.section && s.section !== lastSection) {
+    SECTIONS.push({ title: s.section, slide: i });
+    lastSection = s.section;
+  }
+});
+```
+
+### State variables
+```javascript
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null; // null = no filter active
 ```
 
 ### renderSlide
-Adds section-badge and frame-title programmatically:
+Adds bookmark button, section-badge, frame-title, and understanding bar:
 ```javascript
 function renderSlide(idx) {
   const s = SLIDES[idx];
   const el = document.getElementById('slideContent');
   if (typeof MathJax !== 'undefined' && MathJax.typesetClear) MathJax.typesetClear([el]);
   let html = '';
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  html += '<button class="bookmark-btn' + (isBM ? ' active' : '') + '" onclick="toggleBookmark(' + idx + ')" title="ブックマーク">⭐</button>';
   if (s.section) html += '<div class="section-badge">' + s.section + '</div>';
   if (s.title && s.title !== 'Note') html += '<div class="frame-title">' + s.title + '</div>';
   if (s.is_note) html += '<div class="note-frame"></div>';
   else html += s.html;
+  // Understanding bar
+  const u = understanding[idx] || '';
+  html += '<div class="understanding-bar">';
+  html += '<button class="understanding-btn' + (u==='ok'?' active-ok':'') + '" onclick="setUnderstanding(' + idx + ',\'ok\')">✅ わかった</button>';
+  html += '<button class="understanding-btn' + (u==='unsure'?' active-unsure':'') + '" onclick="setUnderstanding(' + idx + ',\'unsure\')">🤔 あやしい</button>';
+  html += '<button class="understanding-btn' + (u==='ng'?' active-ng':'') + '" onclick="setUnderstanding(' + idx + ',\'ng\')">❌ わからない</button>';
+  html += '</div>';
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
   setupFigureZoom(el);
   setupLinks(el);
+  updateStatusDot(idx);
   // Add copy buttons to <pre> blocks
   el.querySelectorAll('pre').forEach(pre => {
     const btn = document.createElement('button');
@@ -573,10 +649,15 @@ function renderSlide(idx) {
 ### Key design patterns
 - **Getter functions** for canvas: `getCanvas()`, `getCtx()` — never cache DOM references
 - **Draw color/size from UI**: `drawColor` variable + `sizeSlider` input range
-- **Section select dropdown**: populated from SECTIONS array
+- **Dynamic SECTIONS**: built at runtime from `data-section` attributes — never hardcode slide numbers
+- **Section select dropdown**: populated from dynamically built SECTIONS array
 - **Auto-save**: debounced 1s after each change via `scheduleSave()`
+- **localStorage includes**: notes, strokes, boardStrokes, understanding, bookmarks, lastSlide
+- **Filter navigation**: when `filteredIndices` is active, ◀/▶ skip to next/prev matching slide
+- **Export/Import**: JSON with normalized stroke coordinates (0–1 range) for portability across screen sizes
+- **Keyboard**: Escape handled before textarea check (so it works from notes); Space = next slide
 - **Last updated date**: auto-fill via `document.lastModified`
-- **Print mode**: renders all slides sequentially, skips note frames, SVG ID dedup
+- **Print mode**: renders all slides sequentially, skips note frames, SVG ID dedup; hides understanding/bookmark/filter
 
 ### Links
 - Text links: plain `<a href="...">text</a>` — normal style

@@ -70,6 +70,7 @@ For approach A, see `scripts/compile_tikz.sh`.
 
 The output is a single `.html` file. Key design decisions:
 - **`<template>` for slide data**: Slides are stored as `<template class="slide-data">` elements, not JSON. This makes the file readable and directly editable in any text editor. JS reads them via `document.querySelectorAll('template.slide-data')` in `DOMContentLoaded`.
+- **Dynamic SECTIONS**: Do NOT hardcode section page numbers. `SECTIONS` is built dynamically at runtime by scanning `SLIDES` for `data-section` changes. This prevents page numbers from going stale when slides are added/removed.
 - **Single file**: Everything (CSS, JS, SVGs, slide content) in one `.html` file for easy distribution via GitHub Pages etc.
 - **MathJax 3** with mathtools extension: Better support for `\textcolor{red!50!black}{}`, `\coloneqq`, `\text{}` with CJK, and complex environments.
 - **Link separation**: Text links use plain `<a>` tags. QR links use `<a class="qr-link">🔗 QRリンク</a>`. Never put `qr-link` class on text links.
@@ -104,14 +105,30 @@ The output is a single `.html` file. Key design decisions:
 - Export all notes as Markdown
 - **Default state: collapsed** — the panel starts with CSS class `collapsed` so it is hidden on load. Users toggle it with `N` key or 📝 button
 
+### Understanding / Bookmarks / Filter (学習進捗)
+- **Understanding bar**: Below each slide, three buttons — ✅わかった / 🤔あやしい / ❌わからない. Stored in `understanding[slideIndex] = 'ok'|'unsure'|'ng'`. Click again to toggle off.
+- **Status dot**: A small colored dot next to page info in the topbar (green/yellow/red). Created dynamically via `updateStatusDot(idx)`.
+- **Bookmark**: ⭐ button at top-right of slide content. Stored in `bookmarks[slideIndex] = true`.
+- **Filter bar**: Toggle via 🔍 button. Filter chips: すべて / ⭐ブックマーク / ✅わかった / 🤔あやしい / ❌わからない / ⬜未チェック.
+  - When a filter is active, `filteredIndices` is set and ◀/▶ skip to the next matching slide.
+  - Page info shows filtered position: `3/12 [45]` (3rd of 12 filtered, actual slide 45).
+- All hidden in print mode via CSS.
+
+### Export / Import (データ書き出し/読み込み)
+- **Export (💾)**: Saves notes, understanding, bookmarks, strokes (normalized to 0–1 range), boardStrokes as JSON.
+  - Filename: `{lecture}_study_{date}.json`
+  - Includes `version: 1`, `canvasSize`, `exportDate`, `slideCount` for portability.
+- **Import (📂)**: Reads JSON, denormalizes strokes back to current canvas size, merges into existing data.
+  - Detects already-normalized coordinates (`p.x <= 1.5`) to handle mixed data.
+
 ### Local Storage (ローカル保存)
-- Saves notes, strokes, and last viewed slide position to `localStorage`
+- Saves notes, strokes, boardStrokes, understanding, bookmarks, and last viewed slide position to `localStorage`
 - Storage key: `'beamer_' + location.pathname` (unique per file/URL, so multiple slide sets don't conflict)
 - Auto-saves 1 second after each change (debounced via `scheduleSave`)
 - Also saves on `beforeunload` (page close/refresh)
-- Restores on page load: notes, strokes, and last slide position
-- Clear button (🗑️) in topbar with confirmation dialog
-- Hook `scheduleSave()` into: endDraw, undoStroke, clearStrokes, showSlide, clearNote, note input
+- Restores on page load: notes, strokes, understanding, bookmarks, and last slide position
+- Clear button (🗑️) in topbar with confirmation dialog — warns user to export first
+- Hook `scheduleSave()` into: endDraw, undoStroke, clearStrokes, showSlide, clearNote, note input, setUnderstanding, toggleBookmark
 
 ### Print / Handout Mode
 - Renders all slides sequentially with adjustable margin below each
@@ -156,13 +173,14 @@ QR Generator:  https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js
 | Key | Action |
 |-----|--------|
 | ← → | Slide navigation |
+| Space | Next slide (when not in draw mode) |
 | D | Toggle drawing mode |
 | P / H / E / L | Pen / Highlighter / Eraser / Pointer (in draw mode) |
 | B | Toggle board space (in draw mode) |
 | N | Toggle notes panel |
 | R | Reveal/hide all phantom blanks |
-| Ctrl+Z | Undo last stroke |
-| Esc | Close lightbox/video modal |
+| Ctrl+Z / Cmd+Z | Undo last stroke |
+| Esc | Close lightbox/video modal / board (works even in textarea) |
 
 ## Common Pitfalls
 
