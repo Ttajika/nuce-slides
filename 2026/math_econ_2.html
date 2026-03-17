@@ -182,6 +182,37 @@ kbd { background:#374151; padding:1px 5px; border-radius:3px; border:1px solid #
 .color-dot.active { border-color:#fff; transform:scale(1.2); }
 .size-range { width:70px; accent-color:var(--accent); }
 .tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar { display:flex; gap:6px; justify-content:center; padding:8px 0; border-top:1px solid var(--border); position:sticky; bottom:0; background:var(--surface); z-index:4; }
+.understanding-btn { padding:5px 14px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.15s; color:var(--text-dim); }
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn { position:absolute; top:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s; z-index:5; padding:4px; }
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+.slide-content { position:relative; }
+
+/* ═══ STATUS BADGE (topbar) ═══ */
+.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-left:6px; vertical-align:middle; }
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar { display:none; align-items:center; gap:6px; padding:4px 16px; background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px; }
+.filter-bar.show { display:flex; }
+.filter-chip { padding:3px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s; }
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar, body.print-mode .bookmark-btn, body.print-mode .filter-bar { display:none !important; }
 </style>
 </head>
 <body class="slide-mode">
@@ -200,8 +231,24 @@ kbd { background:#374151; padding:1px 5px; border-radius:3px; border:1px solid #
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
 </div>
 
 <div class="draw-toolbar" id="drawToolbar">
@@ -296,6 +343,10 @@ let SECTIONS = [];
 let SLIDES = [];
 let current = 0, mode = 'slide';
 let notes = {}, strokes = {};
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null; // null = no filter active
 let drawMode = false, drawTool = 'pen', drawColor = '#e94560', drawingNow = false;
 let currentStroke = null, boardMode = false;
 let pointerPos = null;
@@ -315,7 +366,12 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   current = idx;
   renderSlide(idx);
-  document.getElementById('pageInfo').textContent = (idx+1) + ' / ' + SLIDES.length;
+  let pageText = (idx+1) + ' / ' + SLIDES.length;
+  if (filteredIndices && filteredIndices.length > 0) {
+    const pos = filteredIndices.indexOf(idx);
+    if (pos >= 0) pageText = (pos+1) + '/' + filteredIndices.length + ' [' + (idx+1) + ']';
+  }
+  document.getElementById('pageInfo').textContent = pageText;
   document.getElementById('noteSlideNum').textContent = idx+1;
   document.getElementById('noteArea').value = notes[idx] || '';
   // Update section select
@@ -339,19 +395,36 @@ function renderSlide(idx) {
   const el = document.getElementById('slideContent');
   if (typeof MathJax !== 'undefined' && MathJax.typesetClear) MathJax.typesetClear([el]);
   let html = '';
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  html += '<button class="bookmark-btn' + (isBM ? ' active' : '') + '" onclick="toggleBookmark(' + idx + ')" title="ブックマーク">⭐</button>';
   if (s.section) html += '<div class="section-badge">' + s.section + '</div>';
   if (s.title && s.title !== 'Note') html += '<div class="frame-title">' + s.title + '</div>';
   if (s.is_note) html += '<div class="note-frame"></div>';
   else html += s.html;
+  // Understanding bar
+  const u = understanding[idx] || '';
+  html += '<div class="understanding-bar">';
+  html += '<button class="understanding-btn' + (u==='ok'?' active-ok':'') + '" onclick="setUnderstanding(' + idx + ',\'ok\')">✅ わかった</button>';
+  html += '<button class="understanding-btn' + (u==='unsure'?' active-unsure':'') + '" onclick="setUnderstanding(' + idx + ',\'unsure\')">🤔 あやしい</button>';
+  html += '<button class="understanding-btn' + (u==='ng'?' active-ng':'') + '" onclick="setUnderstanding(' + idx + ',\'ng\')">❌ わからない</button>';
+  html += '</div>';
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
   setupFigureZoom(el);
   setupLinks(el);
+  updateStatusDot(idx);
 }
 
-function nextSlide() { showSlide(current+1); }
-function prevSlide() { showSlide(current-1); }
+function nextSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { nextFiltered(); return; }
+  showSlide(current+1);
+}
+function prevSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { prevFiltered(); return; }
+  showSlide(current-1);
+}
 function goSlide(i) { showSlide(i); }
 function goToSection(v) { if (v !== '') showSlide(parseInt(v)); }
 
@@ -744,7 +817,7 @@ function scheduleSave() {
 function saveLocal() {
   try {
     notes[current] = document.getElementById('noteArea').value;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, lastSlide: current }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }));
   } catch(e) {}
 }
 
@@ -755,18 +828,211 @@ function loadLocal() {
     if (data.notes) notes = data.notes;
     if (data.strokes) strokes = data.strokes;
     if (data.boardStrokes) boardStrokes = data.boardStrokes;
+    if (data.understanding) understanding = data.understanding;
+    if (data.bookmarks) bookmarks = data.bookmarks;
     if (typeof data.lastSlide === 'number') current = data.lastSlide;
   } catch(e) {}
 }
 
 function clearLocal() {
-  if (confirm('保存されたメモ・手書きデータをすべて消去しますか？')) {
+  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
     localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
     boardStrokes = {};
+    understanding = {};
+    bookmarks = {};
+    document.getElementById('noteArea').value = '';
+    redrawStrokes();
     showSlide(current);
   }
+}
+
+// ─── Understanding ───
+function setUnderstanding(idx, level) {
+  if (understanding[idx] === level) {
+    delete understanding[idx]; // toggle off
+  } else {
+    understanding[idx] = level;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+function updateStatusDot(idx) {
+  let dot = document.getElementById('statusDot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.id = 'statusDot';
+    dot.className = 'status-dot';
+    document.getElementById('pageInfo').after(dot);
+  }
+  const u = understanding[idx];
+  dot.className = 'status-dot' + (u ? ' ' + u : '');
+}
+
+// ─── Bookmarks ───
+function toggleBookmark(idx) {
+  if (bookmarks[idx]) {
+    delete bookmarks[idx];
+  } else {
+    bookmarks[idx] = true;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+// ─── Filter ───
+function toggleFilter() {
+  document.getElementById('filterBar').classList.toggle('show');
+}
+
+function setFilter(type, el) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (type === 'all') {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < SLIDES.length; i++) {
+      if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
+      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
+      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
+      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
+      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
+    }
+  }
+  updateFilterCount();
+  if (filteredIndices && filteredIndices.length > 0 && !filteredIndices.includes(current)) {
+    showSlide(filteredIndices[0]);
+  }
+}
+
+function updateFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  if (!filteredIndices) { el.textContent = ''; return; }
+  el.textContent = filteredIndices.length + ' / ' + SLIDES.length + ' スライド';
+}
+
+function nextFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { showSlide(current+1); return; }
+  const next = filteredIndices.find(i => i > current);
+  if (next !== undefined) showSlide(next);
+  else showSlide(filteredIndices[0]); // wrap
+}
+
+function prevFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { showSlide(current-1); return; }
+  const prev = [...filteredIndices].reverse().find(i => i < current);
+  if (prev !== undefined) showSlide(prev);
+  else showSlide(filteredIndices[filteredIndices.length - 1]); // wrap
+}
+
+function revealAllPhantoms() {
+  document.querySelectorAll('.phantom').forEach(p => p.classList.toggle('revealed'));
+}
+
+// ─── Export / Import ───
+function exportData() {
+  notes[current] = document.getElementById('noteArea').value;
+  const canvas = getCanvas();
+  const cw = canvas ? canvas.width : 1;
+  const ch = canvas ? canvas.height : 1;
+
+  const normalizeStrokes = (src) => {
+    const out = {};
+    for (const [k, arr] of Object.entries(src || {})) {
+      out[k] = arr.map(s => ({
+        ...s,
+        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
+      }));
+    }
+    return out;
+  };
+
+  const data = {
+    version: 1,
+    title: document.querySelector('.topbar-title')?.textContent || '',
+    exportDate: new Date().toISOString(),
+    slideCount: SLIDES.length,
+    canvasSize: { w: cw, h: ch },
+    notes,
+    understanding,
+    bookmarks,
+    strokes: normalizeStrokes(strokes),
+    boardStrokes: normalizeStrokes(boardStrokes),
+    lastSlide: current,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.download = 'math_econ2_study_' + dateStr + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) { alert('形式が不正です'); return; }
+
+      const merge = confirm(
+        '読み込みモードを選んでください:\n\n' +
+        '「OK」→ 既存データに上書き（マージ）\n' +
+        '「キャンセル」→ 読み込み中止'
+      );
+      if (!merge) return;
+
+      const canvas = getCanvas();
+      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
+      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
+
+      const denormalizeStrokes = (src) => {
+        const out = {};
+        for (const [k, arr] of Object.entries(src || {})) {
+          out[k] = arr.map(s => ({
+            ...s,
+            points: s.points.map(p => ({
+              x: p.x <= 1.5 ? p.x * cw : p.x,
+              y: p.y <= 1.5 ? p.y * ch : p.y,
+            }))
+          }));
+        }
+        return out;
+      };
+
+      if (data.notes) Object.assign(notes, data.notes);
+      if (data.understanding) Object.assign(understanding, data.understanding);
+      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+      if (data.strokes) {
+        const dn = denormalizeStrokes(data.strokes);
+        Object.assign(strokes, dn);
+      }
+      if (data.boardStrokes) {
+        const dn = denormalizeStrokes(data.boardStrokes);
+        Object.assign(boardStrokes, dn);
+      }
+
+      saveLocal();
+      showSlide(current);
+      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ─── Print Mode ───
@@ -861,23 +1127,21 @@ function bindCanvasEvents() {
 
 // ─── Keyboard ───
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
+  if (e.key === 'Escape') { closeLightbox(); closeVideo(); return; }
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   if (mode !== 'slide') return;
-  if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
-  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoStroke(); return; }
+  if (e.key === 'ArrowRight' || (e.key === ' ' && !drawMode)) { e.preventDefault(); nextSlide(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
   else if (e.key === 'd' || e.key === 'D') toggleDraw();
-  else if (drawMode && (e.key === 'p' || e.key === 'P')) setDrawTool('pen');
-  else if (drawMode && (e.key === 'h' || e.key === 'H')) setDrawTool('highlight');
-  else if (drawMode && (e.key === 'e' || e.key === 'E')) setDrawTool('eraser');
-  else if (drawMode && (e.key === 'l' || e.key === 'L')) setDrawTool('pointer');
-  else if ((drawMode || boardMode) && (e.key === 'b' || e.key === 'B')) toggleBoard();
+  else if (e.key === 'p' || e.key === 'P') { if (drawMode) setDrawTool('pen'); }
+  else if (e.key === 'h' || e.key === 'H') { if (drawMode) setDrawTool('highlight'); }
+  else if (e.key === 'e' || e.key === 'E') { if (drawMode) setDrawTool('eraser'); }
+  else if (e.key === 'l' || e.key === 'L') { if (drawMode) setDrawTool('pointer'); }
+  else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
-  else if (e.key === 'r' || e.key === 'R') {
-    document.querySelectorAll('.phantom').forEach(p => p.classList.toggle('revealed'));
-  }
-  else if (e.ctrlKey && e.key === 'z') undoStroke();
-  else if (e.key === 'Escape') { closeLightbox(); closeVideo(); }
+  else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
 });
 
 // Touch swipe
