@@ -1,0 +1,3737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>基礎ミクロ経済学 — 2026年度</title>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['\\[', '\\]'], ['$$', '$$']],
+    macros: {
+      R: '\\mathbb{R}',
+      P: '\\mathsf{Pr}',
+      condi: '\\mathrel{|}',
+      br: '\\mathrel{\\phantom{=}}',
+      brr: '\\\\&\\mathrel{\\phantom{=}}',
+      inte: '\\mathop{\\mathrm{int}}',
+      pd: ['\\frac{\\partial #1}{\\partial #2}', 2],
+      dd: ['\\frac{d #1}{d #2}', 2],
+      eqdef: '\\mathrel{:=}',
+      pdif: ['\\partial_{\\scriptscriptstyle{#1}}', 1],
+      uu: '\\underline{u}',
+      ou: '\\overline{u}',
+      ua: '\\underline{a}',
+      oa: '\\overline{a}',
+      d: '\\ d',
+      vvec: ['\\left[{#1 \\atop #2}\\right]', 2],
+    },
+    processEscapes: false,
+    tags: 'none',
+    color: { padding: '2px' }
+  },
+  options: {
+    skipHtmlTags: ['script','noscript','style','textarea','pre','code'],
+  },
+  startup: {
+    typeset: false
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e2e2e0;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --accent-light: #eff6ff;
+  --keyword: #dc2626;
+  --keyword-bg: #fef2f2;
+  --note-bg: #fffbeb;
+  --note-border: #fbbf24;
+  --phantom-bg: #e0e7ff;
+  --tikz-bg: #f0fdf4;
+  --tikz-border: #86efac;
+  --header-bg: #1e293b;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ═══ SLIDE VIEW MODE ═══ */
+body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 16px;
+  background: var(--header-bg); color:#fff;
+  flex-shrink:0; z-index:100;
+}
+.topbar-title { font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.topbar-nav { display:flex; align-items:center; gap:6px; }
+.nav-btn {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+  color:#fff; padding:4px 10px; border-radius:4px; cursor:pointer;
+  font-size:13px; font-family:inherit; transition:all 0.15s;
+}
+.nav-btn:hover { background:rgba(255,255,255,0.25); }
+.page-info {
+  font-size:13px; color:rgba(255,255,255,0.7);
+  font-family:'JetBrains Mono',monospace; min-width:70px; text-align:center;
+}
+.section-select {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+  color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
+  font-family:inherit; cursor:pointer; max-width:200px;
+}
+.section-select option { background:#1e293b; color:#fff; }
+
+/* Main layout */
+.main { display:flex; flex:1; overflow:hidden; }
+
+.slide-area {
+  flex:1; display:flex; align-items:stretch; justify-content:center;
+  overflow:auto; background:var(--bg); padding:24px 32px;
+  position:relative;
+}
+.slide-content {
+  max-width:1100px; width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:28px 36px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  overflow:auto;
+}
+
+.slide-content .frame-title {
+  font-size:20px; font-weight:700; color:var(--accent);
+  border-bottom:2px solid var(--accent);
+  padding-bottom:8px; margin-bottom:16px;
+}
+.slide-content .section-badge {
+  font-size:11px; color:var(--text-dim); margin-bottom:4px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+
+/* Notes panel */
+.notes-panel {
+  width:300px; background:var(--note-bg);
+  border-left:3px solid var(--note-border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  transition:width 0.2s;
+}
+.notes-panel.collapsed { width:0; overflow:hidden; border-left:none; }
+.notes-header {
+  padding:8px 12px; background:rgba(251,191,36,0.15);
+  border-bottom:1px solid var(--note-border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.notes-header h3 { font-size:13px; font-weight:500; color:#92400e; }
+.notes-textarea {
+  flex:1; background:transparent; border:none; color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; font-size:14px; line-height:1.8;
+  padding:12px; resize:none; outline:none;
+}
+.notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
+
+/* ═══ CONTENT STYLES ═══ */
+.columns { display:flex; gap:24px; }
+.column { flex:1; min-width:0; }
+
+ul, ol { padding-left:1.5em; margin:0.3em 0; }
+li { margin:0.4em 0; }
+li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
+li.sub-item::before { content:''; }
+li.spacer { list-style:none; height:0.8em; }
+li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
+li.custom-label { list-style:none; }
+li.custom-label .label { font-weight:500; margin-right:4px; }
+ol.custom-enum { padding-left:1.5em; }
+
+.keyword {
+  color:var(--keyword); background:var(--keyword-bg);
+  padding:1px 4px; border-radius:3px; font-weight:700;
+}
+.accent { color:var(--accent); }
+.red { color:#9b2d86; }
+strong.keyword { font-weight:700; }
+
+a { color:var(--accent); text-decoration:underline; }
+a:hover { color:#1e40af; }
+.qr-link {
+  display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px;
+  background:var(--accent-light); padding:4px 10px; border-radius:4px;
+  text-decoration:none; margin:4px 0; font-size:13px; cursor:pointer;
+  color:var(--accent);
+}
+.qr-link:hover { background:#dbeafe; }
+.qr-link .qr-img {
+  display:none; width:100%; margin-top:6px; padding:4px;
+  background:#fff; border-radius:4px;
+}
+.qr-link.qr-open .qr-img { display:block; }
+.qr-link.qr-open { flex-direction:column; }
+
+/* Video modal */
+.video-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.9); align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.video-overlay.open { display:flex; }
+.video-container {
+  width:min(80vw, 800px); aspect-ratio:16/9;
+  cursor:default;
+}
+.video-container iframe { width:100%; height:100%; border:none; border-radius:8px; }
+.video-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
+  align-items:center; justify-content:center;
+}
+.video-overlay.open ~ .video-close { display:flex; }
+
+.phantom {
+  background:var(--phantom-bg); color:transparent;
+  padding:2px 8px; border-radius:3px; border:1px dashed #818cf8;
+  user-select:none; cursor:pointer; transition:color 0.3s;
+}
+.phantom.revealed { color:var(--accent); background:#c7d2fe; }
+
+.tikz-placeholder {
+  background:var(--tikz-bg); border:2px dashed var(--tikz-border);
+  border-radius:8px; padding:20px; text-align:center;
+  margin:12px 0; color:#166534; font-size:14px;
+}
+.tikz-icon { font-size:24px; display:block; margin-bottom:4px; }
+
+.tikz-figure {
+  margin:10px 0; text-align:center; cursor:zoom-in;
+  transition:opacity 0.15s;
+}
+.tikz-figure:hover { opacity:0.85; }
+.tikz-figure svg {
+  max-height:260px;
+}
+body.print-mode .tikz-figure svg {
+  max-height:180px;
+}
+body.print-mode .tikz-figure { cursor:default; }
+
+/* ═══ LIGHTBOX ═══ */
+.lightbox {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.85);
+  align-items:center; justify-content:center;
+  cursor:zoom-out;
+}
+.lightbox.open { display:flex; }
+.lightbox-inner {
+  background:#fff; border-radius:8px; padding:20px;
+  max-width:90vw; max-height:90vh; overflow:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+  cursor:default;
+}
+.lightbox-inner svg { width:100%; height:auto; max-height:80vh; display:block; }
+.lightbox-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
+  align-items:center; justify-content:center;
+}
+.lightbox.open + .lightbox-close { display:flex; }
+
+.math-display { margin:10px 0; overflow-x:auto; }
+
+.section-title-big {
+  text-align:center; font-size:36px; font-weight:700;
+  color:var(--accent); padding:60px 0;
+  font-family:'Noto Serif JP',serif;
+}
+
+.slide-table {
+  border-collapse:collapse; margin:8px auto;
+}
+.slide-table td, .slide-table th {
+  border:1px solid var(--border); padding:4px 12px; text-align:center;
+}
+
+.multicols { column-count:2; column-gap:24px; }
+
+.note-frame {
+  display:flex; align-items:center; justify-content:center;
+  min-height:200px; color:var(--text-dim); font-size:16px;
+}
+.note-frame::before { content:'📝 ノート用スペース'; }
+
+.framed { border:1px solid var(--border); padding:8px; border-radius:4px; margin:8px 0; }
+
+.small { font-size:0.85em; }
+.tiny { font-size:0.75em; }
+
+/* ═══ PRINT / HANDOUT MODE ═══ */
+body.print-mode {
+  background:#fff;
+}
+body.print-mode .topbar,
+body.print-mode .notes-panel,
+body.print-mode .nav-btn,
+body.print-mode .topbar-nav { display:none !important; }
+
+body.print-mode .main {
+  display:block; overflow:visible;
+}
+body.print-mode .slide-area {
+  display:block; overflow:visible; padding:0;
+}
+
+.print-slide {
+  page-break-inside:auto;
+  border:1px solid #ccc;
+  padding:20px 28px;
+  margin:12px auto;
+  max-width:780px;
+  background:#fff;
+  position:relative;
+  overflow:visible;
+}
+.print-slide .slide-number {
+  position:absolute; top:8px; right:12px;
+  font-size:11px; color:#999;
+  font-family:'JetBrains Mono',monospace;
+}
+.print-slide .frame-title {
+  font-size:16px; font-weight:700; color:var(--accent);
+  border-bottom:1.5px solid var(--accent);
+  padding-bottom:4px; margin-bottom:10px;
+}
+.print-slide .section-badge {
+  font-size:10px; color:#999; margin-bottom:2px;
+}
+.print-slide-title {
+  padding-top:8px; padding-bottom:8px;
+}
+.print-slide-title .section-title-big {
+  padding:12px 0;
+}
+
+/* Print: figures get proper spacing */
+.print-slide .tikz-figure { margin:8px 0 12px; }
+.print-slide .tikz-figure svg { max-height:160px; }
+
+/* Print: QR codes always visible */
+body.print-mode .qr-link .qr-img { display:block !important; }
+body.print-mode .qr-link { flex-direction:column; }
+
+.print-note-area {
+  margin-top:8px;
+}
+
+.print-header {
+  text-align:center; padding:20px 0 10px;
+  border-bottom:2px solid var(--accent);
+  margin:0 auto 20px; max-width:780px;
+}
+.print-header h1 { font-size:22px; color:var(--accent); }
+.print-header p { font-size:12px; color:#666; }
+.print-header .page-break-toggle {
+  margin-top:8px; padding:4px 12px;
+  font-size:12px; cursor:pointer;
+  border:1px solid #ccc; border-radius:4px;
+  background:#f5f5f5; color:#333;
+}
+.print-header .page-break-toggle:hover { background:#e8e8e8; }
+body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
+
+@media print {
+  body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  .print-note-area { min-height:60px; }
+}
+
+/* ═══ KEYBOARD HINTS ═══ */
+.hints {
+  position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:6px;
+  font-size:11px; color:#ccc; display:none; z-index:200; white-space:nowrap;
+}
+.hints.show { display:block; }
+kbd {
+  background:#374151; padding:1px 5px; border-radius:3px;
+  border:1px solid #4b5563; font-family:'JetBrains Mono',monospace; font-size:11px;
+}
+
+/* ═══ MODE TOGGLE ═══ */
+.mode-toggle {
+  position:fixed; bottom:12px; right:12px; z-index:200;
+  background:var(--header-bg); color:#fff;
+  padding:8px 16px; border-radius:6px; cursor:pointer;
+  font-size:13px; font-family:inherit; border:none;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+body.print-mode .mode-toggle { bottom:12px; }
+
+/* ═══ DRAWING ═══ */
+.draw-canvas {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  z-index:10; pointer-events:none;
+}
+.draw-canvas.active { pointer-events:auto; cursor:crosshair; }
+.draw-canvas.eraser { cursor:cell; }
+.draw-canvas.pointer { cursor:none; }
+
+.board-popup { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; z-index:300; align-items:center; justify-content:center; }
+.board-popup.show { display:flex; }
+.board-popup-inner { position:relative; width:min(900px,90vw); height:min(600px,80vh); background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.3); overflow:hidden; }
+.board-popup-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--header-bg); color:#fff; font-size:13px; }
+.board-popup-header button { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:4px; cursor:pointer; padding:4px 8px; font-size:13px; }
+.board-popup-header button:hover { background:rgba(255,255,255,0.3); }
+.board-popup-canvas-wrap { position:relative; width:100%; height:calc(100% - 40px); }
+.board-popup-canvas-wrap canvas { position:absolute; top:0; left:0; width:100%; height:100%; cursor:crosshair; }
+
+.draw-toolbar {
+  display:none; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:var(--header-bg); color:#fff;
+  flex-shrink:0; z-index:100;
+}
+.draw-toolbar.show { display:flex; }
+
+.tool-group {
+  display:flex; align-items:center; gap:4px;
+  padding-right:10px; border-right:1px solid rgba(255,255,255,0.15);
+  margin-right:4px;
+}
+.tool-group:last-child { border-right:none; }
+
+.draw-btn {
+  width:30px; height:30px; border-radius:4px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.1); color:#fff;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:14px; transition:all 0.15s;
+}
+.draw-btn:hover { background:rgba(255,255,255,0.25); }
+.draw-btn.active { background:var(--accent); border-color:var(--accent); }
+
+.color-dot {
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid rgba(255,255,255,0.3); cursor:pointer;
+  transition:transform 0.1s;
+}
+.color-dot:hover { transform:scale(1.2); }
+.color-dot.active { border-color:#fff; transform:scale(1.2); }
+
+.size-range { width:70px; accent-color:var(--accent); }
+.tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar {
+  display:flex; gap:6px; justify-content:center; padding:8px 0;
+  border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--surface); z-index:4;
+}
+.understanding-btn {
+  padding:5px 14px; border-radius:16px; border:1.5px solid var(--border);
+  background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit;
+  transition:all 0.15s; color:var(--text-dim);
+}
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn {
+  position:absolute; top:8px; right:8px; background:none; border:none;
+  font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s;
+  z-index:5; padding:4px;
+}
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+.slide-content { position:relative; }
+
+/* ═══ STATUS BADGE (topbar) ═══ */
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-left:6px; vertical-align:middle;
+}
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  display:none; align-items:center; gap:6px; padding:4px 16px;
+  background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px;
+}
+.filter-bar.show { display:flex; }
+.filter-chip {
+  padding:3px 10px; border-radius:12px; border:1px solid var(--border);
+  background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s;
+}
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar,
+body.print-mode .bookmark-btn,
+body.print-mode .filter-bar { display:none !important; }
+
+/* ═══ GEOGEBRA EMBED ═══ */
+.geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
+.geogebra-embed .print-label { display:none; }
+body.print-mode .geogebra-embed iframe { display:none; }
+body.print-mode .geogebra-embed .print-label {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
+</style>
+</head>
+<body class="slide-mode">
+
+<div class="topbar" id="topbar">
+  <div class="topbar-title">基礎ミクロ経済学 — 2026年度</div>
+  <div class="topbar-nav">
+    <select class="section-select" id="sectionSelect" onchange="goToSection(this.value)">
+      <option value="">— セクション —</option>
+    </select>
+    <button class="nav-btn" onclick="goSlide(0)">⏮</button>
+    <button class="nav-btn" onclick="prevSlide()">◀</button>
+    <span class="page-info" id="pageInfo">1 / ?</span>
+    <button class="nav-btn" onclick="nextSlide()">▶</button>
+    <button class="nav-btn" onclick="goSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn" onclick="toggleNotes()">📝</button>
+    <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
+    <button class="nav-btn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
+    <button class="nav-btn" onclick="toggleHints()">?</button>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
+</div>
+
+<!-- Draw toolbar — below topbar/filter, above main -->
+<div class="draw-toolbar" id="drawToolbar">
+  <div class="tool-group">
+    <span class="tool-label">ツール:</span>
+    <button class="draw-btn active" id="btnPen" onclick="setDrawTool('pen')" title="ペン (P)">✏️</button>
+    <button class="draw-btn" id="btnHL" onclick="setDrawTool('highlight')" title="ハイライト (H)">🖍️</button>
+    <button class="draw-btn" id="btnPointer" onclick="setDrawTool('pointer')" title="ポインター (L)">🔴</button>
+    <button class="draw-btn" id="btnEraser" onclick="setDrawTool('eraser')" title="消しゴム (E)">🧹</button>
+  </div>
+  <div class="tool-group">
+    <span class="tool-label">色:</span>
+    <div class="color-dot active" style="background:#e94560" onclick="setDrawColor('#e94560',this)"></div>
+    <div class="color-dot" style="background:#4cc9f0" onclick="setDrawColor('#4cc9f0',this)"></div>
+    <div class="color-dot" style="background:#f9c74f" onclick="setDrawColor('#f9c74f',this)"></div>
+    <div class="color-dot" style="background:#333" onclick="setDrawColor('#333',this)"></div>
+    <div class="color-dot" style="background:#1d4ed8" onclick="setDrawColor('#1d4ed8',this)"></div>
+  </div>
+  <div class="tool-group">
+    <span class="tool-label">太さ:</span>
+    <input type="range" class="size-range" min="1" max="16" value="3" id="sizeSlider">
+  </div>
+  <div class="tool-group">
+    <button class="draw-btn" onclick="undoStroke()" title="取消 (Ctrl+Z)">↩️</button>
+    <button class="draw-btn" onclick="clearStrokes()" title="全消去">🗑️</button>
+    <button class="draw-btn" id="btnBoard" onclick="toggleBoard()" title="板書スペース (B)">📋</button>
+  </div>
+</div>
+
+<div class="main" id="mainArea">
+  <div class="slide-area" id="slideArea">
+    <div class="slide-content" id="slideContent"></div>
+    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+  </div>
+  <div class="notes-panel collapsed" id="notesPanel">
+    <div class="notes-header">
+      <h3>📝 メモ（スライド <span id="noteSlideNum">1</span>）</h3>
+      <button class="nav-btn" onclick="clearNote()" style="font-size:11px;padding:2px 6px;background:rgba(0,0,0,0.1);color:#92400e;border-color:rgba(0,0,0,0.1);">クリア</button>
+    </div>
+    <textarea class="notes-textarea" id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
+  </div>
+</div>
+
+
+<div class="hints" id="hints">
+  <kbd>←</kbd><kbd>→</kbd> スライド移動 &nbsp;
+  <kbd>D</kbd> 書き込みモード &nbsp;
+  <kbd>P</kbd> ペン &nbsp;
+  <kbd>H</kbd> ハイライト &nbsp;
+  <kbd>E</kbd> 消しゴム &nbsp;
+  <kbd>B</kbd> 板書スペース &nbsp;
+  <kbd>N</kbd> メモ欄 &nbsp;
+  <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>Ctrl+Z</kbd> 取り消し
+</div>
+
+<button class="mode-toggle" id="modeToggle" onclick="toggleMode()">📄 印刷用表示</button>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-inner" id="lightboxInner"></div>
+</div>
+<button class="lightbox-close" onclick="closeLightbox()">✕</button>
+
+<div class="video-overlay" id="videoOverlay" onclick="closeVideo(event)">
+  <div class="video-container" id="videoContainer"></div>
+</div>
+<button class="video-close" onclick="closeVideo()">✕</button>
+
+<div class="board-popup" id="boardPopup" onclick="if(event.target===this)toggleBoard()">
+  <div class="board-popup-inner">
+    <div class="board-popup-header">
+      <span>📋 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="color-dot" style="background:#e63946;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#e63946',this)"></div>
+        <div class="color-dot" style="background:#2563eb;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#2563eb',this)"></div>
+        <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
+        <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
+        <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
+        <button id="boardEraserBtn" onclick="toggleBoardEraser()" title="消しゴム">🧹</button>
+        <button onclick="undoBoardStroke()">↩️</button>
+        <button onclick="clearBoardStrokes()">🗑️</button>
+        <button onclick="toggleBoard()">✕</button>
+      </div>
+    </div>
+    <div class="board-popup-canvas-wrap">
+      <canvas id="boardCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// SLIDES is populated from <template> elements after DOM is ready
+let SLIDES = [];
+let SECTIONS = [];
+
+let current = 0;
+let notes = {};
+let mode = 'slide';
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null; // null = no filter active
+
+// ═══ LOCAL STORAGE ═══
+const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
+
+function saveLocal() {
+  try {
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) { /* quota exceeded or unavailable */ }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.notes) notes = data.notes;
+    if (data.strokes) strokes = data.strokes;
+    if (data.boardStrokes) boardStrokes = data.boardStrokes;
+    if (data.understanding) understanding = data.understanding;
+    if (data.bookmarks) bookmarks = data.bookmarks;
+    if (typeof data.lastSlide === 'number') current = data.lastSlide;
+  } catch(e) { /* parse error */ }
+}
+
+function clearLocal() {
+  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
+    localStorage.removeItem(STORAGE_KEY);
+    notes = {};
+    strokes = {};
+    boardStrokes = {};
+    understanding = {};
+    bookmarks = {};
+    document.getElementById('noteArea').value = '';
+    redrawStrokes();
+    showSlide(current);
+  }
+}
+
+// Auto-save periodically
+let saveTimer = null;
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveLocal, 1000);
+}
+
+// ═══ DRAWING STATE ═══
+let drawMode = false;
+let drawTool = 'pen';
+let drawColor = '#e94560';
+let drawingNow = false;
+let strokes = {};      // slide index -> array of strokes
+let currentStroke = null;
+let pointerPos = null; // for pointer tool
+
+function getCanvas() { return document.getElementById('drawCanvas'); }
+function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
+
+function toggleDraw() {
+  drawMode = !drawMode;
+  const canvas = getCanvas();
+  const toolbar = document.getElementById('drawToolbar');
+  const btn = document.getElementById('drawToggleBtn');
+  if (canvas) canvas.classList.toggle('active', drawMode);
+  toolbar.classList.toggle('show', drawMode);
+  btn.style.background = drawMode ? 'var(--accent)' : '';
+  if (drawMode) resizeDrawCanvas();
+}
+
+function setDrawTool(t) {
+  drawTool = t;
+  const canvas = document.getElementById('drawCanvas');
+  canvas.classList.toggle('eraser', t === 'eraser');
+  canvas.classList.toggle('pointer', t === 'pointer');
+  document.getElementById('btnPen').classList.toggle('active', t === 'pen');
+  document.getElementById('btnHL').classList.toggle('active', t === 'highlight');
+  document.getElementById('btnPointer').classList.toggle('active', t === 'pointer');
+  document.getElementById('btnEraser').classList.toggle('active', t === 'eraser');
+  // Clear pointer dot when switching away
+  if (t !== 'pointer') { pointerPos = null; redrawStrokes(); }
+}
+
+function setDrawColor(c, el) {
+  drawColor = c;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function resizeDrawCanvas() {
+  const area = document.getElementById('slideArea');
+  const c = getCanvas();
+  if (!c) return;
+  c.width = area.scrollWidth;
+  c.height = area.scrollHeight;
+  redrawStrokes();
+}
+
+function getDrawPos(e) {
+  const c = getCanvas();
+  if (!c) return {x:0,y:0};
+  const rect = c.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: cx - rect.left, y: cy - rect.top };
+}
+
+function redrawStrokes() {
+  const c = getCanvas(); const ctx = getCtx();
+  if (!c || !ctx) return;
+  ctx.clearRect(0, 0, c.width, c.height);
+  const ss = strokes[current];
+  if (!ss) return;
+  ss.forEach(s => {
+    if (s.points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = s.alpha || 1;
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) {
+      ctx.lineTo(s.points[i].x, s.points[i].y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+  // Draw pointer dot
+  if (pointerPos) {
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(233, 69, 96, 0.7)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fill();
+  }
+}
+
+function startDraw(e) {
+  if (!drawMode) return;
+  e.preventDefault();
+  drawingNow = true;
+  const pos = getDrawPos(e);
+  if (drawTool === 'pointer') { pointerPos = pos; redrawStrokes(); return; }
+  if (drawTool === 'eraser') { eraseAt(pos); return; }
+  if (!strokes[current]) strokes[current] = [];
+  const sz = parseInt(document.getElementById('sizeSlider').value);
+  currentStroke = {
+    color: drawColor,
+    size: drawTool === 'highlight' ? sz * 3 : sz,
+    alpha: drawTool === 'highlight' ? 0.3 : 1,
+    points: [pos]
+  };
+  strokes[current].push(currentStroke);
+}
+
+function moveDraw(e) {
+  if (!drawMode) return;
+  const pos = getDrawPos(e);
+  if (drawTool === 'pointer') {
+    e.preventDefault();
+    pointerPos = pos;
+    redrawStrokes();
+    return;
+  }
+  if (!drawingNow) return;
+  e.preventDefault();
+  if (drawTool === 'eraser') { eraseAt(pos); return; }
+  if (currentStroke) {
+    currentStroke.points.push(pos);
+    redrawStrokes();
+  }
+}
+
+function endDraw(e) {
+  if (drawTool === 'pointer') { pointerPos = null; redrawStrokes(); }
+  if (drawingNow) scheduleSave();
+  drawingNow = false;
+  currentStroke = null;
+}
+
+function eraseAt(pos) {
+  if (!strokes[current]) return;
+  const r = parseInt(document.getElementById('sizeSlider').value) * 4;
+  strokes[current] = strokes[current].filter(s =>
+    !s.points.some(p => Math.abs(p.x - pos.x) < r && Math.abs(p.y - pos.y) < r)
+  );
+  redrawStrokes();
+}
+
+function undoStroke() {
+  if (strokes[current] && strokes[current].length > 0) {
+    strokes[current].pop();
+    redrawStrokes();
+    scheduleSave();
+  }
+}
+
+function clearStrokes() {
+  strokes[current] = [];
+  redrawStrokes();
+  scheduleSave();
+}
+
+// ═══ BOARD MODE ═══
+let boardMode = false;
+let boardStrokes = {};
+let boardColor = '#333';
+let boardDrawing = false;
+let boardCurrentStroke = null;
+let boardEraser = false;
+
+function toggleBoard() {
+  boardMode = !boardMode;
+  const popup = document.getElementById('boardPopup');
+  popup.classList.toggle('show', boardMode);
+  const btn = document.getElementById('btnBoard');
+  if (btn) btn.classList.toggle('active', boardMode);
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = current + 1;
+    setTimeout(() => { resizeBoardCanvas(); redrawBoardStrokes(); }, 50);
+  } else if (boardEraser) {
+    toggleBoardEraser();
+  }
+}
+
+function resizeBoardCanvas() {
+  const c = document.getElementById('boardCanvas');
+  const wrap = c.parentElement;
+  if (!c || !wrap) return;
+  c.width = wrap.clientWidth;
+  c.height = wrap.clientHeight;
+  redrawBoardStrokes();
+}
+
+function setBoardColor(col, el) {
+  boardColor = col;
+  document.querySelectorAll('#boardPopup .color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function getBoardPos(e) {
+  const c = document.getElementById('boardCanvas');
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+  return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
+}
+
+function toggleBoardEraser() {
+  boardEraser = !boardEraser;
+  const btn = document.getElementById('boardEraserBtn');
+  if (btn) btn.style.background = boardEraser ? 'var(--accent)' : '';
+  const c = document.getElementById('boardCanvas');
+  if (c) c.style.cursor = boardEraser ? 'cell' : 'crosshair';
+}
+
+function eraseBoardAt(pos) {
+  const sl = boardStrokes[current] || [];
+  const r = parseInt(document.getElementById('boardSizeSlider').value) * 4;
+  boardStrokes[current] = sl.filter(s =>
+    !s.points.some(p => Math.abs(p.x - pos.x) < r && Math.abs(p.y - pos.y) < r)
+  );
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function startBoardDraw(e) {
+  e.preventDefault();
+  const p = getBoardPos(e);
+  if (boardEraser) { eraseBoardAt(p); boardDrawing = true; return; }
+  boardDrawing = true;
+  const size = parseInt(document.getElementById('boardSizeSlider').value);
+  boardCurrentStroke = { color: boardColor, size, points: [p] };
+}
+
+function moveBoardDraw(e) {
+  if (!boardDrawing) return;
+  e.preventDefault();
+  if (boardEraser) { eraseBoardAt(getBoardPos(e)); return; }
+  if (!boardCurrentStroke) return;
+  boardCurrentStroke.points.push(getBoardPos(e));
+  redrawBoardStrokes(boardCurrentStroke);
+}
+
+function endBoardDraw() {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  boardDrawing = false;
+  if (!boardStrokes[current]) boardStrokes[current] = [];
+  boardStrokes[current].push(boardCurrentStroke);
+  boardCurrentStroke = null;
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function redrawBoardStrokes(tempStroke) {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const all = (boardStrokes[current] || []).concat(tempStroke ? [tempStroke] : []);
+  all.forEach(s => {
+    if (s.points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    ctx.stroke();
+  });
+}
+
+function undoBoardStroke() {
+  if (boardStrokes[current] && boardStrokes[current].length) {
+    boardStrokes[current].pop();
+    redrawBoardStrokes();
+    scheduleSave();
+  }
+}
+
+function clearBoardStrokes() {
+  boardStrokes[current] = [];
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function bindBoardCanvasEvents() {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  c.addEventListener('mousedown', startBoardDraw);
+  c.addEventListener('mousemove', moveBoardDraw);
+  c.addEventListener('mouseup', endBoardDraw);
+  c.addEventListener('mouseleave', endBoardDraw);
+  c.addEventListener('touchstart', startBoardDraw, {passive:false});
+  c.addEventListener('touchmove', moveBoardDraw, {passive:false});
+  c.addEventListener('touchend', endBoardDraw);
+}
+
+// Canvas events - bind via function for rebinding after print mode
+function bindCanvasEvents() {
+  const c = getCanvas();
+  if (!c) return;
+  c.addEventListener('mousedown', startDraw);
+  c.addEventListener('mousemove', moveDraw);
+  c.addEventListener('mouseup', endDraw);
+  c.addEventListener('mouseleave', endDraw);
+  c.addEventListener('touchstart', startDraw, {passive:false});
+  c.addEventListener('touchmove', moveDraw, {passive:false});
+  c.addEventListener('touchend', endDraw);
+}
+bindCanvasEvents();
+bindBoardCanvasEvents();
+
+window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
+
+// Init sections (populated in DOMContentLoaded)
+const sel = document.getElementById('sectionSelect');
+
+function renderSlide(idx) {
+  const s = SLIDES[idx];
+  const el = document.getElementById('slideContent');
+  // Clear MathJax state before replacing content
+  if (typeof MathJax !== 'undefined' && MathJax.typesetClear) {
+    MathJax.typesetClear([el]);
+  }
+  let html = '';
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  html += `<button class="bookmark-btn${isBM ? ' active' : ''}" onclick="toggleBookmark(${idx})" title="ブックマーク">⭐</button>`;
+  if (s.section) {
+    html += `<div class="section-badge">${s.section}</div>`;
+  }
+  if (s.title && s.title !== 'Note') {
+    html += `<div class="frame-title">${s.title}</div>`;
+  }
+  if (s.is_note) {
+    html += '<div class="note-frame"></div>';
+  } else {
+    html += s.html;
+  }
+  // Understanding bar
+  const u = understanding[idx] || '';
+  html += '<div class="understanding-bar">';
+  html += `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>`;
+  html += `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>`;
+  html += `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
+  html += '</div>';
+  el.innerHTML = html;
+  renderMath(el);
+  setupPhantoms(el);
+  setupFigureZoom(el);
+  setupLinks(el);
+  updateStatusDot(idx);
+}
+
+function renderMath(el) {
+  if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+    MathJax.typesetPromise([el]).catch(function(err) {
+      console.warn('MathJax typeset error:', err);
+    });
+  }
+}
+
+function setupPhantoms(el) {
+  el.querySelectorAll('.phantom').forEach(p => {
+    p.addEventListener('click', () => p.classList.toggle('revealed'));
+    p.title = 'クリックで表示';
+  });
+}
+
+function showSlide(idx) {
+  if (idx < 0 || idx >= SLIDES.length) return;
+  notes[current] = document.getElementById('noteArea').value;
+  scheduleSave();
+  current = idx;
+  renderSlide(idx);
+  let pageText = (idx+1) + ' / ' + SLIDES.length;
+  if (filteredIndices && filteredIndices.length > 0) {
+    const pos = filteredIndices.indexOf(idx);
+    if (pos >= 0) pageText = (pos+1) + '/' + filteredIndices.length + ' [' + (idx+1) + ']';
+  }
+  document.getElementById('pageInfo').textContent = pageText;
+  document.getElementById('noteSlideNum').textContent = idx+1;
+  document.getElementById('noteArea').value = notes[idx] || '';
+  // Update section select
+  let secIdx = '';
+  for (let i = SECTIONS.length-1; i >= 0; i--) {
+    if (idx >= SECTIONS[i].slide) { secIdx = SECTIONS[i].slide; break; }
+  }
+  sel.value = secIdx;
+  // Scroll to top
+  document.getElementById('slideArea').scrollTop = 0;
+  // Redraw canvas for this slide
+  setTimeout(() => {
+    const c = getCanvas(); const ctx = getCtx();
+    if (drawMode) resizeDrawCanvas();
+    else if (c && ctx) { c.width = c.parentElement.scrollWidth; c.height = c.parentElement.scrollHeight; redrawStrokes(); }
+    if (boardMode) {
+      document.getElementById('boardSlideNum').textContent = idx+1;
+      redrawBoardStrokes();
+    }
+  }, 50);
+}
+
+function nextSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { nextFiltered(); return; }
+  showSlide(current + 1);
+}
+function prevSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { prevFiltered(); return; }
+  showSlide(current - 1);
+}
+function goSlide(i) { showSlide(parseInt(i)); }
+function goToSection(v) { if (v !== '') showSlide(parseInt(v)); }
+
+function toggleNotes() {
+  document.getElementById('notesPanel').classList.toggle('collapsed');
+}
+function toggleHints() {
+  document.getElementById('hints').classList.toggle('show');
+}
+function clearNote() {
+  document.getElementById('noteArea').value = '';
+  notes[current] = '';
+  scheduleSave();
+}
+
+function revealAllPhantoms() {
+  document.querySelectorAll('.phantom').forEach(p => p.classList.toggle('revealed'));
+}
+
+// ═══ LIGHTBOX ═══
+function openLightbox(svgEl) {
+  const lb = document.getElementById('lightbox');
+  const inner = document.getElementById('lightboxInner');
+  inner.innerHTML = svgEl.outerHTML;
+  // Remove max-height constraint for expanded view
+  const svg = inner.querySelector('svg');
+  if (svg) { svg.style.maxHeight = '80vh'; svg.style.width = 'auto'; svg.style.maxWidth = '85vw'; }
+  lb.classList.add('open');
+}
+function closeLightbox(e) {
+  if (e && e.target.closest('.lightbox-inner')) return; // click inside
+  document.getElementById('lightbox').classList.remove('open');
+}
+function setupFigureZoom(container) {
+  container.querySelectorAll('.tikz-figure').forEach(fig => {
+    fig.addEventListener('click', () => {
+      const svg = fig.querySelector('svg');
+      if (svg) openLightbox(svg);
+    });
+  });
+}
+
+// ═══ VIDEO MODAL ═══
+function parseVimeoUrl(url) {
+  // Handles vimeo.com/ID and vimeo.com/ID/HASH
+  const m = url.match(/vimeo\.com\/([\d]+)(?:\/([a-zA-Z0-9]+))?/);
+  if (!m) return null;
+  let src = 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1';
+  if (m[2]) src += '&h=' + m[2];
+  return src;
+}
+function openVideo(url) {
+  const src = parseVimeoUrl(url);
+  if (!src) { window.open(url, '_blank'); return; }
+  const c = document.getElementById('videoContainer');
+  c.innerHTML = '<iframe src="' + src + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+  document.getElementById('videoOverlay').classList.add('open');
+}
+function closeVideo(e) {
+  if (e && e.target.closest('.video-container')) return;
+  document.getElementById('videoOverlay').classList.remove('open');
+  document.getElementById('videoContainer').innerHTML = '';
+}
+
+// ═══ QR CODE ═══
+function generateQR(url) {
+  if (typeof qrcode === 'undefined') return null;
+  const qr = qrcode(0, 'M');
+  qr.addData(url);
+  qr.make();
+  return qr.createSvgTag({cellSize:3, margin:2});
+}
+
+function setupLinks(container) {
+  container.querySelectorAll('.qr-link').forEach(link => {
+    const url = link.getAttribute('href');
+    if (!url) return;
+    const isVimeo = /vimeo\.com/.test(url);
+
+    // Prevent default navigation
+    link.addEventListener('click', e => e.preventDefault());
+
+    // Clear old content, rebuild
+    const label = isVimeo ? '▶ 動画を再生' : '🔗 QRコード';
+    link.textContent = '';
+
+    // Main button
+    const btn = document.createElement('span');
+    btn.textContent = label;
+    btn.style.cursor = 'pointer';
+    link.appendChild(btn);
+
+    if (isVimeo) {
+      btn.addEventListener('click', () => openVideo(url));
+      // Also add a small QR toggle
+      const qrBtn = document.createElement('span');
+      qrBtn.textContent = ' 📱';
+      qrBtn.style.cursor = 'pointer';
+      qrBtn.title = 'QRコード表示';
+      link.appendChild(qrBtn);
+      const qrDiv = document.createElement('div');
+      qrDiv.className = 'qr-img';
+      const svg = generateQR(url);
+      if (svg) qrDiv.innerHTML = svg;
+      link.appendChild(qrDiv);
+      qrBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        link.classList.toggle('qr-open');
+      });
+    } else {
+      // Non-Vimeo: toggle QR code
+      const qrDiv = document.createElement('div');
+      qrDiv.className = 'qr-img';
+      const svg = generateQR(url);
+      if (svg) qrDiv.innerHTML = svg;
+      link.appendChild(qrDiv);
+      btn.addEventListener('click', () => link.classList.toggle('qr-open'));
+    }
+  });
+}
+
+// Print/Handout mode
+function toggleMode() {
+  if (mode === 'slide') {
+    enterPrintMode();
+  } else {
+    enterSlideMode();
+  }
+}
+
+function togglePageBreak() {
+  document.body.classList.toggle('page-break-on');
+  const on = document.body.classList.contains('page-break-on');
+  const btn = document.querySelector('.page-break-toggle');
+  if (btn) btn.textContent = '改ページ区切り: ' + (on ? 'ON' : 'OFF');
+}
+
+function enterPrintMode() {
+  mode = 'print';
+  if (drawMode) toggleDraw();
+  notes[current] = document.getElementById('noteArea').value;
+  document.body.className = 'print-mode';
+  document.getElementById('modeToggle').textContent = '🖥 スライド表示';
+
+  const main = document.getElementById('mainArea');
+  const area = document.getElementById('slideArea');
+
+  let html = '<div class="print-header"><h1>基礎ミクロ経済学 — 2026年度版</h1><p>多鹿 智哉 ｜ 配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
+
+  SLIDES.forEach((s, i) => {
+    // Skip Note frames and title slide (first slide) in print mode
+    if (s.is_note) return;
+    if (i === 0) return;
+
+    const isSectionTitle = s.html.includes('section-title-big');
+    const margin = s.printMargin || 80;  // default 80px, editable per slide
+
+    html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}">`;
+    html += `<span class="slide-number">${i+1} / ${SLIDES.length}</span>`;
+    if (s.section) html += `<div class="section-badge">${s.section}</div>`;
+    if (s.title && s.title !== 'Note') html += `<div class="frame-title">${s.title}</div>`;
+    html += s.html;
+    if (!isSectionTitle) {
+      html += `<div class="print-note-area" style="min-height:${margin}px"></div>`;
+    }
+    html += '</div>';
+  });
+
+  area.innerHTML = html;
+
+  // Make SVG glyph/clip IDs unique to avoid clashes when all slides are in the DOM
+  area.querySelectorAll('.print-slide').forEach((slide, idx) => {
+    slide.querySelectorAll('svg').forEach(svg => {
+      const prefix = 's' + idx + '-';
+      svg.querySelectorAll('[id]').forEach(el => {
+        el.id = prefix + el.id;
+      });
+      svg.querySelectorAll('use').forEach(el => {
+        const ref = el.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
+                 || el.getAttribute('href');
+        if (ref && ref.startsWith('#')) {
+          const newRef = '#' + prefix + ref.slice(1);
+          el.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', newRef);
+          el.setAttribute('href', newRef);
+        }
+      });
+      svg.querySelectorAll('[clip-path]').forEach(el => {
+        const cp = el.getAttribute('clip-path');
+        const m = cp && cp.match(/url\(#(.+?)\)/);
+        if (m) {
+          el.setAttribute('clip-path', 'url(#' + prefix + m[1] + ')');
+        }
+      });
+    });
+  });
+
+  // Render math and setup QR codes in print mode
+  setTimeout(() => {
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      MathJax.typesetPromise([area]).then(() => {
+        document.querySelectorAll('.print-slide .phantom').forEach(p => {
+          p.style.color = 'transparent';
+          p.style.cursor = 'default';
+        });
+      });
+    }
+    // Setup QR codes (they auto-show via CSS in print mode)
+    setupLinks(area);
+  }, 100);
+}
+
+function enterSlideMode() {
+  mode = 'slide';
+  document.body.className = 'slide-mode';
+  document.getElementById('modeToggle').textContent = '📄 印刷用表示';
+
+  const area = document.getElementById('slideArea');
+  area.innerHTML = '<div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas>';
+  bindCanvasEvents();
+  bindBoardCanvasEvents();
+  showSlide(current);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
+  if (e.key === 'Escape') { closeLightbox(); closeVideo(); return; }
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (mode !== 'slide') return;
+  if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoStroke(); return; }
+  if (e.key === 'ArrowRight' || (e.key === ' ' && !drawMode)) { e.preventDefault(); nextSlide(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  else if (e.key === 'd' || e.key === 'D') toggleDraw();
+  else if (e.key === 'p' || e.key === 'P') { if (drawMode) setDrawTool('pen'); }
+  else if (e.key === 'h' || e.key === 'H') { if (drawMode) setDrawTool('highlight'); }
+  else if (e.key === 'e' || e.key === 'E') { if (drawMode) setDrawTool('eraser'); }
+  else if (e.key === 'l' || e.key === 'L') { if (drawMode) setDrawTool('pointer'); }
+  else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
+  else if (e.key === 'n' || e.key === 'N') toggleNotes();
+  else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
+});
+
+// Touch swipe (only when not drawing, single finger only)
+let touchStartX = 0;
+let touchStartY = 0;
+let touchIsSingle = false;
+document.addEventListener('touchstart', e => {
+  touchIsSingle = (e.touches.length === 1);
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) touchIsSingle = false;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  if (mode !== 'slide' || drawMode || !touchIsSingle) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
+    dx > 0 ? prevSlide() : nextSlide();
+  }
+});
+
+// Auto-save note
+document.getElementById('noteArea').addEventListener('input', () => {
+  notes[current] = document.getElementById('noteArea').value;
+  scheduleSave();
+});
+
+// Save on page close
+window.addEventListener('beforeunload', () => {
+  notes[current] = document.getElementById('noteArea').value;
+  saveLocal();
+});
+
+// ═══ UNDERSTANDING ═══
+function setUnderstanding(idx, level) {
+  if (understanding[idx] === level) {
+    delete understanding[idx]; // toggle off
+  } else {
+    understanding[idx] = level;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+function updateStatusDot(idx) {
+  let dot = document.getElementById('statusDot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.id = 'statusDot';
+    dot.className = 'status-dot';
+    document.getElementById('pageInfo').after(dot);
+  }
+  const u = understanding[idx];
+  dot.className = 'status-dot' + (u ? ' ' + u : '');
+}
+
+// ═══ BOOKMARKS ═══
+function toggleBookmark(idx) {
+  if (bookmarks[idx]) {
+    delete bookmarks[idx];
+  } else {
+    bookmarks[idx] = true;
+  }
+  renderSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+// ═══ FILTER ═══
+function toggleFilter() {
+  document.getElementById('filterBar').classList.toggle('show');
+}
+
+function setFilter(type, el) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (type === 'all') {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < SLIDES.length; i++) {
+      if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
+      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
+      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
+      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
+      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
+    }
+  }
+  updateFilterCount();
+  if (filteredIndices && filteredIndices.length > 0 && !filteredIndices.includes(current)) {
+    showSlide(filteredIndices[0]);
+  }
+}
+
+function updateFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  if (!filteredIndices) {
+    el.textContent = '';
+    return;
+  }
+  el.textContent = filteredIndices.length + ' / ' + SLIDES.length + ' スライド';
+}
+
+function nextFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { nextSlide(); return; }
+  const next = filteredIndices.find(i => i > current);
+  if (next !== undefined) showSlide(next);
+  else showSlide(filteredIndices[0]); // wrap
+}
+
+function prevFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { prevSlide(); return; }
+  const prev = [...filteredIndices].reverse().find(i => i < current);
+  if (prev !== undefined) showSlide(prev);
+  else showSlide(filteredIndices[filteredIndices.length - 1]); // wrap
+}
+
+// ═══ EXPORT / IMPORT ═══
+function exportData() {
+  notes[current] = document.getElementById('noteArea').value;
+  const canvas = getCanvas();
+  const cw = canvas ? canvas.width : 1;
+  const ch = canvas ? canvas.height : 1;
+
+  const normalizeStrokes = (src) => {
+    const out = {};
+    for (const [k, arr] of Object.entries(src || {})) {
+      out[k] = arr.map(s => ({
+        ...s,
+        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
+      }));
+    }
+    return out;
+  };
+
+  const data = {
+    version: 1,
+    title: document.querySelector('.topbar-title')?.textContent || '',
+    exportDate: new Date().toISOString(),
+    slideCount: SLIDES.length,
+    canvasSize: { w: cw, h: ch },
+    notes,
+    understanding,
+    bookmarks,
+    strokes: normalizeStrokes(strokes),
+    boardStrokes: normalizeStrokes(boardStrokes),
+    lastSlide: current,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.download = `micro_econ_study_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) { alert('形式が不正です'); return; }
+
+      const merge = confirm(
+        '読み込みモードを選んでください:\n\n' +
+        '「OK」→ 既存データに上書き（マージ）\n' +
+        '「キャンセル」→ 読み込み中止'
+      );
+      if (!merge) return;
+
+      const canvas = getCanvas();
+      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
+      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
+
+      const denormalizeStrokes = (src) => {
+        const out = {};
+        for (const [k, arr] of Object.entries(src || {})) {
+          out[k] = arr.map(s => ({
+            ...s,
+            points: s.points.map(p => ({
+              x: p.x <= 1.5 ? p.x * cw : p.x,
+              y: p.y <= 1.5 ? p.y * ch : p.y,
+            }))
+          }));
+        }
+        return out;
+      };
+
+      if (data.notes) Object.assign(notes, data.notes);
+      if (data.understanding) Object.assign(understanding, data.understanding);
+      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+      if (data.strokes) {
+        const dn = denormalizeStrokes(data.strokes);
+        Object.assign(strokes, dn);
+      }
+      if (data.boardStrokes) {
+        const dn = denormalizeStrokes(data.boardStrokes);
+        Object.assign(boardStrokes, dn);
+      }
+
+      saveLocal();
+      showSlide(current);
+      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset file input
+}
+
+// Export notes as Markdown
+function exportNotes() {
+  notes[current] = document.getElementById('noteArea').value;
+  let text = '# 基礎ミクロ経済学 メモ\n\n';
+  for (let i = 0; i < SLIDES.length; i++) {
+    if (notes[i] && notes[i].trim()) {
+      text += `## スライド ${i+1}: ${SLIDES[i].title || ''}\n${notes[i]}\n\n`;
+    }
+  }
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'micro_econ_notes.md';
+  a.click();
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  // Read slides from <template> elements
+  SLIDES = Array.from(document.querySelectorAll('template.slide-data')).map(t => ({
+    title: t.dataset.title || '',
+    section: t.dataset.section || '',
+    html: t.innerHTML,
+    is_note: t.dataset.note === 'true',
+    printMargin: parseInt(t.dataset.printMargin) || 80,
+  }));
+  // Build sections dynamically from slide data
+  let lastSection = '';
+  SLIDES.forEach((s, i) => {
+    if (s.section && s.section !== lastSection) {
+      SECTIONS.push({ title: s.section, slide: i });
+      lastSection = s.section;
+    }
+  });
+  // Populate section selector
+  SECTIONS.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.slide;
+    o.textContent = s.title;
+    sel.appendChild(o);
+  });
+  // Restore saved notes, strokes, and last position
+  loadLocal();
+  // Wait for MathJax to load
+  function initWhenReady() {
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      showSlide(current);
+    } else {
+      setTimeout(initWhenReady, 100);
+    }
+  }
+  initWhenReady();
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE DATA — 各スライドの内容はここに格納されています
+     テキストエディタで直接編集できます
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- ===== Slide 1: Title ===== -->
+<template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
+<div class="section-title-big" style="padding:40px 0 10px">基礎ミクロ経済学</div><div style="text-align:center;font-size:18px;color:#6b7280;margin-bottom:30px">2026年度版</div><div style="text-align:center;font-size:16px;color:#1a1a1a">多鹿 智哉</div>
+</template>
+
+<!-- ============ SECTION: はじめに ============ -->
+
+<!-- ===== はじめに: section title ===== -->
+<template class="slide-data" data-title="" data-section="はじめに" data-note="false" data-print-margin="80">
+<div class="section-title-big">はじめに</div>
+</template>
+
+<!-- ===== はじめに ===== -->
+<template class="slide-data" data-title="はじめに" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>講義するひと</li>
+<li class="sub-item">» 多鹿 智哉</li>
+<ul>
+<li>学位：博士（経済学）</li>
+<li>研究分野：ミクロ経済学・ゲーム理論</li>
+</ul>
+<li class="sub-item">» 連絡先: tajika.tomoya@nihon-u.ac.jp</li>
+<li class="sub-item">» 研究室: 2号館 807号室</li>
+<li class="sub-item">» オフィスアワー: 月曜午後（だいたい15〜16時まで）</li>
+<ul>
+<li>オフィスアワーはアポなしで来て良い</li>
+<li>zoomなどが良ければ事前に連絡すること</li>
+</ul>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>この講義の目的・目標</li>
+<li class="sub-item">» ミクロ経済学の初歩的な理論を身につける</li>
+<li class="sub-item">» 数式か図か言葉のいずれかを用いて論理的に説明できるようになること．</li>
+<li>教科書</li>
+<ol>
+<li>共通教科書：嶋村紘輝他『入門ミクロ経済学』中央経済社，2002年</li>
+<li>参考書ガイド</li>
+</ol>
+<a href="https://tomoyatajika.notion.site/" target="_blank" class="qr-link">🔗 QRリンク</a>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ===== 諸注意 ===== -->
+<template class="slide-data" data-title="諸注意（朗読必須）" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>授業について：</li>
+<li class="sub-item">» 大学の講義は「授業90分+予復習180分」で二単位です．</li>
+<li class="sub-item">» すべての授業は授業に<strong>すべて</strong>出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</li>
+<li class="sub-item">» この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．</li>
+<ol>
+<li>授業中：ノートをとって内容を理解し，小テストを解く．</li>
+<li>予習：講義資料を先に見て，わからなそうなところをメモしておく</li>
+<li>復習：練習問題を解く・わからないところを質問する・スタディグループを作って協力する</li>
+</ol>
+<li>「わかった」の基準は「授業内容を自分の言葉で説明できる（パラフレーズ）」ことです．</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>持ち物：筆記具，計算用紙，講義スライド</li>
+<li class="sub-item">» スライドに板書や理解したことなどを書き込むこと</li>
+<li class="sub-item">» タブレット派用に電子でも配布する</li>
+<li class="sub-item">» 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．</li>
+<li>この講義は対面授業です．</li>
+<li class="sub-item">» 授業に出ずに単位が取れるはずもなく</li>
+<li class="sub-item">» もちろん授業にいるだけでは取れない</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ===== 成績評価方法 ===== -->
+<template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="math-display">$$\text{総合成績}=\text{共通テスト}+\min\left\{[\text{小テスト}+\text{発言点}+\text{個別試験}]\times \text{平均出席率},50\right\}$$</div>
+<div class="columns">
+<div class="column">
+<ul>
+<li class="sub-item">» 事情がある欠席者は「事前に」メールで連絡した上で，その日の授業の録画を見てまとめ（400字以上かつ全ての内容に触れること）を提出すると出席としてカウント</li>
+<li>小テストは選択式か計算問題, 全14回（1回あたり1点）</li>
+<li class="sub-item">» 小テストはCanvas LMSで出題</li>
+<li class="sub-item">» 小テストに何を用いても何回チャレンジしても良い（最高点のみが成績に加算）</li>
+<li>発言点は授業１回あたり最大1点，ただし授業内容に関係するものとする（事実上の出席点）</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>共通テストは択一式</li>
+<li class="sub-item">» 共通テストの同じ時間に個別試験（記述・配点36点）もある．</li>
+<li class="sub-item">» 個別試験の内容は全部</li>
+<li class="sub-item">» <strong>共通テストの日程・時間は通常授業時間とは異なるので注意</strong><br>遅刻して単位を落とした者は数知れず...</li>
+<li class="sub-item">» 共通テストには最低基準点がありこれに達しないと不合格</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: ミクロ経済学の方法 ============ -->
+
+<template class="slide-data" data-title="" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="80">
+<div class="section-title-big">ミクロ経済学の方法</div>
+</template>
+
+<template class="slide-data" data-title="ミクロ経済学の方法" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>ミクロ経済学とは何か？</li>
+<li class="sub-item">» <span class="keyword">インセンティブ（誘因）</span>に関わるもの全て</li>
+<li class="sub-item">» キーワードは「最善を尽くす」</li>
+<li>ミクロ経済学に何ができるか？<br><span class="small">※教員のところは授業の話ではなく研究の専門の話</span></li>
+<li class="sub-item">» 意思決定論：個人が何を選択する（べき）かの理論．</li>
+<li class="sub-item">» 価格理論：価格の決まり方と資源配分の探求</li>
+<li class="sub-item">» ゲーム理論：複数人による決め方の理論<br>教員では: 安藤先生，岩瀬先生，丸田先生，多鹿</li>
+<li class="sub-item">» 行動経済学：心理学の知見を取り込んだ意思決定論とその応用<br>教員では: 大橋先生，前川先生</li>
+</ul>
+</div>
+<div class="column">
+<ul class="small">
+<li class="sub-item">» 国際貿易論・都市経済：地理的な知見を取り込んだ分析<br>教員では: 村田先生，安田先生，浅田先生</li>
+<li class="sub-item">» 労働経済学：労働問題を扱う<br>教員では: 安藤先生，平河先生</li>
+<li class="sub-item">» 産業組織論：企業と競争の問題を研究<br>教員では: 手塚先生，中村（靖）先生，山田先生</li>
+<li class="sub-item">» 公共経済学・財政学：租税・財政政策などを研究する<br>教員では: 中川先生，（多鹿）</li>
+<li class="sub-item">» メカニズムデザイン・マーケットデザイン：人がどのように行動するかを読んだ上で，制度を設計する．<br>教員では: 岩瀬先生，大橋先生，安藤先生</li>
+<li>他にもたくさん</li>
+<li>この講義で学ぶのは「価格理論」</li>
+<li class="sub-item">» 上記を学ぶためのエッセンスが詰まっている．<br>（※当たり前の話が多いので少しつまらない・技を磨く場所と思え）</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="モデル分析" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>経済学は「モデル」を作る</li>
+<li class="sub-item">» モデルとは？ → 現実社会の単純化された模型</li>
+<li class="sub-item">» 分析のために関係のない，興味のない部分は切り捨てる</li>
+<li class="sub-item">» 論理的に「何が起きるか」「何が良いか」を調べる</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>モデルの例1</li>
+<li class="sub-item">» 自由は良いことか？</li>
+<li>設定</li>
+<ol>
+<li>人々は自分にとって最も良いものを選ぶ</li>
+<li>人々にとって良いものを選んでいることが望ましい</li>
+</ol>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="モデル分析" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>モデルの例2</li>
+<li class="sub-item">» 規制は良いことか？</li>
+<li>設定</li>
+<ol>
+<li>人々は「今の」自分にとって最も良いものを選ぶ</li>
+<li>「将来の」人々にとって良いものを選んでいることが望ましい</li>
+<li>危険薬物を使用することは「今の自分にとっては最も良い」が「将来の自分にとっては最も悪い」</li>
+</ol>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>モデルの例3</li>
+<li class="sub-item">» 規制は良いことか？</li>
+<li>設定</li>
+<ol>
+<li>ある人は「将来の」自分にとって最も良いものを選び，ある人は「今の」自分にとって最も良いものを選ぶ</li>
+<li>「将来の」人々にとって良いものを選んでいることが望ましい</li>
+<li>危険薬物を使用することは「今の自分にとっては最も良い」が「将来の自分にとっては最も悪い」</li>
+</ol>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="モデル分析" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>実際に起きている「現実の行動」の説明ができる（事実解明的分析）</li>
+<li>その良し悪しが判断できる（規範的分析）</li>
+<li>モデル化によって関係ないものを削ぎ落とすので，純粋な影響を知ることができる</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>同じ行動を説明する理論はいくらでもある．</li>
+<li>理論が違えば「良し悪し」の判断も違う</li>
+<li>モデル化はいろんなものを削ぎ落とすので，重要なことが含まれていない可能性もある．</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: 意思決定 ============ -->
+
+<template class="slide-data" data-title="" data-section="意思決定" data-note="false" data-print-margin="80">
+<div class="section-title-big">意思決定</div>
+</template>
+
+<template class="slide-data" data-title="意思決定" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>ミクロ経済学の基本：人々はどのように意思決定を行うか？</li>
+<li>他の分野でも重要:</li>
+<li class="sub-item">» マーケティングは人々の選択に関わる学問</li>
+<li class="sub-item">» 意思決定の理論の理解がフワッフワだと分析もフワッフワになる</li>
+<li>ミクロ経済学がミクロ経済学であるためには</li>
+<li class="sub-item">» 人々の選択に根拠をつけられること</li>
+<li class="sub-item">» 根拠をつけられるのであれば「良し悪し」が判断できる</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>行動経済学も，意思決定の部分に関わる</li>
+<li class="sub-item">» 例：</li>
+<ul>
+<li class="sub-item">» 普通の経済学：選択肢を全部認識している</li>
+<li class="sub-item">» 不注意の経済学：一部の選択肢を認識していない</li>
+</ul>
+<li>キラキラした応用分野を学ぶには基礎がしっかりしてないと薄っぺらい</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="合理的な行動" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>経済学の基本モデルにおける大前提</li>
+<div class="framed" style="text-align:center; font-size:1.1em;">
+「人は効用を最大にするように行動する」
+</div>
+<li class="sub-item">» <span class="keyword">効用</span>：人々が得る利益，幸せの度合い，（マイナスの効用として）費用など...</li>
+<li class="sub-item">» ※どんなことでもできるわけではない．物理的や経済的な<span class="keyword">制約</span>に直面する．</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>人々の「好み」とは次のような質問に対する回答のリスト</li>
+<div class="framed">プラン$a$とプラン$b$だったら$a$を選んでいいですか？</div>
+<li class="sub-item">» yesなら「$a$のプランの方が効用が低くない」</li>
+<li class="sub-item">» noなら「$a$のプランの方が効用が低い」</li>
+<li>選択肢に限りがあり「合理的」なら矛盾なくプランにランキングをつけることができる．</li>
+<li class="sub-item">» ランキングの高い順に大きい点数をつけていく．この点数が効用</li>
+<li class="sub-item">» 数字の値は大小関係さえわかればなんでもよい（<span class="keyword">序数的</span>効用）</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="合理的な行動*" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>合理的であること</li>
+<li class="sub-item">» どんな選択肢でも比較できる（完備性）</li>
+<li class="sub-item">» 好みがサイクルしない（非循環性）</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>完備性は現実的か（完備性を満たさない現実の例があるか）？</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="合理的な行動---費用便益分析" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>プラスの効用を便益，マイナスの効用を費用と呼ぶ．</li>
+<li>あらゆる行動の価値をお金に換算できるとする</li>
+<li class="sub-item">» <span class="keyword">ニュメレール（価値尺度財）</span>：このときのお金のようなもの</li>
+<li>「ヒトは以下の効用を最大化するように行動する」として分析する．</li>
+$$\text{効用}=\text{便益}-\text{費用}$$
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>グレゴリはキノコ狩りを生業としている．キノコ狩りをするためには入山許可書1万ルーブル，道具代30万ルーブル，保険料15万ルーブルがかかる．一方でグレゴリには数学の才能があり，もし彼がキノコ狩りでなく数学者をするならばその仕事自体から得られる効用と合わせて7000万ルーブルを稼ぐことができる．さらに多才なことに物理学の才能もある．グレゴリが数学者でもなくキノコ狩りをするのでもなく物理学者をやるとその仕事自体から得られる効用と合わせて9000万ルーブル稼ぐことができる．さらに彼はいままで数学者になるための教育を受け，それには合計5000万ルーブルの費用がかかった．グレゴリがキノコ狩りをすることの効用はいくら以上か？</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="計算用紙" data-section="意思決定" data-note="true" data-print-margin="0">
+</template>
+
+<template class="slide-data" data-title="機会費用とサンクコスト" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>ある行動をするために諦めた行動から得られる便益の最大値をその行動の<span class="keyword">機会費用</span>と呼ぶ．</li>
+<li class="sub-item">» グレゴリの例では物理学者をすることによる9000万ルーブルの便益がキノコ狩りをすることの機会費用になる</li>
+<li>また，どんな行動をしても既に回収不可能な費用のことを<span class="keyword">埋没費用（サンクコスト）</span>と呼ぶ</li>
+<li class="sub-item">» グレゴリの例では数学者になるために受けた教育費用5000万ルーブルの費用はそれである．</li>
+<li class="sub-item">» 合理的な意思決定では埋没費用は意思決定に考慮すべきでない</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>埋没費用の誤謬：本来考えるべきでない埋没費用のことを気にして意思決定が狂う現象</li>
+<li class="sub-item">» 例：コンコルド効果</li>
+<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: concord.jpg<br><span class="tiny">Jeroen Stroes Aviation Photography from Netherlands</span></div>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="埋没費用の誤謬の恩恵" data-section="意思決定" data-note="false" data-print-margin="0">
+<ul>
+<li>〈発展〉 合理的でない人にとっては埋没費用を気にする方が良い場合も...</li>
+<li class="sub-item">» 例: 事前の自分にとっては運動した方が良いのでジムの会員になるが，事後の自分はめんどうで行きたくない．ジムの会費は埋没費用．</li>
+<ol>
+<li>埋没費用の誤謬にハマらない人：「合理的に」ジムに行かない</li>
+<li>ハマる人：せっかく払ったからとジムに行く．</li>
+</ol>
+<p>事前の自分にとってはどちらが良い？</p>
+<li>〈考えてみましょう〉</li>
+<li class="sub-item">» あなたの身の回りの埋没費用はなんですか？</li>
+<li class="sub-item">» 埋没費用の誤謬に陥っていますか？</li>
+<li class="sub-item">» 埋没費用を気にしないことは本当に良いことでしょうか？</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="費用便益分析の欠点" data-section="意思決定" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>費用便益分析の欠点</li>
+<li class="sub-item">» 費用と便益は別々のものとして考える</li>
+<li class="sub-item">→ 所得を反映させられない．</li>
+<li class="sub-item">→ 「費用」が大きいと所得が大きく変わってしまう．</li>
+<li class="sub-item">→ 便益も変わってしまうかも？（所得効果）</li>
+<li>費用便益分析が妥当でなくなる例</li>
+<li class="sub-item">» 所持金が200万円の人が150万円の車を購入するかどうか<br>※購入前と後の所得では車の価値が違う！</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<!-- ============ SECTION: 需要と供給 ============ -->
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="80">
+<div class="section-title-big">需要と供給</div>
+</template>
+
+<template class="slide-data" data-title="財と市場" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>以降の章では「財」の取引を考える</li>
+<li class="sub-item">» 財とは取引される対象で，商品，サービス，余暇など有形無形を問わない</li>
+<li>取引量の数詞として，「単位」を用いる</li>
+<li class="sub-item">» 例：商品であれば1個，水などであれば1Lなど</li>
+<li>財の購入時に支払う金額は「価格 $\times$ 数量」である．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場における交換" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>経済活動の最大の舞台は<span class="keyword">市場</span>である</li>
+<li class="sub-item">» この市場ではどのように取引が行われるべきか？</li>
+<li>例として「家」の市場を考える．</li>
+<li class="sub-item">» 家を欲しがる人と家を建てる人（大工）がいる．</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>（最大の）支払意思額(willingness to pay, wtp)とはその財に支払ってもよい最大金額のこと</li>
+</ul>
+</div>
+</div>
+<table class="slide-table">
+<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+</template>
+
+<template class="slide-data" data-title="適当なマッチングを考える..." data-section="需要と供給" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><td colspan="6" style="height:2em;"></td></tr>
+<tr><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+<div class="columns">
+<div class="column"><ul>
+<li>このマッチングはうまくいっているか？</li>
+<li class="sub-item">» 不満がある人がいる...</li>
+</ul></div>
+<div class="column"><ul><li>もっと良い取引方法を！</li></ul></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場取引（需要曲線）" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線 - 階段状のグラフ（横軸:数量, 縦軸:支払意思額, 天照5000/出雲3500/高木2000/月読1000/大和800）</div>
+</div>
+<div class="column">
+<ul>
+<li>上の曲線は<span class="keyword">需要曲線</span>という．</li>
+<li class="sub-item">» <span class="keyword">需要量</span>とはある価格が与えられたとき，その価格ならこれだけ買いたいという量の総合計．</li>
+<li class="sub-item">» 価格と需要量を結びつける関係を需要曲線という.</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場取引（供給曲線）" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線 - 階段状のグラフ（横軸:数量, 縦軸:費用, ヨセフ850/ヤコブ950/ルツ1800/イヴ3200/アダム4500）</div>
+</div>
+<div class="column">
+<ul>
+<li>この曲線は<span class="keyword">供給曲線</span>と呼ぶ．</li>
+<li class="sub-item">» <span class="keyword">供給量</span>とはある価格が与えられたとき，その価格ならこれだけ売りたいという量の総合計</li>
+<li class="sub-item">» 価格と供給量を結びつける関係を供給曲線という．</li>
+<li class="sub-item">» 追加で一個作るための費用の大きさ（限界費用）が供給曲線を形作る</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線の交点（均衡価格1800〜2000, 均衡取引量3）</div>
+</div>
+<div class="column">
+<ul>
+<li>需要量と供給量が一致するときの価格を<span class="keyword">（市場）均衡価格</span>と呼ぶ</li>
+<li class="sub-item">» 「均衡」は選択の次に経済学にとって大事な要素</li>
+<li>均衡価格では"ある意味"不満がない</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場経済での取引の実験" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>架空の商品の取引をします．</li>
+<li class="sub-item">» 商品の価値はランダムに決まる数です</li>
+<li>取引は一度に2回まで行われます</li>
+<li>商品の価格は注文の需要と供給が交わるところで決まります</li>
+<li class="sub-item">» 価格よりも希望購入金額が高ければ買え，希望売却金額が低ければ売れます．</li>
+<li>最終的な利益は2回目の後にでます．</li>
+<li class="sub-item">» 景品が一つもらえます．景品は賞金の大きい順に選べます．</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>実験はスマホ（or PC）を使って行います．</li>
+<li class="sub-item">» 以下のQRコードからアクセスしてみましょう（授業中のみ有効）</li>
+<a href="https://class-experiments-basicmicro-tomoyatajika.onrender.com/" target="_blank" class="qr-link">🔗 QRリンク</a>
+<li>まずは練習してみましょう．</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="余剰の概念（消費者余剰）" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と消費者余剰（均衡価格以上の支払意思額部分を塗りつぶし）</div>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と消費者余剰（書き込み用）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="余剰の概念（生産者余剰）" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線と生産者余剰（均衡価格以下の費用部分を塗りつぶし）</div>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線と生産者余剰（書き込み用）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="社会的総余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>社会的総余剰</li>
+<li class="sub-item">» 消費者余剰と生産者余剰の和</li>
+<li>「支払意思額 $-$ 費用」と考えても良い</li>
+<li class="sub-item">» なぜ？：お金の部分は相殺されるから</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>図解</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（総余剰の図示用）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="社会的総余剰：図解" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 過少生産のケース - 需要・供給曲線</div>
+<p style="text-align:center;">過少生産のケース</p>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 過大生産のケース - 需要・供給曲線</div>
+<p style="text-align:center;">過大生産のケース</p>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<ul>
+<li>滑らかな需要曲線・供給曲線は「階段の段差」が細かいと考えれば良い．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>数式で需要曲線・供給曲線が与えられているケース</li>
+<li class="sub-item">» 需要曲線：$P=21-3Q$</li>
+<li class="sub-item">» 供給曲線：$P=2Q+1$</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="余剰について" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>社会的総余剰は合計</li>
+<li class="sub-item">» 当然の疑問は「足していいの？」</li>
+<li class="sub-item">» すべてをお金に関する価値に変換でき，そのレートが常に一定ならOK</li>
+<li><span class="keyword">パレート効率性</span>：よりゆるい最適性の基準</li>
+<li class="sub-item">» AからBに移ったとき，全員が改善するなら BのほうがAよりよい</li>
+<li class="sub-item">» AからBに移ったとき，誰かが損するなら，BのほうがAより良いとは言えない</li>
+<li>Aがパレート効率的であるとは，他のどの状態に移っても誰かが損すること．</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>金銭的価値の足し算ですべての価値が決まり，余剰が譲渡できる世界ならば「社会的総余剰最大化 $=$ パレート効率的」</li>
+<li class="sub-item">» そうでなければ「社会的総余剰最大化してなくてもパレート効率的」のときがある</li>
+<li class="sub-item">» 例：</li>
+<ol>
+<li>この章の最初の適当なマッチング：余剰は低い，アダムは取引できて嬉しい</li>
+<li>市場均衡：余剰は最大，アダムは取引できなくて悲しい</li>
+</ol>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="例" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul><li>社会に選択肢が$x_1$〜$x_5$だけとする.</li></ul>
+<table class="slide-table">
+<tr><th></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th></tr>
+<tr><th>アダム</th><td>2</td><td>4</td><td>3</td><td>1</td><td>5</td></tr>
+<tr><th>イヴ</th><td>2</td><td>0</td><td>2</td><td>1</td><td>5</td></tr>
+<tr><th>ルツ</th><td>2</td><td>4</td><td>1</td><td>10</td><td>1</td></tr>
+</table>
+</div>
+<div class="column">
+<ul>
+<li class="sub-item">» $x_{1}$はパレート効率的か？</li>
+<li class="sub-item">» $x_{2}$は...</li>
+<li class="sub-item">» $x_{3}$は...</li>
+<li class="sub-item">» $x_{4}$は...</li>
+<li class="sub-item">» $x_{5}$は...</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="パレート効率性以外の判断基準" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>パレート効率性だけでは選択肢を絞りきれない</li>
+<li class="sub-item">→ 社会厚生関数</li>
+<li>左の方法でそれぞれの選択肢の「社会厚生」を求める</li>
+</ul>
+<table class="slide-table">
+<tr><th></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th></tr>
+<tr><th>アダム</th><td>2</td><td>4</td><td>3</td><td>1</td><td>5</td></tr>
+<tr><th>イヴ</th><td>2</td><td>0</td><td>2</td><td>1</td><td>5</td></tr>
+<tr><th>ルツ</th><td>2</td><td>4</td><td>1</td><td>10</td><td>1</td></tr>
+</table>
+</div>
+<div class="column">
+<ul>
+<li>足す（ベンサム型）</li>
+<li>掛ける（ナッシュ型）</li>
+<li>最小値で比較（レキシミン型）</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="需要曲線と供給曲線の特徴①: 価格弾力性" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="small">※これ以降は需要曲線と供給曲線をなめらかな曲線で描く．</span></li>
+<li>需要曲線は右下がり，供給曲線は右上がり</li>
+<li class="sub-item">» <span class="keyword">需要法則</span>: その財価格が上がると需要量は下がる（少なくとも増えない）<br>（例外：ギッフェン財，ヴェブレン財など）</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>ではどれくらいの反応を示すのか？</li>
+<li class="sub-item">» 同じ価格だけ需要と価格が増減してもインパクトは異なる.</li>
+<ol>
+<li>駄菓子の価格が$10$円上昇すると需要量が$10$万個減った．</li>
+<li>車の価格が$10$円上昇すると需要量が$1$台減った．</li>
+</ol>
+<li class="sub-item">» 「駄菓子の方が車より10万倍価格に敏感」と言える？</li>
+<li class="sub-item">» これらはもともとの価格と需要量が違うのでインパクトが異なる</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="価格弾力性のつづき①" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>変化率で見る．</li>
+$$\text{変化率}=\frac{\text{変化後の量}-\text{変化前の量}}{\text{変化前の量}}$$
+<li><span class="keyword">需要の価格弾力性</span>とは</li>
+$$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{価格の変化率}}$$
+<li><span class="small">※ 需要量の変化率/価格の変化率はマイナスであることがほとんどなので，プラスの値で表すためにマイナスをつける．</span></li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>具体例で計算してみよう</li>
+<li class="sub-item">» 駄菓子の価格が$100$円から$110$円に値上がりしたところ，需要量が$120$万個から$110$万個に減った．</li>
+<li class="sub-item">» 車の価格が$100$万円から$110$万円に値上がりしたところ，需要量が$12$万台から$11$万台に減った．</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="価格弾力性のつづき②" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>価格弾力性が$1$より大きいとき，その財は<span class="keyword">弾力的</span>，$1$より小さいとき<span class="keyword">非弾力的</span>という．</li>
+<li class="sub-item">» どのような財が弾力的でどのような財がそうではないか？</li>
+</ul>
+</div>
+<div class="column"><ul><li>図解</li></ul></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>価格が増加すると弾力性はどうなる？</li>
+<li class="sub-item">» 分数の性質：分母が大きいなら小さい，分子が大きいなら大きい</li>
+<li class="sub-item">» 価格が低いなら需要量が大きいことに注目</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>需要曲線の傾きが急勾配になると弾力性はどうなる？</li>
+<li class="sub-item">» 傾きが大きいと，同じ価格の変化に対して，需要量の変化が小さい</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="需要曲線と供給曲線の特徴② 曲線のシフト" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>価格以外の理由で需要量や供給量が変わる場合がある.</li>
+<li class="sub-item">» 例：</li>
+<ol>
+<li>所得の増減</li>
+<li>製造費用の増減</li>
+<li>課税</li>
+</ol>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（シフト前）</div>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（シフト後）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="曲線のシフトのつづき" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: シフト後の需要・供給曲線</div>
+</div>
+<div class="column">
+<ul>
+<li>均衡価格・取引量の変化を見る</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="曲線シフトから需要曲線・供給曲線を明らかにする" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>需要曲線を右シフトさせるショックが起きたとする</li>
+<li class="sub-item">» 例:</li>
+<li class="sub-item">» このとき，価格と購入量ともに上昇したことが観測された．</li>
+<li class="sub-item">» ありうるパターンは次のうちどれか？</li>
+</ul>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: patterns.pdf</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="実際のデータを見てみる" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<table class="slide-table small">
+<tr><th>年</th><th>石油価格</th><th>石油消費量</th><th>備考</th></tr>
+<tr><td>1972</td><td>$113</td><td>8.25M</td><td></td></tr>
+<tr><td>1973</td><td>$142</td><td>8.91M</td><td>第一次オイルショック</td></tr>
+<tr><td>1974</td><td>$450</td><td>8.79M</td><td></td></tr>
+<tr><td>...</td><td></td><td></td><td></td></tr>
+<tr><td>1979</td><td>$834</td><td>10.73M</td><td>第二次オイルショック</td></tr>
+<tr><td>1980</td><td>$856</td><td>9.76M</td><td></td></tr>
+<tr><td>...</td><td></td><td></td><td></td></tr>
+<tr><td>2019</td><td>$481</td><td>15.62M</td><td></td></tr>
+<tr><td>2020</td><td>$309</td><td>14.22M</td><td>コロナショック</td></tr>
+</table>
+</div>
+<div class="column">
+<p style="text-align:center;">データ出典</p>
+<a href="https://ourworldindata.org/grapher/world-crude-oil-price-vs-oil-consumption" target="_blank" class="qr-link">🔗 QRリンク</a>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<ul>
+<li>オイルショックは需要側のショック？供給側のショック？</li>
+<li>コロナショックは需要側のショック？供給側のショック？</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="曲線シフトから需要・供給曲線を明らかにする" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>需要曲線を右シフトさせるショックが起きたとする</li>
+<li class="sub-item">» 価格が2%上昇，取引量が5%増加</li>
+<li class="sub-item">» このとき，わかるのは<br>
+<span style="font-size:1.2em;">「<strong>供給</strong>の価格弾力性が<strong>$\frac{5}{2}$</strong>」</span>
+</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>注意すべきこと：わかるのは均衡点での取引量のみ</li>
+<li class="sub-item">» 需要曲線のシフトによってわかるのは需要曲線についての情報とは限らない</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場均衡分析の応用例① 最低賃金制度" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>最低賃金は貧困層の助けになるか？</li>
+<li class="sub-item">» 「働くこと」を財と考える．</li>
+<li class="sub-item">» 労働者が「労働」の供給者，企業が「労働」の需要者</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 労働市場の需要・供給曲線（横軸:量, 縦軸:賃金）</div>
+</div>
+<div class="column">
+<ul>
+<li>労働の供給量 $-$ 労働の需要量を<span class="keyword">失業</span>と呼ぶ．</li>
+<li class="sub-item">» 最低賃金によって失業が発生する</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="実際に失業は増える？*" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>〈実証分析〉 実際に最低賃金の引き上げによって失業は増える？</li>
+<li class="sub-item">» Card and Krueger (1994)：必ずしもそうとは言えない</li>
+<li class="sub-item">» 「労働経済学」という分野ではいろんな視点から分析する</li>
+<li class="sub-item">» 文献を調べてみましょう．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場均衡分析の応用例② 豊作貧乏" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul><li>$q^{\text{前}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 豊作前の供給曲線と需要曲線（$q^{\text{前}}$, $p^{\text{前}}$, 消費者余剰・生産者余剰の塗りつぶし）</div>
+</div>
+<div class="column">
+<ul><li>$q^{\text{後}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 豊作後の供給曲線シフト（$q^{\text{後}}$, $p^{\text{後}}$）</div>
+<ul>
+<li class="sub-item">» 生産できる量が増えた（豊作の）結果，収入はどうなるか？</li>
+</ul>
+<a href="https://youtu.be/HMIVlvWZg5o?t=105" target="_blank" class="qr-link">🔗 QRリンク</a>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場均衡分析の応用例③ 課税の効果" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>市場取引では社会的総余剰が最大化される．</li>
+<li>課税すればどうなるか?</li>
+<li><span class="keyword">従量税</span>を考える．一単位購入するごとに税が$t$円課される．</li>
+<li>財を一単位購入するとき，</li>
+<li class="sub-item">» 消費者の支払額:</li>
+<li class="sub-item">» 生産者の受け取る額:</li>
+<li>実質的な価格は?</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>均衡では何が起きるか</li>
+<li class="sub-item">» 税<span class="keyword">込</span>価格での需要量と税<span class="keyword">抜</span>価格での供給量が一致する</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="課税の効果のつづき① 課税下での市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>課税があるときの市場均衡の図示</li>
+<li class="sub-item">» 均衡じゃないときの図</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 課税下の非均衡（供給曲線上の$p$, 需要曲線上の$p+t$, 需給不一致）</div>
+</div>
+<div class="column">
+<ul><li class="sub-item">» 均衡にあるときの図</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 課税下の均衡（$p^*$, $p^*+t$, $q^*$）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="課税の効果のつづき② 課税下での社会的総余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>課税下では税収も社会的総余剰に含まれる</li>
+</ul>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 死荷重損失（消費者余剰・生産者余剰・税収・死荷重の三角形）</div>
+<ul>
+<li>死荷重損失：課税によって失われた社会的総余剰の大きさ</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="課税の効果のつづき③ どの財に課税すべきか?" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 非弾力的な需要曲線での課税（死荷重小）</div>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 弾力的な需要曲線での課税（死荷重大）</div>
+</div>
+</div>
+<ul>
+<li>需要曲線の傾き（弾力性）に注目</li>
+<li><span class="keyword">ラムゼイ・ルール</span>(Ramsey, 1927，逆弾力性ルールとも):</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="市場均衡の安定性①" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>調整過程：（市場）均衡にどうやってたどり着くかのプロセス</li>
+<li><span class="keyword">均衡の安定性</span>：均衡から価格/生産量がわずかにずれたとき，その調整過程により元々の均衡に戻ってくること（局所安定性）．</li>
+<li class="sub-item">» 戻ってこないときは<span class="keyword">不安定</span></li>
+<li><span class="keyword">ワルラス的調整過程</span></li>
+<li class="sub-item">» 市場の価格調整メカニズムとも呼ばれる</li>
+<li class="sub-item">» 超過需要が生じると価格が上昇，超過供給が生じると価格が低下する過程</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="市場均衡の安定性②" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">マーシャル的調整過程</span></li>
+<li class="sub-item">» 取引量$Q$を決める．</li>
+<li class="sub-item">» 需要量がその取引量になるような価格$P^D(Q)$と供給量が取引量になるような価格$P^S(Q)$を考える</li>
+<li class="sub-item">» $P^D(Q)>P^S(Q)$なら$Q$を増やす<br>（買いたい人にとっての価値の方が売りたい人の費用より大きいので取引が進む）</li>
+<li class="sub-item">» $P^D(Q)&lt;P^S(Q)$なら$Q$を減らす<br>（売りたい人の費用の方が買いたい人にとっての価値より大きいので取引が減っていく）</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<!-- ============ SECTION: 市場の失敗 ============ -->
+
+<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="80">
+<div class="section-title-big">市場の失敗</div>
+</template>
+
+<template class="slide-data" data-title="市場の失敗" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>市場取引では社会的総余剰が最大になる</li>
+<li class="sub-item">» これはいつでも成り立つものではない</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>市場取引がうまくいくための条件</li>
+<li class="sub-item">» 人々は自分の消費からしか利益や損失を受けない（私的消費・私的生産）</li>
+<li class="sub-item">» 人々の間で財の性質に関する情報が同じである（対称情報）</li>
+<li class="sub-item">» 人々は自分一人で価格を変えられないものと考えている（価格受容者）</li>
+<li>上の条件が成り立たないと，市場取引が社会的総余剰を最大にしないときがある</li>
+<li class="sub-item">» 成り立たない時に問題が起きることの総称を<span class="keyword">市場の失敗</span>と呼ぶ．</li>
+<li>詳しくはミクロ経済学A/Bで学ぶ</li>
+<li class="sub-item">» この講義では簡単な例を紹介する</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="外部性" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<ul>
+<li>他人の行動が自分の効用に直接影響を与えるとき，<span class="keyword">外部性</span>があると言う．</li>
+<li class="sub-item">» 例：</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<ul>
+<li>数値例：</li>
+</ul>
+<table class="slide-table">
+<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+<ul>
+<li class="sub-item">» 追加の登場人物：近所に住むおじさん<br>「家が一軒建つたびに，500万円だけの騒音被害を受ける」</li>
+</ul>
+<div class="columns">
+<div class="column"><ul>
+<li class="sub-item">» 市場均衡で建つ家の数</li>
+<li class="sub-item">» そのときの社会的総余剰</li>
+</ul></div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th>支払意思額（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+<div class="columns">
+<div class="column"><ul>
+<li class="sub-item">» １軒当たり買い手に500万円の課税</li>
+<li class="sub-item">» このとき建つ家の数</li>
+<li class="sub-item">» 社会的総余剰</li>
+</ul></div>
+<div class="column"></div>
+</div>
+<ul>
+<li><span class="keyword">ピグー税</span>：外部性の問題を税金をかけることで解決できる</li>
+<li class="sub-item">» 外部性によって生じる被害分を当事者に負担させる（外部性の内部化）</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="情報の非対称性" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>現代の闇市，フリマアプリで出品される商品の真の品質は</li>
+<ul>
+<li class="sub-item">» 買い手にはわからない</li>
+<li class="sub-item">» 売り手にはわかる</li>
+</ul>
+<li><span class="keyword">情報の非対称性</span>があると言う</li>
+<li class="sub-item">» 情報に格差がある</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：中古のアイフォンをフリマアプリで買うことを考える</li>
+</ul>
+<table class="slide-table">
+<tr><th>状態</th><th>売り手評価</th><th>買い手評価</th></tr>
+<tr><td>良い</td><td>3万円</td><td>4万円</td></tr>
+<tr><td>悪い</td><td>5千円</td><td>6千円</td></tr>
+</table>
+<ul>
+<li>「良い」か「悪い」かが売り手・買い手双方にわかっている場合，市場が分かれる</li>
+<li class="sub-item">» 良い状態の市場</li>
+<li class="sub-item">» 悪い状態の市場</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="情報の非対称性" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<table class="slide-table">
+<tr><th>状態</th><th>売り手評価</th><th>買い手評価</th></tr>
+<tr><td>良い</td><td>3万円</td><td>4万円</td></tr>
+<tr><td>悪い</td><td>5千円</td><td>6千円</td></tr>
+</table>
+<ul>
+<li>「良い」か「悪い」かが売り手にしかわかっていない場合，市場がまとめられる</li>
+<li class="sub-item">» 十把一絡げ，玉石混交な状態</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>良いものと悪いものが半々だとする</li>
+<li class="sub-item">» 買い手の評価は</li>
+<li class="sub-item">» 買ってもらうためには価格は最大でも</li>
+<li class="sub-item">» 上記の価格で売り手は売りたいか？<br>良い売り手：<br>悪い売り手：</li>
+<li class="sub-item">→ 市場には悪いものしか残らない！</li>
+<li><span class="keyword">逆淘汰</span>（逆選抜，逆選択とも）</li>
+<li class="sub-item">» 良いものが駆逐される</li>
+<li class="sub-item">» 品質保証（あるいは売り手への信頼）は大事</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: 独占市場 ============ -->
+
+<template class="slide-data" data-title="" data-section="独占市場" data-note="false" data-print-margin="80">
+<div class="section-title-big">独占市場</div>
+</template>
+
+<template class="slide-data" data-title="独占市場と独占価格" data-section="独占市場" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>ある財について，それを生産できる企業が一社しかないとき，その状況を<span class="keyword">独占</span>と呼ぶ．</li>
+<li>独占企業は生産量を減らすことで価格を吊り上げることができる．</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 独占価格の図（需要曲線・供給曲線, 均衡点$E$, 独占点$p', q'$, 点$A,B,C$）</div>
+</div>
+<div class="column">
+<ul>
+<li>いままでは... <span class="keyword">完全競争</span></li>
+<li class="sub-item">» 自分がどれだけ買っても売っても価格は変わらない（<span class="keyword">価格受容者</span>という）．</li>
+<li class="sub-item">» 売り手や買い手がたくさんいるならまあそう</li>
+<li>独占は完全競争では無い（不完全競争）</li>
+<li>完全競争との違い</li>
+<li class="sub-item">» 自分の行動で市場価格が変わることを意識している．（<span class="keyword">価格設定者</span>の仮定）</li>
+<li class="sub-item">» 意識してないときよりも生産量は減る<br>（豊作貧乏になることがわかってるならたくさん作らない）</li>
+<li class="sub-item">→ 社会的総余剰は最大にはならない</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="独占---動画説明" data-section="独占市場" data-note="false" data-print-margin="0">
+<a href="https://www.dropbox.com/scl/fi/" target="_blank" class="qr-link">🔗 QRリンク</a>
+<ul>
+<li>社会的総余剰が最大にならないことの図示</li>
+<li class="sub-item">» 上の動画の図では市場均衡では生産者余剰が$0$</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="売り方の工夫---価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<ul>
+<li>同じ財なら同じ価格で売られなければいけない？</li>
+<li class="sub-item">» <span class="keyword">一物一価の法則</span></li>
+<li>なぜ（いつ）一物一価の法則は成り立つか?</li>
+<li class="sub-item">→ <span class="keyword">裁定取引</span>が働くとき</li>
+<li class="sub-item">» もし同じ商品がA店で100円，B店で120円で売っていれば？</li>
+<li class="sub-item">» 「フリーランチは無い」（または「道端に１万円は落ちていない」）</li>
+<li>裁定取引ができないとき</li>
+<li class="sub-item">» <span class="keyword">価格差別</span>のチャンス</li>
+<li>この講義では簡単な価格差別の方法を紹介する</li>
+<li class="sub-item">» より多様な方法についてはミクロ経済学A/B，産業組織論，情報の経済学などで学ぶ．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="なるべく余剰を搾取せよ---完全価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<ul>
+<li>アダムとイヴに遊園地のチケットを売る．</li>
+<li class="sub-item">» アダムは8000円の支払意思額</li>
+<li class="sub-item">» イヴは10000円の支払意思額</li>
+<li>どうやって売るか？</li>
+<ol>
+<li>8000円で売る</li>
+<li>10000円で売る</li>
+<li></li>
+</ol>
+</ul>
+</template>
+
+<template class="slide-data" data-title="学割は学生のためか？---属性による価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>完全価格差別は難しい</li>
+<li>属性で区別する</li>
+<li class="sub-item">» 証拠がある属性（e.g., アカデミック版）</li>
+<li class="sub-item">» 地理的要因 (e.g., 国際価格差)</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：学生は8千円までなら払いたい，社会人は1万円までなら払いたい</li>
+<li class="sub-item">» どのように価格をつけるべきか？</li>
+<li>学生と社会人の区別がつかないなら？</li>
+<li class="sub-item">» 価格を1万円にするときの売り上げ</li>
+<li class="sub-item">» 価格を8千円にするときの売り上げ</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="まとめて売ることの意味---バンドリング" data-section="独占市場" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>一個あたりの支払意思額が消費量に比例してだんだん減っていくケースを考える</li>
+<li class="sub-item">» ケーキの個数と消費するときの効用</li>
+</ul>
+<table class="slide-table">
+<tr><th>個数</th><th>効用</th></tr>
+<tr><td>1</td><td>200</td></tr>
+<tr><td>2</td><td>350</td></tr>
+</table>
+<p class="small">※3個以上は不要と思う人を考えている</p>
+</div>
+<div class="column">
+<ul>
+<li>この人からなるべくたくさん売上を上げるにはどのように価格をつける？</li>
+<li class="sub-item">» 価格を〇〇円にする.</li>
+</ul>
+<table class="slide-table">
+<tr><th>一個当たり</th><th>売上数</th><th>売上金額</th></tr>
+<tr><td>200円</td><td></td><td></td></tr>
+<tr><td>150円</td><td></td><td></td></tr>
+</table>
+<ul>
+<li class="sub-item">» <span class="keyword">バンドリング</span>（抱き合わせ販売）</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: 消費者の行動 ============ -->
+
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="80">
+<div class="section-title-big">消費者の行動</div>
+</template>
+
+<template class="slide-data" data-title="ミクロ経済学の行動原理" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>選択可能なものの中から最も効用が高くなるものを選ぶ．</li>
+<li class="sub-item">» 効用とは → 選択肢の望ましさ具合を数値化したもの</li>
+<li class="sub-item">» 消費者の問題に応用すると，「限られた予算の中でどの財をどれだけ購入するべきか？」</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>消費者の問題の例</li>
+<li class="sub-item">» 1000円を握りしめて現金オンリーの回転寿司店にきたとき</li>
+<li class="sub-item">» 労働と余暇</li>
+<li class="sub-item">→ 限られた時間の中でどれだけ遊んでどれだけ働くべきか</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="消費者の問題：例" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>回転寿司店での選択</li>
+<li class="sub-item">» メニュー：ウニ，マグロ，海鮮サラダの３種類</li>
+<li class="sub-item">» ウニは１皿450円，マグロは1皿300円，海鮮サラダは１皿150円</li>
+<li class="sub-item">» X氏の財布には450円しかない．</li>
+<li class="sub-item">» X氏は各寿司ネタの組み合わせについて，完全なランキングを作ることができる．このランキングは財布の中身が増えても減っても変わらない．</li>
+</ul>
+</div>
+<div class="column">
+<table class="slide-table">
+<tr><th>効用</th><th>選択可能な行動</th></tr>
+<tr><td>4</td><td>ウニ1皿だけ注文</td></tr>
+<tr><td>12</td><td>マグロ１皿，海鮮サラダ１皿を注文</td></tr>
+<tr><td>3</td><td>マグロ１皿を注文</td></tr>
+<tr><td>7</td><td>海鮮サラダ３皿を注文</td></tr>
+<tr><td>5</td><td>海鮮サラダ２皿を注文</td></tr>
+<tr><td>1</td><td>海鮮サラダ１皿を注文</td></tr>
+<tr><td>0</td><td>何も注文しないで帰る</td></tr>
+</table>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="消費者の問題：例" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>所得の減少</li>
+<li class="sub-item">» 手持ち金が450円から400円になった</li>
+<li class="sub-item">» 消費行動はどう変化するか？</li>
+<li>価格の上昇</li>
+<li class="sub-item">» 所得は450円のまま海鮮サラダが150円から200円になった</li>
+<li class="sub-item">» 消費行動はどう変化するか？（<span class="keyword">ギッフェン財</span>）</li>
+</ul>
+</div>
+<div class="column">
+<table class="slide-table">
+<tr><th>効用</th><th>選択可能な行動</th></tr>
+<tr><td>4</td><td>ウニ1皿だけ注文</td></tr>
+<tr><td>12</td><td>マグロ１皿，海鮮サラダ１皿を注文</td></tr>
+<tr><td>3</td><td>マグロ１皿を注文</td></tr>
+<tr><td>7</td><td>海鮮サラダ３皿を注文</td></tr>
+<tr><td>5</td><td>海鮮サラダ２皿を注文</td></tr>
+<tr><td>1</td><td>海鮮サラダ１皿を注文</td></tr>
+<tr><td>0</td><td>何も注文しないで帰る</td></tr>
+</table>
+<p class="small">ウニ１皿450円，マグロ1皿300円，海鮮サラダ１皿150円，所得450円</p>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="消費者の問題の定式化" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">消費プラン：</span>消費者が選ぶ財の消費量の組み合わせ</li>
+<li>消費プラン$w$の効用を$u(w)$と書く．</li>
+<li class="sub-item">» $u$は<span class="keyword">効用関数</span>とよばれる</li>
+<li class="sub-item">» 効用の値そのものは重要ではない．</li>
+<li class="sub-item">→ 大小比較さえできれば良い：<span class="keyword">序数性</span>の仮定</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>財は$x$と$y$の二種類</li>
+<li class="sub-item">» 財$x$の消費量を$q_{x}$，財$y$の消費量を$q_{y}$と書く．</li>
+<li class="sub-item">» $q_{x}$と$q_{y}$の組み合わせ$(q_{x},q_{y})$が消費プランに相当する．</li>
+<li class="sub-item">» 消費者の問題は予算内で$q_{x}$と$q_{y}$を選ぶという問題に翻訳できる．</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="注意：図の横軸・縦軸" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column"><ul><li>これまで</li></ul></div>
+<div class="column"><ul><li>消費者の行動の章，複数財市場の均衡の章では</li></ul></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="予算制約" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">価格受容者の仮定</span>：どれだけ購入したとしても価格は変化しない</li>
+<li>消費量を$q_{x},q_{y}$，価格を$p_{x},p_{y}$とする．所得を$m$とする．</li>
+<li>予算制約式</li>
+</ul>
+$$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
+</div>
+<div class="column">
+<ul>
+<li>図解</li>
+<li class="sub-item">» ポイント：財$x$だけに所得を使うとき，財$y$だけに所得を使うときを考える</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="予算制約：図解" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="framed">基本：価格が上昇すると買えるものが減る．所得が上昇すると買えるものが増える</div>
+<div class="columns">
+<div class="column">
+<ul>
+<li>$p_{x}$が上昇したとき</li>
+<li>$p_{y}$が上昇したとき</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>$m$が上昇したとき</li></ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="無差別曲線" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>二つの消費プランが<span class="keyword">無差別</span> $\iff$ どちらの消費プランから得られる効用も同じ</li>
+<li><span class="keyword">無差別曲線</span>：無差別な消費プランの点を結んだ曲線</li>
+<li class="sub-item">» 次のページの特徴を仮定する</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="無差別曲線の仮定" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ol>
+<li>無差別曲線は描ける</li>
+</ol>
+</div>
+<div class="column">
+<ol start="2">
+<li>どの無差別曲線が高い効用を示すかがわかる．</li>
+</ol>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="無差別曲線の仮定" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ol start="3">
+<li>異なる無差別曲線同士は交わらない</li>
+</ol>
+</div>
+<div class="column">
+<ol start="4">
+<li>無差別曲線は原点に対して凸</li>
+</ol>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="無差別曲線の湾曲度：代替性と補完性" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<p>無差別曲線の湾曲度（曲がり方）にも意味がある</p>
+<div class="columns">
+<div class="column">
+<ul>
+<li>ex) 財$x$：2Lペットボトル / 財$y$：500mLペットボトル</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 完全代替財の無差別曲線（直線）</div>
+</div>
+<div class="column">
+<ul>
+<li>ex) 財$x$：ケーキ / 財$y$：紅茶（or好きな飲み物）</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: ケーキと紅茶の無差別曲線（凸な曲線）</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="効用最大化行動" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>無差別曲線を使って効用最大化行動を考える．</li>
+<li class="sub-item">» ポイント：改善できるならそこはベストではない</li>
+</ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 無差別曲線と予算線の接点（点A:最適, 点B,C:予算線上の非最適, 点D:無差別曲線の内側）</div>
+</template>
+
+<template class="slide-data" data-title="限界効用" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>$u(q_{x},q_{y})$: $(q_{x},q_{y})$という消費プランから得られる効用</li>
+<li class="sub-item">» $MU_x$: 財$x$の<span class="keyword">限界効用</span></li>
+<li class="sub-item">» $MU_y$: 財$y$の<span class="keyword">限界効用</span></li>
+<li>ある財の限界効用：その財の消費量をほんの少し増やしたときの効用の増分</li>
+<li class="sub-item">» ex. おおざっぱに言えば $MU_{x}=3$ ならば「$q_x$を$1\%$増やしたとき，効用は$3\%$増える」</li>
+<ul>
+<li>無差別曲線の凸性から</li>
+<li class="sub-item">» $MU_x$: 財$x$の限界効用は$x$の消費量が増えると減る</li>
+<li class="sub-item">» $MU_y$: 財$y$の限界効用は$y$の消費量が増えると減る</li>
+</ul>
+</ul>
+</template>
+
+<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="math-display" style="text-align:center; font-size:1.3em;">
+$$\frac{MU_x}{p_x}= \frac{MU_y}{p_y}$$
+</div>
+<ul>
+<li>直観：最後の1円の使い道</li>
+<li class="sub-item">» 1円で買える財$x$の量</li>
+<li class="sub-item">» 1円で買える財$y$の量</li>
+<li>$\frac{MU_x}{p_x}> \frac{MU_y}{p_y}$のとき</li>
+<li class="sub-item">» 1円分財$y$を減らし，1円分財$x$を増やすと，効用は</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="限界代替率" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li><span class="keyword">限界代替率</span>：財$x$をほんの少し増やしたときに効用を一定に保つためには財$y$をどれだけ減らさなければいけないかという交換比率</li>
+<li>$x$を増やす量を$1$，$y$を減らす量を$\Delta$とする．</li>
+<li>無差別曲線上では</li>
+$$MU_{x}-MU_{y}\Delta=0$$
+</ul>
+</template>
+
+<template class="slide-data" data-title="限界代替率" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>変形すると交換すべき$y$の量$\Delta$は</li>
+$$MRS_{xy}\coloneqq \Delta = \frac{MU_{x}}{MU_{y}}$$
+<li>この交換比率$MRS_{xy}$を<span class="keyword">財$x$の財$y$に対する限界代替率</span>という．</li>
+<li>限界代替率の特徴</li>
+<li class="sub-item">» $x$を増やす量が十分小さいなら，それは無差別曲線の傾き（の絶対値）</li>
+<li class="sub-item">» 無差別曲線が原点に向かって凸なら，$\Delta$は$x$の量が増えるにつれ，減少する．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="math-display" style="text-align:center; font-size:1.3em;">
+$$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代替率}}=\underbrace{\frac{p_x}{p_y}}_{\text{価格比}}$$
+</div>
+</template>
+
+<template class="slide-data" data-title="効用最大化条件・成り立たないケース" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 1. 端点解（完全代替財の無差別曲線と予算線）/ 2. 飽和点（円形の無差別曲線と点A）</div>
+</template>
+
+<template class="slide-data" data-title="所得による需要の変化" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 左=正常財（所得増で両財の消費増）/ 右=劣等財（所得増で$x$の消費増, $y$の消費減）</div>
+<ul>
+<li><span class="keyword">正常財</span>（あるいは<span class="keyword">上級財</span>）</li>
+<li><span class="keyword">劣等財</span>（あるいは<span class="keyword">下級財</span>）</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="所得消費曲線" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 所得消費曲線（所得増加に伴う最適消費点の軌跡）</div>
+<ul>
+<li>正常財はずっと正常財とは限らない．</li>
+<li>劣等財はずっと劣等財ではない．<br>所得ゼロなら消費量もゼロ（価格が正で消費量が非負なら）→ これ以上は減らない</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="需要の所得弾力性" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>所得が$1\%$変化したとき、需要量が何$\%$変化するか，の指標</li>
+<li>需要の所得弾力性が$0$以上$1$未満なら<span class="keyword">必需財</span></li>
+<li class="sub-item">» 所得の変化率 $>$ 需要量の変化率</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>需要の所得弾力性が$1$より大きいなら<span class="keyword">贅沢財</span>（奢侈財とも言う）</li>
+<li class="sub-item">» 所得の変化率 $<$ 需要量の変化率</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="価格による影響" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 粗代替財（$p_x$上昇で$q_x$減, $q_y$増）</div>
+<ul>
+<li><span class="keyword">粗代替財</span></li>
+<li class="sub-item">» $x$と$y$のどちらかだけでいい場合にはそうなりやすい</li>
+<li class="sub-item">» 財$x$の価格が上昇したとき，財$y$の需要量が</li>
+</ul>
+</div>
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 粗補完財（$p_x$上昇で$q_x$減, $q_y$も減）</div>
+<ul>
+<li><span class="keyword">粗補完財</span></li>
+<li class="sub-item">» $x$と$y$をペアで消費したい時にはそうなりやすい</li>
+<li class="sub-item">» 財$x$の価格が上昇したとき，財$y$の需要量が</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="注意：" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>$x$と$y$が粗補完財であるとき，必ずしもその二つの財をペアで消費したいわけではない．</li>
+<li>財$x$の価格が増加することは実質的に所得が減少すること</li>
+<li class="sub-item">→ 財$y$が正常財ならこのあおりを喰らって消費量が減少する</li>
+<li>[例] 電気使用量と牛肉の選択：電気代の値上がりで家計を圧迫したのでたまに買ってた牛肉の頻度が減る</li>
+<li class="sub-item">» これは電気と牛肉を共に消費したい（補完関係）が理由だろうか？</li>
+<li>所得効果と混ざってしまう！</li>
+<li class="sub-item">→ 所得効果を分離したい → <span class="keyword">スルツキー分解</span>という技がある</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="スルツキー分解" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: スルツキー分解（点A:元の最適, 点B:新しい最適, 点C:補償所得での最適, 予算線の回転とシフト）</div>
+</div>
+<div class="column">
+<ul>
+<li><span class="keyword">補償所得</span>：価格が変化したときに効用を元々の水準に保つために変化させた所得</li>
+<li class="sub-item">» $A \to C$の変化：<span class="keyword">代替効果</span></li>
+<li class="sub-item">» $C\to B$の変化：<span class="keyword">所得効果</span></li>
+<li>$x$財の価格増加を考える（「粗」がつかない純粋な代替効果）</li>
+<li class="sub-item">» 代替効果により$y$財の消費量が増加 → $x$は$y$の<span class="keyword">代替財</span></li>
+<li class="sub-item">» 代替効果により$y$財の消費量が減少 → $x$は$y$の<span class="keyword">補完財</span></li>
+<li class="sub-item">» 世の中に財が二種類しかなければ必ずそれらは互いに代替財 → 三種類以上あれば補完財になるペアがある</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="ギッフェン・パラドックス" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: ギッフェン財（$p_x$上昇で$q_x$が増加する無差別曲線と予算線）</div>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="消費者問題の応用：労働供給の問題" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>労働供給：どれだけ働きたいかを決める</li>
+<li>24時間生きる人を考える．</li>
+<li class="sub-item">» $t$時間働くと$w\cdot t$だけの給与をもらえる.</li>
+<li class="sub-item">» この人の効用は消費$c$と余暇$\ell$（働かなかった時間）から得られる．</li>
+<li class="sub-item">» 消費財の価格は$p$であるとする．</li>
+<li class="sub-item">» その他不労所得が$s$だけあるとする．</li>
+<li class="sub-item">→ この人の効用最大化問題はどのように書けるか？</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="効用最大化問題の図示" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column"></div>
+<div class="column">
+<ul>
+<li>賃金の変化の効果と<span class="keyword">オファーカーブ</span></li>
+<li class="sub-item">» 「価格」と「所得」の両方に影響する</li>
+<li class="sub-item">» ギッフェン財との違い</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: 複数財市場の均衡 ============ -->
+
+<template class="slide-data" data-title="" data-section="複数財市場の均衡" data-note="false" data-print-margin="80">
+<div class="section-title-big">複数財市場の均衡</div>
+</template>
+
+<template class="slide-data" data-title="純粋交換経済" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<ul>
+<li>消費者理論を応用して，複数人がいる市場の「均衡」を分析する</li>
+<li class="sub-item">» 均衡では「価格」が決まる</li>
+<li>消費者：レオンとケネスの二人</li>
+<li class="sub-item">» 純粋交換経済：あらかじめ彼らのもっている財$x$と$y$をお互いに交換する．</li>
+<li><span class="keyword">初期保有量</span>あるいは<span class="keyword">初期賦存量</span></li>
+<li class="sub-item">» レオンの初期保有$(e_{Lx},e_{Ly})$</li>
+<li class="sub-item">» ケネスの初期保有$(e_{Kx},e_{Ky})$</li>
+<li>消費プラン</li>
+<li class="sub-item">» レオンの消費プラン$(q_{Lx},q_{Ly})$</li>
+<li class="sub-item">» ケネスの消費プラン$(q_{Kx},q_{Ky})$</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="純粋交換経済での消費者問題" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<ul>
+<li>消費者は自分が持っている初期保有を売って，その売り上げを所得として考える</li>
+<li>レオンは以下の予算制約の下で効用を最大にする消費プラン$(q_{Lx},q_{Ly})$を選ぶ．</li>
+$$p_{x}q_{Lx}+p_{y}q_{Ly}=p_{x}e_{Lx}+p_{y}e_{Ly}$$
+<li>ケネスは以下の予算制約の下で効用を最大にする消費プラン$(q_{Kx},q_{Ky})$を選ぶ．</li>
+$$p_{x}q_{Kx}+p_{y}q_{Ky}=p_{x}e_{Kx}+p_{y}e_{Ky}$$
+</ul>
+</template>
+
+<template class="slide-data" data-title="純粋交換経済における均衡" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<ul>
+<li><span class="keyword">財の需給一致条件</span></li>
+<li class="sub-item">» 欲しいものの合計量が世の中にある総量と一致する</li>
+$$q_{Lx}+q_{Kx}=e_{Lx}+e_{Kx}$$
+$$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
+<li><span class="keyword">市場均衡</span>（あるいは<span class="keyword">完全競争均衡</span>，<span class="keyword">ワルラス均衡</span>）</li>
+<ol>
+<li>予算制約のもとで効用を最大にする消費プランを選んでいること．<br><span class="small">※ ただしいくら消費しても価格は変えられないものと思っている（価格受容者の仮定）</span></li>
+<li>それぞれの財の需給一致条件を満たすこと．</li>
+</ol>
+</ul>
+</template>
+
+<template class="slide-data" data-title="エッジワースボックス" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<a href="https://vimeo.com/1003081215" target="_blank" class="qr-link">🔗 QRリンク</a>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: エッジワースボックス（$O_L$原点, $O_K$対角, 初期保有点$E$, 消費点$A$, 各軸$q_{Lx}, q_{Ly}, q_{Kx}, q_{Ky}$）</div>
+</template>
+
+<template class="slide-data" data-title="パレート効率的な配分" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: エッジワースボックス内のパレート効率性（レオンの無差別曲線とケネスの無差別曲線の接点, 点A,B,C,D）</div>
+<ul>
+<li>余剰がうまく計算できないので，パレート効率性で評価する</li>
+<li>パレート効率性の復習</li>
+<li class="sub-item">» そこから他の点に移ると誰かが損する → パレート効率的である</li>
+<li class="sub-item">» そこから移ると全員が得をするような他の点がある → パレート効率的でない</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="第一厚生定理" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<a href="https://vimeo.com/1003081186" target="_blank" class="qr-link">🔗 QRリンク</a>
+<ul>
+<li><span class="keyword">第一厚生定理</span>（厚生経済学の第一基本定理）：市場均衡の配分はパレート効率的である．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="第二厚生定理" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<a href="https://vimeo.com/1003078070" target="_blank" class="qr-link">🔗 QRリンク</a>
+<ul>
+<li><span class="keyword">第二厚生定理</span>：パレート効率的な配分は（初期保有配分を操作すれば）市場均衡の配分として達成できる．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="市場理論の応用：講義科目配分" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>履修制限のある講義科目について考える．</li>
+<li class="sub-item">» 最大履修可能人数が「供給量」になる</li>
+<li class="sub-item">» 「需要量」は登録者数</li>
+<li>「抽選登録」では「履修したい意欲」が反映できないので不満</li>
+<li class="sub-item">» 市場均衡を使ってこの問題を解決！</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>ポイント投票メカニズム</li>
+<li class="sub-item">» まず学生に「予算」を与える</li>
+<li class="sub-item">» 次に予算内で各科目に対して，履修することの効用を申告する</li>
+<li class="sub-item">» 効用の高い順に受講生が割り当てられ，「価格」を基準に足切りされる</li>
+<li class="sub-item">» 講義が割り当てられた学生は価格の分だけ予算を消費する</li>
+<li>神戸大学，ペンシルバニア大学やハーバード大学の一部では導入されている．日本大学では未導入</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: 企業の行動 ============ -->
+
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="80">
+<div class="section-title-big">企業の行動</div>
+</template>
+
+<template class="slide-data" data-title="企業の行動原理" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>生産者である「企業」を詳しく分析する</li>
+<li>基本的な経済学では企業は「利潤」を最大にするように行動する．</li>
+<li class="sub-item">» $\text{利潤}=\text{売上金額} -\text{費用}$</li>
+<li>現実の企業は本当に利潤を最大化している？</li>
+<li class="sub-item">» 典型的な言い訳：利潤を出せないと倒産するので生き残ってる企業は利潤を出している</li>
+<li>マーケットシェアや売り上げ（年商）を目的とする場合もある．</li>
+<li class="sub-item">» 不完全競争ではそのほうが利潤が増えることもある（詳しくは産業組織論で）</li>
+<li class="sub-item">» ワンマン経営者の場合，違う目的が先行することもある</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>利潤最大化してなさそうな例</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: harimaya.png<br><span class="tiny">(引用元：https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf)</span></div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="単純化" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>企業が選べるものはなに？</li>
+<li class="sub-item">» 生産量（どれだけ作るか）</li>
+<li class="sub-item">» 商品の選択</li>
+<li class="sub-item">» 商品の価格</li>
+<li class="sub-item">» 従業員の採用数</li>
+<li class="sub-item">» 事業のための投資・研究開発</li>
+<p>その他諸々．</p>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>最初から全部分析するのはムリ</li>
+<li class="sub-item">» 以下を仮定する</li>
+<ol type="a">
+<li>商品は決まっている（種類も1つだけ）</li>
+<li>技術も決まっている（生産性の改善とかもナシ）</li>
+<li>価格も自分で変えられない（<span class="keyword">価格受容者の仮定</span>）</li>
+<li>選べるのは①どれだけ作るか，②どれだけ人を雇うか，③どれだけ機械を導入するか...</li>
+</ol>
+<li>最も単純なケースは「どれだけ作るか」しか選べない.</li>
+<li class="sub-item">» ひとまずはこのケースを考え，あとあと②，③について考える．</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産の一番単純なケース" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>選ぶのはどれだけ作るかのみ</li>
+<li class="sub-item">» 生産する量を記号で$q$と書く．</li>
+<li class="sub-item">» $q$だけ生産するときの費用を$C(q)$と書く．</li>
+<li class="sub-item">» $C(q)$は<span class="keyword">総費用関数</span>と呼ばれる．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="利潤最大化の一階条件" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>$C'(q)$は<span class="keyword">限界費用</span>と呼ばれる．（$MC$と書いたりもする．）</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>利潤最大化条件を図示すると</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 限界費用曲線$C'(q)$=供給曲線, 価格$p$の水平線との交点$q^*$</div>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="供給関数" data-section="企業の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>利潤最大化問題を解く．$C(q)=q^2$とする．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>$C(q)=q^2+q$とする．供給関数を求めなさい．</li>
+<li>$C(q)=4\cdot q$だとする．供給関数を求めなさい（微分では解けない）．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="費用の種類と構造" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>総費用関数のより細かい構造を見る．例として$C(q)=q^2+q+5$</li>
+<li class="sub-item">» <span class="keyword">可変費用</span>とは</li>
+<li class="sub-item">» <span class="keyword">固定費用</span>とは</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>経済学における短期と長期</li>
+<li class="sub-item">» 短期とは</li>
+<li class="sub-item">» 長期とは</li>
+<li>固定費用 $\neq$ 埋没費用</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="損益分岐点" data-section="企業の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>どのようなときに利益が黒字か（赤字か）？</li>
+<li class="sub-item">→ <span class="keyword">損益分岐点</span>を求める．</li>
+<li>黒字と赤字の境目＝利潤が0の条件は</li>
+<li class="sub-item">» 損益分岐点での価格は</li>
+<li>利潤最大化条件を使うと...</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="操業停止点" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>利潤が赤字でも（短期的には）店じまいすべきでないかもしれない．</li>
+<li class="sub-item">» 短期的には工場などを売れない → 固定費用はかかりっぱなし</li>
+<li class="sub-item">» 可変費用の部分で黒字であれば固定費用による赤字を減らせる！</li>
+<li>$q$だけ生産するのと全く生産しないのが同じ利潤になる条件は</li>
+<li>この価格を下回れば生産すべきでない．この価格を<span class="keyword">操業停止点</span>の価格，生産量を<span class="keyword">操業停止点</span>の生産量と呼ぶ．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="例題1" data-section="企業の行動" data-note="false" data-print-margin="0">
+<p>費用関数が$C(q)=q^{2}+q+4$だとする．</p>
+<ol>
+<li>損益分岐点の価格と生産量を求めなさい．</li>
+<li>操業停止点の価格と生産量を求めなさい．</li>
+</ol>
+</template>
+
+<template class="slide-data" data-title="例題2" data-section="企業の行動" data-note="false" data-print-margin="0">
+<p>費用関数が$C(q)=q^3-3q^{2}+5q+4$だとする．図を描いて次の問いに答えなさい</p>
+<ol>
+<li>損益分岐点の価格と生産量を求めなさい．</li>
+<li>操業停止点の価格と生産量を求めなさい．</li>
+</ol>
+<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 費用曲線（総費用$C(q)$, 限界費用$MC$, 平均可変費用$AVC$, 平均費用$AC$のグラフ）</div>
+</template>
+
+<template class="slide-data" data-title="企業の参入・退出" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>参入・退出が起きない → 安定した状態</li>
+<li>参入していない時の利潤を$0$とすると</li>
+<li class="sub-item">» 利潤 $>0$: 参入が起きる</li>
+<li class="sub-item">» 利潤 $<0$: 退出が起きる</li>
+<li>自由に参入・退出が可能ならば，安定した状態では利潤はどうなる？</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>参入・退出は効率的か？</li>
+<li class="sub-item">» （不完全競争では）過剰参入定理(Mankiw and Whinston, 1986; Suzumura and Kiyono, 1987)が知られている．</li>
+<li class="sub-item">» 過小参入定理もある（Ghosh and Morita, 2009）.</li>
+<li class="sub-item">» 詳しくは産業組織論で！</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>総費用関数は謎のブラックボックスであった．</li>
+<li class="sub-item">» 100万個作りたいと言ったら「200億円かかります」とだけ言われるようなもの</li>
+<li class="sub-item">» この総費用関数はどこから出てくるのか？</li>
+<li><span class="keyword">生産関数</span></li>
+<li class="sub-item">» 生産要素なるものを投入したら生産物が出てくる関数</li>
+<li class="sub-item">→ 生産関数から総費用関数を作る</li>
+<li class="sub-item">» ex. 100万個作るには，作業員を60人雇って，工場を一箇所作って，材料を3トン購入して,...その諸々の費用が200億円かかります．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数と生産要素" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>生産要素</li>
+<li class="sub-item">» 二つの要素$K,L$によって財が生産できると想定</li>
+<ol>
+<li>$K$: 資本<br>使用するには$r\cdot K$だけの費用がかかる<br>$r$を<span class="keyword">レンタル率</span>と呼ぶ.</li>
+<li>$L$: 労働<br>使用するには$w\cdot L$だけの費用がかかる<br>$w$を<span class="keyword">賃金率</span>と呼ぶ.</li>
+</ol>
+<li>生産関数：$f(K,L)$</li>
+<li class="sub-item">» $(K,L)$の組み合わせを投入すると$f(K,L)$だけの量の財ができる.</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：$f(2,3)=8$は</li>
+<li class="sub-item">» 「工場を2つ建て，工場作業員を3千人雇うと駄菓子を8万個製造可能」くらいの意味</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数の性質" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>規模に関する収穫（スケールメリット/デメリット）</li>
+<ol>
+<li>$f(aK,aL)>a f(K,L)$となるとき，<span class="keyword">規模に関して収穫逓増</span>という</li>
+<li>$f(aK,aL)=a f(K,L)$となるとき，<span class="keyword">規模に関して収穫一定</span>という</li>
+<li>$f(aK,aL)&lt;a f(K,L)$となるとき，<span class="keyword">規模に関して収穫逓減</span>という</li>
+</ol>
+<li class="small">例：お菓子の生産：「規模に関して収穫___」<br>小麦粉と卵の量を3倍にすると，できるケーキの数は3倍になる</li>
+<li class="small">例：店舗の売上：「規模に関して収穫___」<br>店舗数と雇用者数を二倍にしたら，売り上げが1.5倍になった．</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>他にも例を考えてみよう</li></ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="経済学における短期と長期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">長期</span>：すべての生産要素が調整可能</li>
+<li class="sub-item">» <span class="keyword">可変的生産要素</span>: 調整可能な生産要素</li>
+<li><span class="keyword">短期</span>：一部の生産要素が固定されている．</li>
+<li class="sub-item">» <span class="keyword">固定的生産要素</span>:（すぐには）調整できない生産要素．</li>
+<li class="sub-item">→ たいていは$K=\bar K$の水準で固定されていると想定する．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="短期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>短期の最適化問題: $q$だけ作る費用は?</li>
+<li class="sub-item">» $K=\bar K$で固定されているとき，$f(\bar K,L)=q$となるような$L$を$L^*(q, \bar K)$とする．</li>
+<li class="sub-item">» このときの総費用は</li>
+$$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
+<li class="sub-item">» $r\bar K$は固定費用</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：ケーキ工場の機械の数は5個，一個あたり300万円，普段2千個/日作るためには7人雇わないといけない，繁忙期に１万個/日作るためには40人雇わないといけない．一人当たりの日給は8000円</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="長期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>長期の生産問題:</li>
+<li class="sub-item">» $K$と$L$の両方を調整する.</li>
+<li class="sub-item">» 生産量$q$を達成するような$K,L$の中で費用が最小になるような組み合わせを考える．</li>
+<li class="sub-item">» 短期の決定より自由度が高い</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例:</li>
+<li class="sub-item">» ガラケーは時代遅れなので，工場を減らす</li>
+<li class="sub-item">» 半導体は需要が高まりそうなので，工場を増やす</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="等量曲線と等費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
+<p class="small">※縦軸・横軸に注意</p>
+<div class="columns">
+<div class="column">
+<ul><li><span class="keyword">等産出量曲線</span>: 同じ生産量を達成する点$(K,L)$を結んだ曲線</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 等産出量曲線（$f(K,L)=q_1, q_2, q_3$, 横軸$K$, 縦軸$L$）</div>
+<ul><li class="sub-item">» 等産出量曲線の傾きは</li>
+<li><span class="keyword">限界変形率</span>（あるいは技術的限界代替率）</li></ul>
+</div>
+<div class="column">
+<ul><li><span class="keyword">等費用曲線</span>: 同じ費用がかかる点$(K,L)$を結んだもの</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 等費用曲線（$rK+wL=c_1, c_2$, 直線）</div>
+<ul><li class="sub-item">» 等費用曲線の傾きは</li></ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="限界生産物" data-section="企業の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>$f(K,L)$: $(K,L)$という生産計画のときの生産量</li>
+<li class="sub-item">» $MP_L$: 労働の<span class="keyword">限界生産物</span></li>
+<li class="sub-item">» $MP_K$: 資本の<span class="keyword">限界生産物</span></li>
+<li>ある生産要素の限界生産物：その生産要素の投入量をほんの少し増やしたときの生産量の増分</li>
+<li class="sub-item">» ex. おおざっぱに言えば $MP_L=3$ ならば「$L$の投入量を$1\%$増やしたとき，生産量は$3\%$増える」</li>
+<li>限界変形率との関係</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="費用最小化問題" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul><li>生産量を固定（例えば$f(K,L)=q$）した上で費用が最小になるように$K,L$を選ぶ.</li></ul>
+<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 費用最小化（等産出量曲線$f(K,L)=q$と等費用曲線の接点）</div>
+</div>
+<div class="column">
+<ul>
+<li>費用最小化点の求め方は効用最大化問題とほぼ同じ!</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="限界変形率と要素価格比" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>1個生産量を増やすために必要な労働量は$\frac{1}{MP_L}$であり，1個生産量を増やすために必要な資本の量は$\frac{1}{MP_K}$であることに注意する.</li>
+<li>もし$\frac{w}{MP_L}> \frac{r}{MP_K}$ならば...</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>費用最小化する生産計画では</li>
+</ul>
+$$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="長期と短期の費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">費用</span>とは，ある生産量を達成するための最小の費用</li>
+<li class="sub-item">» 長期と短期で費用にどのような差があるか？</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>図解</li></ul>
+</div>
+</div>
+</template>
+
+<!-- ============ SECTION: Final Remark ============ -->
+
+<template class="slide-data" data-title="" data-section="Final Remark" data-note="false" data-print-margin="80">
+<div class="section-title-big">Final Remark</div>
+</template>
+
+<template class="slide-data" data-title="この講義で扱っていないこと" data-section="Final Remark" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>組織の経済学</li>
+<li class="sub-item">» 企業の内部では市場の論理は使えない</li>
+<li class="sub-item">» 「契約」をキーワードに組織内部の行動を分析</li>
+<li class="sub-item">» 経営学と関連する</li>
+<li>社会的選択理論</li>
+<li class="sub-item">» 人々の好みや情報をどのように集計するか？</li>
+<li class="sub-item">» アローの不可能性定理が有名<br>（民主主義の限界を示した，は誤り）</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>ゲーム理論</li>
+<li class="sub-item">» 複数の人物がいる状況で，戦略的な行動を考える</li>
+<li class="sub-item">» 「囚人のジレンマ」だけではない</li>
+<li class="sub-item">» 「囚人のジレンマ」以外がむしろ大事</li>
+<li>メカニズム・デザイン/マーケット・デザイン</li>
+<li class="sub-item">» ゲーム理論を使って，より良い社会を実現する仕組みづくりのための理論</li>
+<li class="sub-item">» 例：オークション制度のデザイン，配属先の決定のデザイン</li>
+</ul>
+</div>
+</div>
+</template>
+
+</body>
+</html>
