@@ -1062,6 +1062,8 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   scheduleSave();
   current = idx;
+  // Update URL hash without triggering hashchange
+  history.replaceState(null, '', '#' + (idx + 1));
   renderSlide(idx);
   let pageText = (idx+1) + ' / ' + SLIDES.length;
   if (filteredIndices && filteredIndices.length > 0) {
@@ -1576,6 +1578,21 @@ function exportNotes() {
   a.click();
 }
 
+// URL-based page navigation: ?page=N or #N (1-based)
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const qp = parseInt(params.get('page'));
+  if (qp >= 1) return qp - 1;
+  const hash = window.location.hash.replace('#', '');
+  const hp = parseInt(hash);
+  if (hp >= 1) return hp - 1;
+  return null;
+}
+window.addEventListener('hashchange', () => {
+  const hp = parseInt(window.location.hash.replace('#', ''));
+  if (hp >= 1 && hp - 1 < SLIDES.length) showSlide(hp - 1);
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Read slides from <template> elements
@@ -1603,6 +1620,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Restore saved notes, strokes, and last position
   loadLocal();
+  // URL page specification: ?page=N or #N (1-based)
+  const urlPage = getPageFromURL();
+  if (urlPage !== null) current = urlPage;
   // Wait for MathJax to load
   function initWhenReady() {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {

@@ -732,6 +732,21 @@ const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 function getCanvas() { return document.getElementById('drawCanvas'); }
 function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
 
+// URL-based page navigation: ?page=N or #N (1-based)
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const qp = parseInt(params.get('page'));
+  if (qp >= 1) return qp - 1;
+  const hash = window.location.hash.replace('#', '');
+  const hp = parseInt(hash);
+  if (hp >= 1) return hp - 1;
+  return null;
+}
+window.addEventListener('hashchange', () => {
+  const hp = parseInt(window.location.hash.replace('#', ''));
+  if (hp >= 1 && hp - 1 < SLIDES.length) showSlide(hp - 1);
+});
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', () => {
   SLIDES = Array.from(document.querySelectorAll('template.slide-data')).map(t => ({
@@ -767,6 +782,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadLocal();
+  // URL page specification: ?page=N or #N (1-based)
+  const urlPage = getPageFromURL();
+  if (urlPage !== null) current = urlPage;
   showSlide(current);
   bindCanvasEvents();
   bindBoardCanvasEvents();
@@ -802,6 +820,8 @@ function showSlide(idx) {
   }
 
   current = idx;
+  // Update URL hash without triggering hashchange
+  history.replaceState(null, '', '#' + (idx + 1));
   const s = SLIDES[idx];
 
   // Section badge
