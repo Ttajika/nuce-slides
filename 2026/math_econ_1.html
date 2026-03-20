@@ -743,11 +743,12 @@ function resizeDrawCanvas() {
 
 function getDrawPos(e) {
   const c = getCanvas();
-  if (!c) return {x:0,y:0};
+  if (!c) return {x:0,y:0,pressure:0.5};
   const rect = c.getBoundingClientRect();
-  const cx = e.touches ? e.touches[0].clientX : e.clientX;
-  const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: cx - rect.left, y: cy - rect.top };
+  const cx = e.clientX;
+  const cy = e.clientY;
+  const pressure = e.pressure !== undefined ? e.pressure : 0.5;
+  return { x: cx - rect.left, y: cy - rect.top, pressure: pressure || 0.5 };
 }
 
 function redrawStrokes() {
@@ -758,17 +759,21 @@ function redrawStrokes() {
   if (!ss) return;
   ss.forEach(s => {
     if (s.points.length < 2) return;
-    ctx.beginPath();
     ctx.strokeStyle = s.color;
-    ctx.lineWidth = s.size;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.globalAlpha = s.alpha || 1;
-    ctx.moveTo(s.points[0].x, s.points[0].y);
     for (let i = 1; i < s.points.length; i++) {
-      ctx.lineTo(s.points[i].x, s.points[i].y);
+      const p0 = s.points[i - 1];
+      const p1 = s.points[i];
+      const pr = (p0.pressure !== undefined && p1.pressure !== undefined)
+        ? (p0.pressure + p1.pressure) / 2 : 0.5;
+      ctx.beginPath();
+      ctx.lineWidth = s.size * (0.3 + pr * 1.4);
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
     }
-    ctx.stroke();
     ctx.globalAlpha = 1;
   });
   // Draw pointer dot
@@ -990,13 +995,11 @@ function bindBoardCanvasEvents() {
 function bindCanvasEvents() {
   const c = getCanvas();
   if (!c) return;
-  c.addEventListener('mousedown', startDraw);
-  c.addEventListener('mousemove', moveDraw);
-  c.addEventListener('mouseup', endDraw);
-  c.addEventListener('mouseleave', endDraw);
-  c.addEventListener('touchstart', startDraw, {passive:false});
-  c.addEventListener('touchmove', moveDraw, {passive:false});
-  c.addEventListener('touchend', endDraw);
+  c.style.touchAction = 'none';
+  c.addEventListener('pointerdown', startDraw);
+  c.addEventListener('pointermove', moveDraw);
+  c.addEventListener('pointerup', endDraw);
+  c.addEventListener('pointerleave', endDraw);
 }
 bindCanvasEvents();
 bindBoardCanvasEvents();
