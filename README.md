@@ -1,2 +1,12 @@
-これは日本大学　経済学部　多鹿の授業資料です．実際のページは下記リンクからご覧になれます．htmlファイルをご自身の講義用に改変することなどは自由にしてください．ただし，再配布などはお控えください．
-* [ページ](https://ttajika.github.io/nuce-slides/)
+# nuce-slides
+
+日本大学 経済学部 多鹿の講義スライドです。
+
+## 閲覧
+
+公開ページ：[https://ttajika.github.io/nuce-slides/](https://ttajika.github.io/nuce-slides/)
+
+## ライセンス
+
+- ご自身の講義用に改変・利用していただいて構いません。
+- 再配布はご遠慮ください。
