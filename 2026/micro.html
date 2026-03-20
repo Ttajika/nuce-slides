@@ -305,10 +305,10 @@ body.print-mode .slide-area {
 
 .print-slide {
   page-break-inside:auto;
-  border:1px solid #ccc;
-  padding:20px 28px;
-  margin:12px auto;
-  max-width:780px;
+  border:none;
+  padding:0px 28px;
+  margin:-30px auto;
+  max-width:870px;
   background:#fff;
   position:relative;
   overflow:visible;
@@ -362,7 +362,7 @@ body.print-mode .qr-link { flex-direction:column; }
 body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 
 @media print {
-  body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
 }
 

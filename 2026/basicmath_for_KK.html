@@ -234,7 +234,7 @@ ol.custom-enum { padding-left:1.5em; }
 .red { color:#9b2d86; }
 strong.keyword { font-weight:700; }
 
-.math-display { margin:10px 0; overflow-x:auto; }
+.math-display { margin:10px 0; overflow-x:auto; text-align:left; }
 
 /* ---- TikZ ---- */
 .tikz-figure {
@@ -422,10 +422,10 @@ body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
 
 .print-slide {
   page-break-inside:auto;
-  border:1px solid #ccc;
-  padding:8px 28px;
-  margin:4px auto;
-  max-width:780px;
+  border:none;
+  padding:0px 28px;
+  margin:-30px auto;
+  max-width:870px;
   background:#fff;
   position:relative;
   overflow:visible;
@@ -465,7 +465,7 @@ body.print-mode .qr-link { flex-direction:column; }
 .print-header {
   text-align:center; padding:20px 0 10px;
   border-bottom:2px solid var(--accent);
-  margin:0 auto 20px; max-width:780px;
+  margin:0 auto 20px; max-width:870px;
 }
 .print-header h1 { font-size:22px; color:var(--accent); }
 .print-header p { font-size:12px; color:#666; }
@@ -487,7 +487,7 @@ body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
   .topbar-title { max-width:120px; }
 }
 @media print {
-  body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
   .topbar,.draw-toolbar,.notes-panel { display:none !important; }
 }
@@ -1766,6 +1766,29 @@ document.addEventListener('keydown', e => {
 </div>
 </template>
 
+
+
+<!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
+<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class = "columns">
+<div class = "column"> 
+<ul>
+<li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
+<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）<a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
+<li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
+</li>
+</ul>
+</div>  
+<div class = "column">
+<ul>
+<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
+<li class="spacer"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
+</li>
+</ul>
+</div>
+</div>
+</template>
+
 <!-- ===== Slide 3: はじめに / 諸注意 ===== -->
 <template class="slide-data" data-title="諸注意" data-section="はじめに" data-note="false" data-print-margin="0">
 <div class="columns"> 
@@ -1798,26 +1821,6 @@ document.addEventListener('keydown', e => {
  </div>
 </template>
 
-<!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
-<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
-<div class = "columns">
-<div class = "column"> 
-<ul>
-<li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
-<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）<a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
-<li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
-</li>
-</ul>
-</div>  
-<div class = "column">
-<ul>
-<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
-<li class="spacer"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
-</li>
-</ul>
-</div>
-</div>
-</template>
 
 <!-- ===== Slide 5: はじめに / 成績評価方法 ===== -->
 <template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
@@ -2212,8 +2215,9 @@ document.addEventListener('keydown', e => {
   <li> ギリシャ文字の一覧
   
     <div style="display:flex;gap:12px;">
-    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \alpha $</td><td>$  A $</td><td>アルファ</td></tr><tr><td>$  \beta $</td><td>$  B $</td><td>ベータ</td></tr><tr><td>$  \gamma $</td><td>$  \Gamma $</td><td>ガンマ</td></tr><tr><td>$  \delta $</td><td>$  \Delta $</td><td>デルタ</td></tr><tr><td>$  \epsilon $</td><td>$  E $</td><td>エプシロン</td></tr><tr><td>$  \zeta $</td><td>$  Z $</td><td>ゼータ</td></tr><tr><td>$  \eta $</td><td>$  H $</td><td>エータ</td></tr><tr><td>$  \theta $</td><td>$  \Theta $</td><td>シータ</td></tr><tr><td>$  \iota $</td><td>$  I $</td><td>イオタ</td></tr><tr><td>$  \kappa $</td><td>$  K $</td><td>カッパ</td></tr><tr><td>$  \lambda $</td><td>$  \Lambda $</td><td>ラムダ</td></tr><tr><td>$  \mu $</td><td>$  M $</td><td>ミュー</td></tr></table>
-    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \nu $</td><td>$  N $</td><td>ニュー</td></tr><tr><td>$  \xi $</td><td>$  \Xi $</td><td>クシー</td></tr><tr><td>$  o $</td><td>$  O $</td><td>オミクロン</td></tr><tr><td>$  \pi $</td><td>$  \Pi $</td><td>パイ</td></tr><tr><td>$  \rho $</td><td>$  P $</td><td>ロー</td></tr><tr><td>$  \sigma $</td><td>$  \Sigma $</td><td>シグマ</td></tr><tr><td>$  \tau $</td><td>$  T $</td><td>タウ</td></tr><tr><td>$  \upsilon $</td><td>$  Y $</td><td>イプシロン</td></tr><tr><td>$  \phi $</td><td>$  \Phi $</td><td>ファイ</td></tr><tr><td>$  \chi $</td><td>$  X $</td><td>カイ</td></tr><tr><td>$  \psi $</td><td>$  \Psi $</td><td>プサイ</td></tr><tr><td>$  \omega $</td><td>$  \Omega $</td><td>オメガ</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \alpha $</td><td>$  A $</td><td>アルファ</td></tr><tr><td>$  \beta $</td><td>$  B $</td><td>ベータ</td></tr><tr><td>$  \gamma $</td><td>$  \Gamma $</td><td>ガンマ</td></tr><tr><td>$  \delta $</td><td>$  \Delta $</td><td>デルタ</td></tr><tr><td>$  \epsilon $</td><td>$  E $</td><td>エプシロン</td></tr><tr><td>$  \zeta $</td><td>$  Z $</td><td>ゼータ</td></tr><tr><td>$  \eta $</td><td>$  H $</td><td>エータ</td></tr><tr><td>$  \theta $</td><td>$  \Theta $</td><td>シータ</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \iota $</td><td>$  I $</td><td>イオタ</td></tr><tr><td>$  \kappa $</td><td>$  K $</td><td>カッパ</td></tr><tr><td>$  \lambda $</td><td>$  \Lambda $</td><td>ラムダ</td></tr><tr><td>$  \mu $</td><td>$  M $</td><td>ミュー</td></tr><tr><td>$  \nu $</td><td>$  N $</td><td>ニュー</td></tr><tr><td>$  \xi $</td><td>$  \Xi $</td><td>クシー</td></tr><tr><td>$  o $</td><td>$  O $</td><td>オミクロン</td></tr><tr><td>$  \pi $</td><td>$  \Pi $</td><td>パイ</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \rho $</td><td>$  P $</td><td>ロー</td></tr><tr><td>$  \sigma $</td><td>$  \Sigma $</td><td>シグマ</td></tr><tr><td>$  \tau $</td><td>$  T $</td><td>タウ</td></tr><tr><td>$  \upsilon $</td><td>$  Y $</td><td>イプシロン</td></tr><tr><td>$  \phi $</td><td>$  \Phi $</td><td>ファイ</td></tr><tr><td>$  \chi $</td><td>$  X $</td><td>カイ</td></tr><tr><td>$  \psi $</td><td>$  \Psi $</td><td>プサイ</td></tr><tr><td>$  \omega $</td><td>$  \Omega $</td><td>オメガ</td></tr></table>
     </div>
     </ul> 
 
@@ -2227,22 +2231,22 @@ document.addEventListener('keydown', e => {
  <div class="column">
  <ul>
  <li> 最も基本となる計算は和と積
-  </ul> 
- <dl>
- <li class="custom-marker"><span class="marker">結合法則（加法）</span>  全ての数 $  a,b,c $ について
+ 
+ 
+ <li ><span class="keyword">結合法則（加法）</span>  全ての数 $  a,b,c $ について
 <div class="math-display">\[\begin{aligned}a+(b+c)=(a+b)+c\end{aligned}\]</div>
- <li class="custom-marker"><span class="marker">結合法則（乗法）</span>  全ての数 $  a,b,c $ について
+ <li "><span class="keyword">結合法則（乗法）</span>  全ての数 $  a,b,c $ について
 <div class="math-display">\[\begin{aligned}a\cdot(b\cdot c)=(a\cdot b)\cdot c\end{aligned}\]</div>
 
-  </dl>
+ </ul>   
  </div>
  <div class="column">
 <dl>
- <li class="custom-marker"><span class="marker">交換法則（加法）</span>  全ての数 $  a,b $ について
+ <li ><span class="keyword">交換法則（加法）</span>  全ての数 $  a,b $ について
 <div class="math-display">\[\begin{aligned}a+b=b+a\end{aligned}\]</div>
- <li class="custom-marker"><span class="marker">交換法則（乗法）</span>  全ての数 $  a,b $ について
+ <li ><span class="keyword">交換法則（乗法）</span>  全ての数 $  a,b $ について
 <div class="math-display">\[\begin{aligned}a\cdot b=b\cdot a\end{aligned}\]</div> 
-<li class="custom-marker"><span class="marker">分配法則</span>  全ての数 $  a,b,c $ について
+<li ><span class="keyword">分配法則</span>  全ての数 $  a,b,c $ について
 <div class="math-display">\[\begin{aligned}a\cdot (b+c)=ab+ac\end{aligned}\]</div>
 
 </dl>
@@ -2254,20 +2258,20 @@ document.addEventListener('keydown', e => {
 <template class="slide-data" data-title="計算のルール②" data-section="四則演算" data-note="false" data-print-margin="80">
 <div class="columns"> 
   <div class="column"> 
-<dl>
-<li class="custom-marker"><span class="marker">単位元（加法）</span> 全ての数 $  a $ について
+<ul>
+<li class="custom-marker"><span class="keyword">単位元（加法）</span> 全ての数 $  a $ について
 <div class="math-display">\[\begin{aligned}a+0=0+a=a\end{aligned}\]</div>
-<li class="custom-marker"><span class="marker">単位元（乗法）</span> 全ての数 $  a $ について
+<li class="custom-marker"><span class="keyword">単位元（乗法）</span> 全ての数 $  a $ について
 <div class="math-display">\[\begin{aligned}a\cdot 1=1\cdot a=a\end{aligned}\]</div>
 
-</dl>
+</ul>
   </div> 
   <div class="column"> 
  <ul> 
   <dl>
-    <li class="custom-marker"><span class="marker">逆元（加法）</span> 全ての数 $  a $ について
+    <li class="custom-marker"><span class="keyword">逆元（加法）</span> 全ての数 $  a $ について
 <div class="math-display">\[\begin{aligned}a+(-a)=0\end{aligned}\]</div>
-<li class="custom-marker"><span class="marker">逆元（乗法）</span> 全ての数 $  a\ne 0 $ について
+<li class="custom-marker"><span class="keyword">逆元（乗法）</span> 全ての数 $  a\ne 0 $ について
 <div class="math-display">\[\begin{aligned}a\cdot \frac{1}{a}=1\end{aligned}\]</div>
 </li>
 </dl>
@@ -2325,16 +2329,18 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
   <div class="column"> 
  <ul> 
    <li> 分数式の和
-  <div class="math-display">\[\begin{aligned}\frac{a}{b}+\frac{c}{d}=\end{aligned}\]</div>
-  
+  <br><br>$\dfrac{a}{b}+\dfrac{c}{d}=$
+  <div style="margin-top:80px;"></div>
   <li> 分数を分数で割る
+     <br><br>$\dfrac{1+\dfrac{a}{b}}{1+\dfrac{c}{d}}=$
   </ul> 
+
    </div> 
   </div>
 </template>
 
 <!-- ===== Slide 24: 四則演算 / 式変形による証明 ===== -->
-<template class="slide-data" data-title="式変形による証明" data-section="四則演算" data-note="false" data-print-margin="180">
+<template class="slide-data" data-title="式変形による証明" data-section="四則演算" data-note="false" data-print-margin="580">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -3223,7 +3229,18 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 
 <!-- ===== Slide 70: 多変数関数の微分 / 例 ===== -->
 <template class="slide-data" data-title="例" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
-
+<ul>
+  <li>それぞれ偏微分してみましょう</li>
+</ul>  
+<ol>
+<li>  $ f(x,y)=x+y $ 
+ <br><br> <br><br>
+<li>  $ f(x,y,z)=x^2+y^2+z $ 
+  <br><br><br><br>
+<li>  $ f(x,y)=xy $ 
+  <br><br><br><br>
+<li>  $ f(x,y)=x^2y^3 $ 
+</ol>
 </template>
 
 <!-- ===== Slide 71: 多変数関数の微分 / 多変数関数の最適化（無制約） ===== -->
@@ -3475,7 +3492,7 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </template>
 
 <!-- ===== Slide 83: 累乗，数列とその和 / 応用：割引現在価値の和 ===== -->
-<template class="slide-data" data-title="応用：割引現在価値の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="180">
+<template class="slide-data" data-title="応用：割引現在価値の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="380">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3492,10 +3509,7 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </div>
 </template>
 
-<!-- ===== Slide 84: 累乗，数列とその和 / 計算例 ===== -->
-<template class="slide-data" data-title="計算例" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
 
-</template>
 
 
 
@@ -3664,7 +3678,7 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </template>
 
 <!-- ===== Slide 94: 確率 / 条件付き確率 ===== -->
-<template class="slide-data" data-title="条件付き確率" data-section="確率" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="条件付き確率" data-section="確率" data-note="false" data-print-margin="380">
 <div class="columns"> 
  <div class="column"> 
  <ul> 

@@ -134,7 +134,7 @@ body.print-mode { background:#fff; }
 body.print-mode .topbar, body.print-mode .notes-panel, body.print-mode .nav-btn, body.print-mode .topbar-nav, body.print-mode .draw-toolbar, body.print-mode .hints { display:none !important; }
 body.print-mode .main { display:block; overflow:visible; }
 body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
-.print-slide { page-break-inside:auto; border:1px solid #ccc; padding:20px 28px; margin:12px auto; max-width:780px; background:#fff; position:relative; overflow:visible; }
+.print-slide { page-break-inside:auto; border:none; padding:0px 28px; margin:-30px auto; max-width:870px; background:#fff; position:relative; overflow:visible; }
 .print-slide .slide-number { position:absolute; top:8px; right:12px; font-size:11px; color:#999; font-family:'JetBrains Mono',monospace; }
 .print-slide .frame-title { font-size:16px; font-weight:700; color:var(--accent); border-bottom:1.5px solid var(--accent); padding-bottom:4px; margin-bottom:10px; }
 .print-slide .section-badge { font-size:10px; color:#999; margin-bottom:2px; }
@@ -153,7 +153,7 @@ body.print-mode .tikz-figure { cursor:default; }
 }
 .print-header .page-break-toggle:hover { background:#e8e8e8; }
 body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
-@media print { body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; } .print-note-area { min-height:60px; } }
+@media print { body.print-mode .print-slide { border:none; box-shadow:none; } .print-note-area { min-height:60px; } }
 .hints { position:fixed; bottom:12px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:6px; font-size:11px; color:#ccc; display:none; z-index:200; white-space:nowrap; }
 .hints.show { display:block; }
 kbd { background:#374151; padding:1px 5px; border-radius:3px; border:1px solid #4b5563; font-family:'JetBrains Mono',monospace; font-size:11px; }
