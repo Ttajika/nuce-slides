@@ -305,10 +305,10 @@ body.print-mode .slide-area {
 
 .print-slide {
   page-break-inside:auto;
-  border:1px solid #ccc;
-  padding:20px 28px;
-  margin:12px auto;
-  max-width:780px;
+  border:none;
+  padding:0px 28px;
+  margin:-30px auto;
+  max-width:870px;
   background:#fff;
   position:relative;
   overflow:visible;
@@ -362,7 +362,7 @@ body.print-mode .qr-link { flex-direction:column; }
 body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 
 @media print {
-  body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
 }
 
@@ -495,6 +495,7 @@ body.print-mode .mode-toggle { bottom:12px; }
 body.print-mode .understanding-bar,
 body.print-mode .bookmark-btn,
 body.print-mode .filter-bar { display:none !important; }
+body.hide-understanding .understanding-bar { display:none !important; }
 
 /* ═══ GEOGEBRA EMBED ═══ */
 .geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
@@ -525,6 +526,7 @@ body.print-mode .geogebra-embed .print-label {
     <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
     <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
@@ -1062,6 +1064,8 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   scheduleSave();
   current = idx;
+  // Update URL hash without triggering hashchange
+  history.replaceState(null, '', '#' + (idx + 1));
   renderSlide(idx);
   let pageText = (idx+1) + ' / ' + SLIDES.length;
   if (filteredIndices && filteredIndices.length > 0) {
@@ -1415,6 +1419,12 @@ function toggleFilter() {
   document.getElementById('filterBar').classList.toggle('show');
 }
 
+function toggleUnderstanding() {
+  const hidden = document.body.classList.toggle('hide-understanding');
+  localStorage.setItem('hideUnderstanding', hidden ? '1' : '');
+  document.getElementById('ubToggleBtn').style.opacity = hidden ? '0.4' : '';
+}
+
 function setFilter(type, el) {
   activeFilter = type;
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1576,6 +1586,21 @@ function exportNotes() {
   a.click();
 }
 
+// URL-based page navigation: ?page=N or #N (1-based)
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const qp = parseInt(params.get('page'));
+  if (qp >= 1) return qp - 1;
+  const hash = window.location.hash.replace('#', '');
+  const hp = parseInt(hash);
+  if (hp >= 1) return hp - 1;
+  return null;
+}
+window.addEventListener('hashchange', () => {
+  const hp = parseInt(window.location.hash.replace('#', ''));
+  if (hp >= 1 && hp - 1 < SLIDES.length) showSlide(hp - 1);
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Read slides from <template> elements
@@ -1603,6 +1628,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Restore saved notes, strokes, and last position
   loadLocal();
+  if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
+  // URL page specification: ?page=N or #N (1-based)
+  const urlPage = getPageFromURL();
+  if (urlPage !== null) current = urlPage;
   // Wait for MathJax to load
   function initWhenReady() {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {

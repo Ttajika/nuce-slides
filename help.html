@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スライドビューア — 使い方ガイド</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e2e2e0;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --accent-light: #eff6ff;
+  --header-bg: #1e293b;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+header {
+  background: var(--header-bg);
+  color: #fff;
+  padding: 24px 32px;
+}
+header h1 { font-size: 22px; font-weight: 700; }
+header p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+
+main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 40px 0 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--accent);
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 24px 0 8px;
+}
+
+p, li { font-size: 14px; }
+
+ul { padding-left: 1.4em; margin: 8px 0; }
+li { margin: 4px 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px;
+  font-size: 14px;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+th {
+  background: var(--accent-light);
+  font-weight: 500;
+  white-space: nowrap;
+}
+td:first-child { white-space: nowrap; }
+
+kbd {
+  display: inline-block;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif;
+  box-shadow: 0 1px 0 #cbd5e1;
+}
+
+.btn-icon {
+  display: inline-block;
+  background: var(--header-bg);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 13px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 0;
+}
+
+.note {
+  background: #fffbeb;
+  border-left: 4px solid #fbbf24;
+  padding: 12px 16px;
+  border-radius: 0 6px 6px 0;
+  margin: 16px 0;
+  font-size: 13px;
+}
+
+.color-dot {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.toc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 20px 0;
+}
+.toc h2 { margin-top: 0; border: none; font-size: 16px; }
+.toc ol { padding-left: 1.4em; }
+.toc li { margin: 6px 0; }
+.toc a { color: var(--accent); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>スライドビューア — 使い方ガイド</h1>
+  <p>講義スライドの操作方法・機能一覧</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#nav">スライド操作・ナビゲーション</a></li>
+    <li><a href="#draw">描画・書き込みツール</a></li>
+    <li><a href="#board">板書スペース</a></li>
+    <li><a href="#phantom">穴埋め（Phantom テキスト）</a></li>
+    <li><a href="#notes">ノート機能</a></li>
+    <li><a href="#understanding">理解度チェック・ブックマーク</a></li>
+    <li><a href="#filter">フィルタ機能</a></li>
+    <li><a href="#media">図の拡大・動画再生・QRコード</a></li>
+    <li><a href="#data">データの保存・書き出し・読み込み</a></li>
+    <li><a href="#print">印刷用表示（ハンドアウト）</a></li>
+    <li><a href="#shortcuts">キーボードショートカット一覧</a></li>
+    <li><a href="#tips">学生へのおすすめの使い方</a></li>
+  </ol>
+</nav>
+
+<!-- ===== 1. ナビゲーション ===== -->
+<h2 id="nav">1. スライド操作・ナビゲーション</h2>
+
+<h3>基本操作</h3>
+<table>
+  <tr><th>操作</th><th>方法</th></tr>
+  <tr><td>次のスライド</td><td><kbd>→</kbd> または <kbd>Space</kbd>、ツールバー <span class="btn-icon">▶</span></td></tr>
+  <tr><td>前のスライド</td><td><kbd>←</kbd>、ツールバー <span class="btn-icon">◀</span></td></tr>
+  <tr><td>最初のスライドへ</td><td>ツールバー <span class="btn-icon">⏮</span></td></tr>
+  <tr><td>最後のスライドへ</td><td>ツールバー <span class="btn-icon">⏭</span></td></tr>
+  <tr><td>セクションへジャンプ</td><td>ツールバー中央のドロップダウンで選択</td></tr>
+</table>
+
+<h3>タッチ操作（タブレット・スマートフォン）</h3>
+<ul>
+  <li><strong>左スワイプ</strong>：次のスライド</li>
+  <li><strong>右スワイプ</strong>：前のスライド</li>
+</ul>
+<div class="note">描画モード中はスワイプによるスライド移動は無効になります。</div>
+
+<h3>ページ表示</h3>
+<p>ツールバー右側に現在のスライド番号と総数が表示されます（例：<strong>12 / 85</strong>）。フィルタ適用中はフィルタ後の番号も表示されます。</p>
+
+<!-- ===== 2. 描画 ===== -->
+<h2 id="draw">2. 描画・書き込みツール</h2>
+
+<p>スライド上に直接書き込みができます。ツールバーの <span class="btn-icon">✏️</span> ボタンまたは <kbd>D</kbd> キーで描画モードの ON/OFF を切り替えます。</p>
+
+<h3>描画ツール</h3>
+<table>
+  <tr><th>ツール</th><th>キー</th><th>説明</th></tr>
+  <tr><td>ペン</td><td><kbd>P</kbd></td><td>通常の書き込み（不透明）</td></tr>
+  <tr><td>ハイライト</td><td><kbd>H</kbd></td><td>半透明（30%）の太線マーカー</td></tr>
+  <tr><td>消しゴム</td><td><kbd>E</kbd></td><td>触れたストロークを削除</td></tr>
+  <tr><td>ポインタ</td><td><kbd>L</kbd></td><td>赤い光点を表示（書き込みなし）</td></tr>
+</table>
+
+<h3>色の選択</h3>
+<p>描画ツールバーに5色のカラーパレットが表示されます。</p>
+<ul>
+  <li><span class="color-dot" style="background:#e94560"></span> 赤（デフォルト）</li>
+  <li><span class="color-dot" style="background:#4cc9f0"></span> シアン</li>
+  <li><span class="color-dot" style="background:#f9c74f"></span> 黄</li>
+  <li><span class="color-dot" style="background:#333"></span> 黒</li>
+  <li><span class="color-dot" style="background:#1d4ed8"></span> 青</li>
+</ul>
+
+<h3>線の太さ</h3>
+<p>スライダーで 1〜16 の範囲で調整できます。ハイライトは設定値の3倍の太さで描画されます。</p>
+
+<h3>取り消し・全消去</h3>
+<table>
+  <tr><th>操作</th><th>方法</th></tr>
+  <tr><td>直前のストロークを取り消し</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd>（Mac: <kbd>⌘</kbd>+<kbd>Z</kbd>）またはツールバー <span class="btn-icon">↩️</span></td></tr>
+  <tr><td>現在のスライドの全ストローク消去</td><td>ツールバー <span class="btn-icon">🗑️</span></td></tr>
+</table>
+
+<div class="note">書き込みはスライドごとに保存され、スライドを移動しても保持されます。</div>
+
+<!-- ===== 3. 板書 ===== -->
+<h2 id="board">3. 板書スペース</h2>
+
+<p>スライドとは別の白紙キャンバスを開いてメモや計算ができます。</p>
+
+<ul>
+  <li><strong>開く/閉じる</strong>：<kbd>B</kbd> キーまたはツールバーの <span class="btn-icon">📋</span> ボタン</li>
+  <li><strong>閉じる</strong>：<kbd>Esc</kbd>、✕ ボタン、またはポップアップ外をクリック</li>
+</ul>
+
+<h3>板書スペースのツール</h3>
+<ul>
+  <li>4色のカラーパレット（<span class="color-dot" style="background:#e63946"></span> 赤 ／ <span class="color-dot" style="background:#2563eb"></span> 青 ／ <span class="color-dot" style="background:#333"></span> 黒 ／ <span class="color-dot" style="background:#16a34a"></span> 緑）</li>
+  <li>線の太さスライダー</li>
+  <li>消しゴム（<span class="btn-icon">🧹</span>）</li>
+  <li>取り消し（<span class="btn-icon">↩️</span>）・全消去（<span class="btn-icon">🗑️</span>）</li>
+</ul>
+
+<div class="note">板書はスライドごとに独立して保存されます。</div>
+
+<!-- ===== 4. 穴埋め ===== -->
+<h2 id="phantom">4. 穴埋め（Phantom テキスト）</h2>
+
+<p>スライド内の一部のテキストが薄い背景色で隠されています。</p>
+
+<ul>
+  <li><strong>個別に表示</strong>：隠されたテキスト部分をクリック</li>
+  <li><strong>すべて表示</strong>：<kbd>R</kbd> キーで現在のスライドの穴埋めを一括表示</li>
+</ul>
+
+<!-- ===== 5. ノート ===== -->
+<h2 id="notes">5. ノート機能</h2>
+
+<p>各スライドにテキストメモを残せます。</p>
+
+<ul>
+  <li><strong>開く/閉じる</strong>：ツールバーの <span class="btn-icon">📝</span> ボタンまたは <kbd>N</kbd> キー</li>
+  <li>画面右側にノートパネルが表示されます</li>
+  <li>入力内容はスライドごとに自動保存されます</li>
+  <li><strong>クリアボタン</strong>で現在のスライドのノートを削除</li>
+</ul>
+
+<div class="note">ノートはブラウザのローカルストレージに保存されます。ブラウザのデータを消去すると失われるため、大切なメモは「データの書き出し」機能でバックアップしてください。</div>
+
+<!-- ===== 6. 理解度・ブックマーク ===== -->
+<h2 id="understanding">6. 理解度チェック・ブックマーク</h2>
+
+<h3>理解度チェック</h3>
+<p>ツールバーの <span class="btn-icon">📊</span> ボタンで表示を切り替えます。各スライドに3段階の理解度を設定できます。</p>
+
+<table>
+  <tr><th>ボタン</th><th>意味</th><th>背景色</th></tr>
+  <tr><td>✅ わかった</td><td>理解できた</td><td style="background:#d1fae5">緑</td></tr>
+  <tr><td>🤔 あやしい</td><td>少し不安</td><td style="background:#fef3c7">黄</td></tr>
+  <tr><td>❌ わからない</td><td>理解できていない</td><td style="background:#fee2e2">赤</td></tr>
+</table>
+<p>同じボタンをもう一度クリックすると解除されます。</p>
+
+<h3>ブックマーク</h3>
+<p>ツールバーの <span class="btn-icon">⭐</span> ボタンで、現在のスライドをブックマークに追加/解除できます。</p>
+
+<!-- ===== 7. フィルタ ===== -->
+<h2 id="filter">7. フィルタ機能</h2>
+
+<p>ツールバーの <span class="btn-icon">🔍</span> ボタンでフィルタバーを表示し、条件に合うスライドだけを表示できます。</p>
+
+<table>
+  <tr><th>フィルタ</th><th>表示されるスライド</th></tr>
+  <tr><td>すべて</td><td>全スライド</td></tr>
+  <tr><td>⭐ ブックマーク</td><td>ブックマーク済みのスライド</td></tr>
+  <tr><td>✅ わかった</td><td>理解度「わかった」のスライド</td></tr>
+  <tr><td>🤔 あやしい</td><td>理解度「あやしい」のスライド</td></tr>
+  <tr><td>❌ わからない</td><td>理解度「わからない」のスライド</td></tr>
+  <tr><td>⬜ 未チェック</td><td>理解度未設定のスライド</td></tr>
+</table>
+
+<p>フィルタ適用中は、<kbd>←</kbd> <kbd>→</kbd> キーで該当スライド間をジャンプします。</p>
+
+<!-- ===== 8. メディア ===== -->
+<h2 id="media">8. 図の拡大・動画再生・QRコード</h2>
+
+<h3>図の拡大（ライトボックス）</h3>
+<p>スライド内の図（SVG）をクリックすると全画面で拡大表示されます。<kbd>Esc</kbd> キーまたは図の外側をクリックで閉じます。</p>
+
+<h3>動画再生</h3>
+<p>スライド内の「▶ 動画を再生」ボタンをクリックするとオーバーレイで動画が再生されます。<kbd>Esc</kbd> キーまたは外側クリックで閉じます。</p>
+
+<h3>QRコード</h3>
+<p>リンク横の 📱 アイコンをクリックするとQRコードが表示されます。スマートフォンで読み取ってリンク先にアクセスできます。</p>
+
+<!-- ===== 9. データ ===== -->
+<h2 id="data">9. データの保存・書き出し・読み込み</h2>
+
+<h3>自動保存</h3>
+<p>ノート・描画・板書・理解度・ブックマークはすべてブラウザのローカルストレージに自動保存されます。次回アクセス時に復元されます。</p>
+<div class="note">ローカルストレージはブラウザの閲覧データ消去・シークレットモードの終了・ブラウザの変更などで失われます。大切なデータは定期的に下記の「データ書き出し」機能でバックアップしてください。</div>
+
+<h3>データ書き出し（エクスポート）</h3>
+<p>ツールバーの <span class="btn-icon">💾</span> ボタンで、すべてのデータを JSON ファイルとしてダウンロードできます。</p>
+<ul>
+  <li>ファイル名例：<code>math_econ_study_2026-04-15.json</code></li>
+  <li>含まれるデータ：ノート、描画、板書、理解度、ブックマーク</li>
+</ul>
+
+<h3>データ読み込み（インポート）</h3>
+<p>ツールバーの <span class="btn-icon">📂</span> ボタンで、書き出した JSON ファイルを読み込めます。既存のデータとマージされます。</p>
+
+
+
+<!-- ===== 10. 印刷 ===== -->
+<h2 id="print">10. 印刷用表示（ハンドアウト）</h2>
+
+<p>画面下部の「📄 印刷用表示」ボタンをクリックすると、全スライドを一覧表示する印刷用レイアウトに切り替わります。</p>
+
+<ul>
+  <li>各スライドの下にメモ書き用の余白が表示されます</li>
+  <li>「改ページ区切り」トグルで、スライドごとの改ページを ON/OFF できます</li>
+  <li>穴埋めテキストは透明表示になります</li>
+  <li>QRコードは自動的に展開表示されます</li>
+  <li>もう一度ボタンをクリックするとスライドモードに戻ります</li>
+</ul>
+
+<!-- ===== 11. ショートカット一覧 ===== -->
+<h2 id="shortcuts">11. キーボードショートカット一覧</h2>
+
+<table>
+  <tr><th>キー</th><th>機能</th><th>条件</th></tr>
+  <tr><td><kbd>→</kbd> / <kbd>Space</kbd></td><td>次のスライド</td><td>—</td></tr>
+  <tr><td><kbd>←</kbd></td><td>前のスライド</td><td>—</td></tr>
+  <tr><td><kbd>D</kbd></td><td>描画モード ON/OFF</td><td>—</td></tr>
+  <tr><td><kbd>P</kbd></td><td>ペンツール</td><td>描画モード中</td></tr>
+  <tr><td><kbd>H</kbd></td><td>ハイライトツール</td><td>描画モード中</td></tr>
+  <tr><td><kbd>E</kbd></td><td>消しゴムツール</td><td>描画モード中</td></tr>
+  <tr><td><kbd>L</kbd></td><td>ポインタ（レーザー）</td><td>描画モード中</td></tr>
+  <tr><td><kbd>B</kbd></td><td>板書スペース ON/OFF</td><td>—</td></tr>
+  <tr><td><kbd>N</kbd></td><td>ノートパネル ON/OFF</td><td>—</td></tr>
+  <tr><td><kbd>R</kbd></td><td>穴埋めを一括表示</td><td>—</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>ストローク取り消し</td><td>描画モード中</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>板書・ライトボックス・動画を閉じる</td><td>—</td></tr>
+</table>
+
+<h3>ヒントの表示</h3>
+<p>ツールバーの <span class="btn-icon">?</span> ボタンでヒントパネルの表示/非表示を切り替えます。</p>
+
+<!-- ===== 12. おすすめの使い方 ===== -->
+<h2 id="tips">12. 学生へのおすすめの使い方</h2>
+
+<h3>授業中</h3>
+<div class="card">
+  <ul>
+    <li><strong>穴埋めを活用する</strong>：穴埋め部分をすぐにクリックせず、まず自分で考えてから答えを確認しましょう。</li>
+    <li><strong>描画ツールで書き込む</strong>：ペンやハイライトを使って、スライド上に直接メモや補足を書き込みましょう。板書の内容を写すのにも便利です。</li>
+    <li><strong>板書スペースを使う</strong>：<kbd>B</kbd> キーで白紙キャンバスを開いて、計算の途中式や自分なりの整理を書き留めましょう。</li>
+    <li><strong>ノートを残す</strong>：<kbd>N</kbd> キーでノートパネルを開き、先生の口頭での補足や自分の疑問点をテキストで記録しましょう。</li>
+  </ul>
+</div>
+
+<h3>授業後の復習</h3>
+<div class="card">
+  <ul>
+    <li><strong>理解度チェックをつける</strong>：スライドを1枚ずつ見直しながら「✅ わかった」「🤔 あやしい」「❌ わからない」を設定しましょう。自分の理解状況を可視化できます。</li>
+    <li><strong>フィルタで苦手箇所を集中復習</strong>：フィルタ機能で「🤔 あやしい」「❌ わからない」だけを表示し、重点的に復習しましょう。理解できたら「✅ わかった」に更新します。</li>
+    <li><strong>ブックマークで重要スライドを管理</strong>：試験に出そうなスライドや重要な定義・定理のスライドに ⭐ をつけておくと、後から素早くアクセスできます。</li>
+  </ul>
+</div>
+
+<h3>試験前</h3>
+<div class="card">
+  <ul>
+    <li><strong>ブックマーク＋フィルタで総復習</strong>：⭐ ブックマークのフィルタを使い、重要スライドだけを通しで確認しましょう。</li>
+    <li><strong>穴埋めで知識を確認</strong>：穴埋めテキストを隠した状態で答えを思い出してからクリックし、定着度をチェックしましょう。</li>
+    <li><strong>印刷用表示で紙に出す</strong>：「📄 印刷用表示」でハンドアウトを作成し、書き込み用の余白付きで印刷すると、紙での復習にも活用できます。</li>
+  </ul>
+</div>
+
+<h3>データのバックアップ</h3>
+<div class="card">
+  <ul>
+    <li><strong>定期的にエクスポート</strong>：ノートや描画などのデータはブラウザに保存されているため、ブラウザのデータ消去で失われます。<span class="btn-icon">💾</span> ボタンで定期的に JSON ファイルを書き出しておきましょう。</li>
+    <li><strong>別のブラウザ・端末への移行</strong>：書き出した JSON ファイルを <span class="btn-icon">📂</span> ボタンで読み込めば、別の環境でも同じデータで学習を続けられます。</li>
+  </ul>
+</div>
+
+</main>
+
+</body>
+</html>

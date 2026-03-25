@@ -302,10 +302,10 @@ body.print-mode .slide-area {
 
 .print-slide {
   page-break-inside:auto;
-  border:1px solid #ccc;
-  padding:20px 28px;
-  margin:12px auto;
-  max-width:780px;
+  border:none;
+  padding:0px 28px;
+  margin:-30px auto;
+  max-width:870px;
   background:#fff;
   position:relative;
   overflow:visible;
@@ -316,18 +316,18 @@ body.print-mode .slide-area {
   font-family:'JetBrains Mono',monospace;
 }
 .print-slide .frame-title {
-  font-size:16px; font-weight:700; color:var(--accent);
+  font-size:14px; font-weight:700; color:var(--accent);
   border-bottom:1.5px solid var(--accent);
-  padding-bottom:4px; margin-bottom:10px;
+  padding-bottom:4px; margin-bottom:4px;
 }
 .print-slide .section-badge {
   font-size:10px; color:#999; margin-bottom:2px;
 }
 .print-slide-title {
-  padding-top:8px; padding-bottom:8px;
+  padding-top:4px; padding-bottom:4px;
 }
 .print-slide-title .section-title-big {
-  padding:12px 0;
+  padding:20px 0;
 }
 
 /* Print: figures get proper spacing */
@@ -339,20 +339,20 @@ body.print-mode .qr-link .qr-img { display:block !important; }
 body.print-mode .qr-link { flex-direction:column; }
 
 .print-note-area {
-  margin-top:8px;
+  margin-top:0px;
   /* Height is set inline via data-print-margin attribute on each slide template.
      Edit the value in the <template> to adjust per slide. Default: 80px */
 }
 
 .print-header {
-  text-align:center; padding:20px 0 10px;
+  text-align:center; padding:0px 0 10px;
   border-bottom:2px solid var(--accent);
-  margin:0 auto 20px; max-width:780px;
+  margin:0 auto 20px; max-width:870px;
 }
 .print-header h1 { font-size:22px; color:var(--accent); }
 .print-header p { font-size:12px; color:#666; }
 .print-header .page-break-toggle {
-  margin-top:8px; padding:4px 12px;
+  margin-top:10px; padding:4px 12px;
   font-size:12px; cursor:pointer;
   border:1px solid #ccc; border-radius:4px;
   background:#f5f5f5; color:#333;
@@ -361,7 +361,7 @@ body.print-mode .qr-link { flex-direction:column; }
 body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 
 @media print {
-  body.print-mode .print-slide { border:0.5pt solid #ccc; box-shadow:none; }
+  body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
 }
 
@@ -494,6 +494,7 @@ body.print-mode .mode-toggle { bottom:12px; }
 body.print-mode .understanding-bar,
 body.print-mode .bookmark-btn,
 body.print-mode .filter-bar { display:none !important; }
+body.hide-understanding .understanding-bar { display:none !important; }
 
 /* ═══ GEOGEBRA EMBED ═══ */
 .geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
@@ -524,6 +525,7 @@ body.print-mode .geogebra-embed .print-label {
     <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
     <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn" onclick="toggleHints()">?</button>
   </div>
@@ -1061,6 +1063,8 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   scheduleSave();
   current = idx;
+  // Update URL hash without triggering hashchange
+  history.replaceState(null, '', '#' + (idx + 1));
   renderSlide(idx);
   let pageText = (idx+1) + ' / ' + SLIDES.length;
   if (filteredIndices && filteredIndices.length > 0) {
@@ -1419,6 +1423,12 @@ function toggleFilter() {
   document.getElementById('filterBar').classList.toggle('show');
 }
 
+function toggleUnderstanding() {
+  const hidden = document.body.classList.toggle('hide-understanding');
+  localStorage.setItem('hideUnderstanding', hidden ? '1' : '');
+  document.getElementById('ubToggleBtn').style.opacity = hidden ? '0.4' : '';
+}
+
 function setFilter(type, el) {
   activeFilter = type;
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1583,6 +1593,21 @@ function exportNotes() {
   a.click();
 }
 
+// URL-based page navigation: ?page=N or #N (1-based)
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const qp = parseInt(params.get('page'));
+  if (qp >= 1) return qp - 1;
+  const hash = window.location.hash.replace('#', '');
+  const hp = parseInt(hash);
+  if (hp >= 1) return hp - 1;
+  return null;
+}
+window.addEventListener('hashchange', () => {
+  const hp = parseInt(window.location.hash.replace('#', ''));
+  if (hp >= 1 && hp - 1 < SLIDES.length) showSlide(hp - 1);
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Read slides from <template> elements
@@ -1610,6 +1635,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Restore saved notes, strokes, and last position
   loadLocal();
+  if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
+  // URL page specification: ?page=N or #N (1-based)
+  const urlPage = getPageFromURL();
+  if (urlPage !== null) current = urlPage;
   // Wait for MathJax to load
   function initWhenReady() {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
@@ -1646,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li class="sub-item">»  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
 <li class="sub-item">»  研究室<br>
 2号館 8-7室
-<li class="sub-item">»  オフィスアワー：以下から予約
+<li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
 <a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
 <li class="sub-item">»  欠席について：いかなる理由でも欠席は欠席として扱う。この場合，授業の録画を見て，その内容を400字程度でまとめたものを提出することで「出席」とみなすことができる。
 </ul> 
@@ -1669,6 +1698,28 @@ document.addEventListener('DOMContentLoaded', () => {
 </ol>
 </ul> 
 </div>	
+</div>
+</template>
+
+
+<!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
+<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
+<ul>
+<div class = "columns">
+<div class="column">
+<li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
+<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）．
+<a href="https://www.wolframalpha.com/" target="_blank" class="qr-link">🔗 QRリンク</a>
+</li>
+<li class="sub-item">»  大学数学レベルならだいたいなんでもできる
+</li>
+</div>
+
+<div class = "column">
+<li class="sub-item">»   <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
+<a href="https://vimeo.com/928301937/7323999c71" target="_blank" class="qr-link">🔗 QRリンク</a>
+</ul>
+</div>
 </div>
 </template>
 
@@ -1701,26 +1752,6 @@ document.addEventListener('DOMContentLoaded', () => {
  </div>
 </template>
 
-<!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
-<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
-<ul>
-<div class = "columns">
-<div class="column">
-<li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
-<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）．
-<a href="https://www.wolframalpha.com/" target="_blank" class="qr-link">🔗 QRリンク</a>
-</li>
-<li class="sub-item">»  大学数学レベルならだいたいなんでもできる
-</li>
-</div>
-
-<div class = "column">
-<li class="sub-item">»   <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
-<a href="https://vimeo.com/928301937/7323999c71" target="_blank" class="qr-link">🔗 QRリンク</a>
-</ul>
-</div>
-</div>
-</template>
 
 <!-- ===== Slide 5: はじめに / 成績評価方法 ===== -->
 <template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
@@ -1951,7 +1982,9 @@ document.addEventListener('DOMContentLoaded', () => {
  <li> PならばQである．
 <li> Qでない.
 <li> よってPでない． 
- 
+</div>
+  <div class="column"> 
+
  </ol>
 <li>  例：
 <ol>
@@ -1961,7 +1994,6 @@ document.addEventListener('DOMContentLoaded', () => {
  </ol> 
  </ul> 
  </div> 
- <div class="column"> 
   </div> 
  </div>
 </template>
@@ -2350,12 +2382,15 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 32: 関数と連続性 / 関数のグラフ ===== -->
-<template class="slide-data" data-title="関数のグラフ" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="関数のグラフ" data-section="関数と連続性" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
   <li> $(x,f(x))$ の集合を関数 $f$ の<strong class="keyword">グラフ</strong>という
-  <li class="sub-item">»  （例） 
+
+  <li class="sub-item">»  （例）$\{(1,3),(2,1),(3,0)\}$はどんな関数のグラフでしょうか？
+
+    <li class="sub-item">»  （例）$\{(x,y): y=x^2\}$はどんな関数のグラフでしょうか？
   </ul> 
   </div> 
  <div class="column"> 
@@ -2367,12 +2402,16 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 33: 関数と連続性 / b. 関数と連続性：連続性 ===== -->
-<template class="slide-data" data-title="b. 関数と連続性：連続性" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="b. 関数と連続性：連続性" data-section="関数と連続性" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
   <li> 関数が<strong class="keyword">連続</strong>であるとは？  
   <li class="sub-item">»  グラフが定義域上で切れ目なくつながっていること
+    <li> 関数が<strong class="keyword">連続でない</strong>とは？  
+  <li class="sub-item">»  定義域上でグラフの切れ目があること
+
+  
   </ul> 
   </div> 
  <div class="column"> 
@@ -2471,13 +2510,11 @@ document.addEventListener('DOMContentLoaded', () => {
  <li>  $h(x)=\max\{f(x),g(x)\}$
  <li>  $h(x)=\min\{f(x),g(x)\}$  
  </ol>
+</div>
+ <div class="column"> 
+
  <li> 経済学部の学部レベルで出るようなものはだいたい連続関数
  <li class="sub-item">»  不連続な関数は実用上はある<br>（e.g., 限界税率；〇〇万円の壁）
- </ul> 
- </div> 
- <div class="column"> 
-<ul> 
- <li class="spacer">
  </ul> 
   </div> 
  </div>
@@ -2523,16 +2560,15 @@ document.addEventListener('DOMContentLoaded', () => {
  <li> $ D(\overline{p})&lt;S(\overline{p})$
  
  </ol>
- <li> <strong class="keyword">市場均衡価格</strong>とは $ D(p^*)=S(p^*)$ となる価格 $ p^*$
- <li class="sub-item">»  市場均衡価格は存在するか？
  
- <li> 超過需要関数： $Z(p)=D(p)-S(p)$ を用いる 
  </ul> 
  </div> 
  <div class="column"> 
 <ul> 
- <li class="spacer"> 
- </ul> 
+ <li> <strong class="keyword">市場均衡価格</strong>とは $ D(p^*)=S(p^*)$ となる価格 $ p^*$
+ <li class="sub-item">»  市場均衡価格は存在するか？
+ 
+ <li> 超過需要関数： $Z(p)=D(p)-S(p)$ を用いる </ul> 
   </div> 
  </div>
 </template>
@@ -2712,7 +2748,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 48: 微分の意味と計算公式 / ネイピア数 ===== -->
-<template class="slide-data" data-title="ネイピア数" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="ネイピア数" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2736,7 +2772,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 49: 微分の意味と計算公式 / 計算公式③ ===== -->
-<template class="slide-data" data-title="計算公式③" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="計算公式③" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2752,7 +2788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 50: 微分の意味と計算公式 / 計算公式④ ===== -->
-<template class="slide-data" data-title="計算公式④" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="計算公式④" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2768,7 +2804,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 51: 微分の意味と計算公式 / 計算公式⑤ ===== -->
-<template class="slide-data" data-title="計算公式⑤" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="計算公式⑤" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
 <ul>
@@ -2784,7 +2820,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 52: 微分の意味と計算公式 / 計算公式⑥ ===== -->
-<template class="slide-data" data-title="計算公式⑥" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="計算公式⑥" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2800,7 +2836,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </template>
 
 <!-- ===== Slide 53: 微分の意味と計算公式 / 計算公式⑦ ===== -->
-<template class="slide-data" data-title="計算公式⑦" data-section="微分の意味と計算公式" data-note="false" data-print-margin="200">
+<template class="slide-data" data-title="計算公式⑦" data-section="微分の意味と計算公式" data-note="false" data-print-margin="300">
 <div class="columns"> 
   <div class="column"> 
    <ul> 
@@ -2842,7 +2878,7 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 57: テイラー展開 / 関数の近似 ===== -->
-<template class="slide-data" data-title="関数の近似" data-section="テイラー展開" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="関数の近似" data-section="テイラー展開" data-note="false" data-print-margin="150">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -2884,10 +2920,21 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 59: テイラー展開 / マクローリン展開 ===== -->
-<template class="slide-data" data-title="マクローリン展開" data-section="テイラー展開" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="マクローリン展開" data-section="テイラー展開" data-note="false" data-print-margin="0">
 <ul>
  <li> もし関数 $f$ が多項式でかけるならば
  <div class="math-display">\[\begin{aligned}f(x)= \alpha_{0}+ \alpha_{1}x+\alpha_{2}x^{2}+\alpha_{3}x^{3}+\alpha_{4}x^{4}+\cdots\end{aligned}\]</div> 
+ <li> $f(0)$を計算すると...
+ <li class="spacer"> 
+ <li> $f'(x)$を計算すると...
+ <li class="spacer"> 
+<li> $f'(0)$を計算すると...
+ <li class="spacer"> 
+ <li> $f''(x)$を計算すると...
+ <li class="spacer"> 
+ <li> $f''(0)$を計算すると...
+ <li class="spacer"> 
+ 
  </ul>
 </template>
 
@@ -3070,6 +3117,54 @@ $f(x)=h(g(x))$ のとき,
  <li>  $f'(x)=0$ となる $x$ をすべて求め，最大化解の候補にする
  <li> 1，2で求めた候補を $f$ に代入していき，その中で $f(x)$ の値が最大となるものが最大化解である   
  </ol>
+</ul>
+</template>
+
+
+<!-- ===== Slide 66: 最大化・最小化 / 最大化問題の例 ===== -->
+<template class="slide-data" data-title="最大化問題の例①" data-section="最大化・最小化" data-note="false" data-print-margin="180">
+<ul>
+ <li> 最大化問題の例として，独占企業の利潤問題を考える
+ <li> 独占企業の利潤: $P(q)=20-3q$ を<span class="keyword">逆需要関数</span>とする．
+  <li class="sub-item">» 需要量（購入量）が$q$となる<strong>価格</strong>である
+<li> ひとつ生産することの費用が$2$であるとき，企業の利潤（利益）は
+  <li class="spacer">
+ <li> <strong>微分を使って</strong>この利潤を最大化するような生産量を求める．
+  <li class="spacer"></li>
+   <li class="spacer"></li>
+   <li class="spacer"></li>
+    <li class="spacer"></li>
+</ul>
+</template>
+
+<!-- ===== Slide 66: 最大化・最小化 / 最大化問題の例 ===== -->
+<template class="slide-data" data-title="最大化問題の例②" data-section="最大化・最小化" data-note="false" data-print-margin="180">
+<ul>
+ <li> 最大化問題の例として，独占企業の利潤問題を考える
+ <li> 独占企業の利潤: $D(p)=20-3p$ を<span class="keyword">需要関数</span>とする．
+<li> ひとつ生産することの費用が$2$であるとき，企業の利潤（利益）は
+  <li class="spacer">
+ <li> <strong>微分を使って</strong>この利潤を最大化するような価格を求める．
+  <li class="spacer"></li>
+   <li class="spacer"></li>
+   <li class="spacer"></li>
+    <li class="spacer"></li>
+</ul>
+</template>
+
+<!-- ===== Slide 66: 最大化・最小化 / 最大化問題の例 ===== -->
+<template class="slide-data" data-title="最大化問題の例③" data-section="最大化・最小化" data-note="false" data-print-margin="280">
+<ul>
+ <li> 最大化問題の例として，独占企業の利潤問題を考える
+ <li> 独占企業の利潤: $D(p)=20-p$ を需要関数とする．
+<li> ただし，生産量が取り得る範囲は $0 \le p \le 18$ であるとする．
+<li> $q$ だけ生産することの費用が $\ln(q)$ であるとき，企業の利潤（利益）は
+  <li class="spacer">
+ <li> <strong>微分を使って</strong>この利潤を最大化するような生産量を求める．
+  <li class="spacer"></li>
+   <li class="spacer"></li>
+   <li class="spacer"></li>
+    <li class="spacer"></li>
 </ul>
 </template>
 
@@ -4311,10 +4406,10 @@ $f(x)=h(g(x))$ のとき,
    <li> 定義より
     <div class="math-display">\[\begin{aligned}\min_{x\in[s_{i},s_{i+1}]} f(x)\le  f(x_{i,i+1})\le \max_{x\in[s_{i},s_{i+1}]} f(x)\end{aligned}\]</div> 
   <li> したがって次の関係が成立
-    <div class="math-display">\[\begin{aligned}\text{上ダルブー和}\ge \int_{a}^{b}f(x)dx \ge \text{下ダルブー和}\end{aligned}\]</div> 
+    <div class="math-display">\[\begin{aligned}\text{下ダルブー和}\le \int_{a}^{b}f(x)dx \le \text{上ダルブー和}\end{aligned}\]</div> 
   <li class="sub-item">»  分割を無限に細かくすると
   
-  <div class="math-display">\[\begin{aligned}\text{上ダルブー和}=\text{下ダルブー和}=\text{面積}\end{aligned}\]</div> 
+  <div class="math-display">\[\begin{aligned}\text{下ダルブー和}=\text{面積}=\text{上ダルブー和}\end{aligned}\]</div> 
  
   </ul> 
   </div> 
@@ -4453,6 +4548,11 @@ $f(x)=h(g(x))$ のとき,
 </div>
   </div> 
   </div>
+<div style="display: flex; justify-content: center; gap: 20px;">
+  <img src="img/Darboux_lower.gif" alt="下ダルブー和の図解" style="width: 45%;">
+  <img src="img/Darboux_upper.gif" alt="上ダルブー和の図解" style="width: 45%;">
+</div>
+
 </template>
 
 <!-- ===== Slide 88: 積分 / 注意事項・実際の計算 ===== -->
@@ -4655,16 +4755,45 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 100: 応用：確率分布 / 一次確率支配 ===== -->
-<template class="slide-data" data-title="一次確率支配" data-section="応用：確率分布" data-note="false" data-print-margin="200">
-<div class="columns">
- <div class="column">
+<template class="slide-data" data-title="一次確率支配" data-section="応用：確率分布" data-note="false" data-print-margin="300">
+
 <ul>
 <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，すべての $x$ について、$F(x)\ge G(x)$ をみたすとき、$G$ が $F$ を<strong class="keyword">一次確率支配</strong>するという。
- 
- <li class="sub-item">»  $G$ が $F$ を<strong class="keyword">一次確率支配</strong>するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり， $ u$ は $ u'>0$ を満たす関数である．
+ <li class="sub-item">» $F(a)$や$G(a)$は$a$以下が出る確率．それが$F(a)$の方が高いということは，<strong>小さい値が出る確率が高い</strong>ということ．
+
+  <li class="spacer"></li>
+
+ <li>  $G$ が $F$ を<strong class="keyword">一次確率支配</strong>するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり， $ u$ は $ u'>0$ を満たす関数である．
  <div class="math-display">\[\begin{aligned}\int_a^b u(x)g(x)dx\ge \int_a^b u(x)f(x)dx\end{aligned}\]</div>
+
+ <li> 証明：
 </ul>
+ 
  </div>
- <div class="column">
- </div>
- </div>
+
+ </template>
+
+ <template class="slide-data" data-title="危険回避・中立・愛好" data-section="応用：確率分布" data-note="false" data-print-margin="200">
+<ul>
+  <li>確率分布，$F$によって表現される「くじ」を考える．このくじの期待値を$\bar{x}$と置く．</li>
+  <li>危険への態度は次の三つがその代表的なものである：
+    <li class="sub-item">»<span class="keyword">危険回避</span>: $\int u(x)f(x)dx &lt; u(\bar{x})$ </li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="sub-item">»<span class="keyword">危険中立</span>: $\int u(x)f(x)dx=u(\bar{x})$</li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="sub-item">»<span class="keyword">危険愛好</span>:
+      $\int u(x)f(x)dx > u(\bar{x})$
+      </li>
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+  <li>要するに，くじに挑戦するか，その期待値の金額をもらった方が良いかのどちらが良いかで決まる</li>
+  <li> 効用関数の形で危険への態度は決まる </li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  </li>
+</ul>
+
+
+</template>

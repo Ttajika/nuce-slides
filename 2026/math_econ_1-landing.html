@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>授業ページ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=DM+Sans:wght@500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f6f5f1;
+    --card: #ffffff;
+    --text: #2c2c2c;
+    --text-sub: #6b6b6b;
+    --accent: #c0392b;
+    --accent-hover: #a93226;
+    --accent-soft: #fdf0ee;
+    --border: #e8e6e1;
+    --step-bg: #f0eeea;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    margin-bottom: 0.35rem;
+  }
+
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-sub);
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Steps ── */
+  .step {
+    margin-bottom: 1.5rem;
+  }
+
+  .step:last-child {
+    margin-bottom: 0;
+  }
+
+  .step-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--step-bg);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+
+  .step-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .step-desc {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+    padding-left: 2.35rem;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+
+  .btn-login {
+    background: var(--card);
+    border: 2px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-login:hover {
+    border-color: #ccc;
+    background: #fafaf8;
+  }
+
+  .btn-login svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-canvas {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-canvas:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(192, 57, 43, 0.25);
+  }
+
+  .btn-canvas svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .divider span {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+
+  /* ── Notice ── */
+  .notice {
+    background: var(--accent-soft);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    font-size: 0.78rem;
+    color: var(--accent);
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+
+  /* ── Checkmark animation ── */
+  .step1-done {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .step1-done.show { display: inline-flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Mobile polish ── */
+  @media (max-width: 380px) {
+    body { padding: 1.25rem 0.75rem; }
+    .card { padding: 1.5rem 1.15rem; }
+    .header h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <!-- ▼ 授業名をここで変更 ▼ -->
+    <h1>経済数学1（火2・多鹿）</h1>
+    <p class="subtitle">Canvas LMS 授業ページ</p>
+  </div>
+
+  <div class="card">
+    <!-- Step 1: SSO Login -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">1</span>
+        <span class="step-text">ログイン</span>
+      </div>
+      <p class="step-desc">初回またはセッション切れの場合は、<br>まずこちらからログインしてください。</p>
+      <button class="btn btn-login" id="loginBtn">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Googleでログイン
+      </button>
+      <div class="step1-done" id="loginDone">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#2e7d32"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ログイン済み
+      </div>
+    </div>
+
+    <div class="divider"><span>ログインできたら</span></div>
+
+    <!-- Step 2: Canvas Page -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">2</span>
+        <span class="step-text">授業ページを開く</span>
+      </div>
+
+      <!-- ▼ Canvas のリンク先をここで変更 ▼ -->
+      <a href="https://nu.instructure.com/courses/102253"
+         class="btn btn-canvas"
+         id="canvasBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3v2H5v14h14v-9h2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10zm7 0v6h-2V6.41l-8.29 8.3-1.42-1.42L17.59 5H15V3h6z"/></svg>
+        授業ページへ
+      </a>
+    </div>
+  </div>
+
+  <div class="notice">
+    ⚠ ログインせずに「授業ページへ」を押すとエラーになる場合があります。<br>必ず Step 1 → Step 2 の順で進んでください。
+  </div>
+
+  <div class="footer">
+    不具合がある場合は担当教員に連絡してください
+  </div>
+
+</div>
+
+<script>
+  // ▼ SSO ログイン URL ▼
+  var SSO_URL = 'https://accounts.google.com/o/saml2/initsso?idpid=C035aysgw&spid=643933313291&forceauthn=false';
+
+  var loginBtn = document.getElementById('loginBtn');
+  var loginDone = document.getElementById('loginDone');
+  var loginClicked = false;
+
+  loginBtn.addEventListener('click', function() {
+    loginClicked = true;
+
+    // デスクトップ：ポップアップ、モバイル：新しいタブ
+    var w = 500, h = 600;
+    var left = (screen.width - w) / 2;
+    var top = (screen.height - h) / 2;
+    var popup = window.open(
+      SSO_URL,
+      'sso_login',
+      'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',toolbar=no,menubar=no'
+    );
+
+    // ポップアップが閉じられたかを監視
+    if (popup) {
+      var checker = setInterval(function() {
+        if (popup.closed) {
+          clearInterval(checker);
+          showLoginDone();
+        }
+      }, 500);
+    }
+  });
+
+  // モバイル：タブから戻ってきたことを検知
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && loginClicked) {
+      showLoginDone();
+    }
+  });
+
+  function showLoginDone() {
+    loginDone.classList.add('show');
+    loginBtn.style.opacity = '0.5';
+    loginBtn.style.pointerEvents = 'none';
+  }
+</script>
+
+</body>
+</html>

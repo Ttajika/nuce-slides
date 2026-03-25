@@ -5,23 +5,208 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>経済数学 — 多鹿智哉</title>
 <style>
-  body { font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
-  h1 { font-size: 22px; border-bottom: 2px solid #1d4ed8; padding-bottom: 8px; }
-  a { color: #1d4ed8; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  ul { list-style: none; padding: 0; }
-  li { padding: 10px 0; border-bottom: 1px solid #eee; }
-  li span { color: #999; font-size: 13px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    color: #1a1a1a;
+    background: #f5f7fb;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: #666;
+  }
+  .help-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #1d4ed8;
+    text-decoration: none;
+    border: 1px solid #1d4ed8;
+    border-radius: 20px;
+    padding: 4px 14px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .help-link:hover {
+    background: #1d4ed8;
+    color: #fff;
+  }
+
+  /* ── Section ── */
+  .section {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ── List ── */
+  ul { list-style: none; }
+  li {
+    padding: 12px 14px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  li:hover {
+    background: #f0f4ff;
+  }
+  li .emoji {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 26px;
+    text-align: center;
+  }
+  li .content {
+    flex: 1;
+  }
+  li a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  li a:hover {
+    text-decoration: underline;
+  }
+  li .desc {
+    color: #999;
+    font-size: 13px;
+    margin-left: 6px;
+  }
+  li .links {
+    margin-top: 4px;
+  }
+  li .links a {
+    font-size: 13px;
+    font-weight: 400;
+    margin-right: 14px;
+    color: #1d4ed8;
+  }
+  li .links a:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 32px;
+  }
 </style>
 </head>
 <body>
-<h1>講義スライド</h1>
-<p>多鹿 智哉｜2026年度</p>
-<ul>
-  <li><a href="2026/math_econ_1.html">経済数学 I</a> <span>微分・積分とその応用</span></li>
-  <li><a href="2026/math_econ_2.html">経済数学 II</a> <span>（準備中）</span></li>
-  <li><a href="2026/basicmath_for_KK.html">金融公共分析手法入門I</a> <span>（準備中）</span></li>
-  <li><a href="2026/micro.html">基礎ミクロ経済学</a> <span>（準備中）</span></li>
-</ul>
+
+<div class="header">
+  <h1>📚 講義スライド</h1>
+  <p class="subtitle">多鹿 智哉｜2026年度</p>
+</div>
+
+<div class="section">
+  <div class="section-title">🎓 スライド教材 <a class="help-link" href="help.html">❓ ビューワーの使い方</a></div>
+  <ul>
+    <li>
+      <span class="emoji">📐</span>
+      <span class="content">
+        <a href="2026/math_econ_1.html">経済数学 I</a>
+        <span class="desc">微分・積分とその応用</span>
+      </span>
+    </li>
+    <li>
+      <span class="emoji">📏</span>
+      <span class="content">
+        <a href="2026/math_econ_2.html">経済数学 II</a>
+        <span class="badge">準備中</span>
+      </span>
+    </li>
+    <li>
+      <span class="emoji">🧮</span>
+      <span class="content">
+        <a href="2026/basicmath_for_KK.html">金融公共分析手法入門 I</a>
+        <span class="desc">基礎数学</span>
+      </span>
+    </li>
+    <li>
+      <span class="emoji">📊</span>
+      <span class="content">
+        <a href="2026/micro.html">基礎ミクロ経済学</a>
+        <span class="badge">準備中</span>
+      </span>
+    </li>
+  </ul>
+</div>
+
+<div class="section">
+  <div class="section-title">📄 PDF教材</div>
+  <ul>
+    <li>
+      <span class="emoji">📝</span>
+      <span class="content">
+        中級経済数学 1
+        <div class="links">
+          <a href="https://ttajika.github.io/nuce-slides/intermediate-math/text-1.pdf">📔 講義ノート</a>
+          <a href="https://ttajika.github.io/nuce-slides/intermediate-math/slides%20(1).pdf">🎞️ スライド</a>
+        </div>
+      </span>
+    </li>
+    <li>
+      <span class="emoji">📝</span>
+      <span class="content">
+        中級経済数学 2
+        <div class="links">
+          <a href="https://ttajika.github.io/nuce-slides/intermediate-math/text-2.pdf">📔 講義ノート</a>
+          <a href="https://ttajika.github.io/nuce-slides/intermediate-math/slides-2.pdf">🎞️ スライド</a>
+        </div>
+      </span>
+    </li>
+  </ul>
+</div>
+
+<div class="footer">© 2026 多鹿 智哉</div>
+
 </body>
 </html>
