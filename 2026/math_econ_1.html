@@ -494,7 +494,8 @@ body.print-mode .mode-toggle { bottom:12px; }
 body.print-mode .understanding-bar,
 body.print-mode .bookmark-btn,
 body.print-mode .filter-bar { display:none !important; }
-body.hide-understanding .understanding-bar { display:none !important; }
+body.hide-understanding .understanding-bar,
+body.hide-understanding .bookmark-btn { display:none !important; }
 
 /* ═══ GEOGEBRA EMBED ═══ */
 .geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
@@ -503,6 +504,32 @@ body.print-mode .geogebra-embed iframe { display:none; }
 body.print-mode .geogebra-embed .print-label {
   display:block; padding:12px; border:2px dashed var(--border);
   border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
+
+/* ═══ MOBILE (≤768px) ═══ */
+@media (max-width: 768px) {
+  .sp-hide { display: none !important; }
+
+  .topbar { padding: 4px 8px; }
+  .topbar-title { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .section-select { max-width: 110px; font-size: 11px; }
+  .nav-btn { padding: 4px 7px; font-size: 12px; }
+  .topbar-nav { gap: 4px; flex-wrap: wrap; }
+
+  .slide-area { padding: 8px 10px; }
+  .slide-content { padding: 14px 16px; border-radius: 6px; }
+  .slide-content .frame-title { font-size: 17px; }
+
+  .notes-panel:not(.collapsed) {
+    position: fixed; inset: 0;
+    width: 100% !important; z-index: 50;
+    border-left: none; border-top: 3px solid var(--note-border);
+  }
+
+  .mode-toggle { display: none; }
+  .columns { flex-direction: column; gap: 12px; }
+  .draw-toolbar { overflow-x: auto; }
+  .understanding-btn { padding: 4px 10px; font-size: 12px; }
 }
 </style>
 </head>
@@ -514,20 +541,20 @@ body.print-mode .geogebra-embed .print-label {
     <select class="section-select" id="sectionSelect" onchange="goToSection(this.value)">
       <option value="">— セクション —</option>
     </select>
-    <button class="nav-btn" onclick="goSlide(0)">⏮</button>
+    <button class="nav-btn sp-hide" onclick="goSlide(0)">⏮</button>
     <button class="nav-btn" onclick="prevSlide()">◀</button>
     <span class="page-info" id="pageInfo">1 / ?</span>
     <button class="nav-btn" onclick="nextSlide()">▶</button>
-    <button class="nav-btn" onclick="goSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn sp-hide" onclick="goSlide(SLIDES.length-1)">⏭</button>
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
-    <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
-    <button class="nav-btn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
-    <button class="nav-btn" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
-    <button class="nav-btn" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <button class="nav-btn sp-hide" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
+    <button class="nav-btn sp-hide" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
-    <button class="nav-btn" onclick="toggleHints()">?</button>
+    <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
   </div>
 </div>
 
