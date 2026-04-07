@@ -430,8 +430,9 @@ function update() {
   const CS   = Qt > 0 ? 0.5 * b * Qt * Qt : 0;
   const PS   = Qt > 0 ? 0.5 * d * Qt * Qt : 0;
   const taxR = t * Qt;
-  const DWL  = 0.5 * t * (Q0 - Qt);
   const TS   = CS + PS + taxR;
+  const TS0  = 0.5 * (b + d) * Q0 * Q0;   // 課税なし時の社会的総余剰
+  const DWL  = TS0 - TS;                   // 常に正確（市場消滅時も TS0 に一致）
 
   // Stats table
   document.getElementById('st-cs').textContent  = fmt(CS);
@@ -536,15 +537,18 @@ function draw(s) {
   }
 
   // DWL triangle
+  // Qt=0（市場消滅）のとき頂点は需要切片 a・供給切片 c を使う
   if (hasTax && Qt < Q0 - 0.01) {
+    const dwlPd = Qt > 0 ? Pd : a;   // 需要曲線上の価格
+    const dwlPs = Qt > 0 ? Ps : c;   // 供給曲線上の価格
     fill3(ctx,
-      cx(Qt), cy(Pd),
-      cx(Qt), cy(Ps),
+      cx(Qt), cy(dwlPd),
+      cx(Qt), cy(dwlPs),
       cx(Q0), cy(P0),
       'rgba(220,38,38,0.22)', 'rgba(220,38,38,0.5)');
     const midX = cx((Qt + Q0) / 2 * 0.9 + Qt * 0.1);
-    const midY = cy((Pd + Ps) / 2 * 0.5 + P0 * 0.5);
-    const pxW = cx(Q0) - cx(Qt), pxH = cy(Ps) - cy(Pd);
+    const midY = cy((dwlPd + dwlPs) / 2 * 0.5 + P0 * 0.5);
+    const pxW = cx(Q0) - cx(Qt), pxH = cy(dwlPs) - cy(dwlPd);
     if (pxW * pxH > 200) label(ctx, midX, midY, 'DWL', '#b91c1c', '500 11px');
   }
 
