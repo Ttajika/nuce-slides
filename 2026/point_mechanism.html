@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ポイント制 一様価格オークション vs 完全抽選 体験アプリ</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #f7f7f7;
+      line-height: 1.6;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin-top: 1.8rem;
+    }
+    h3 {
+      font-size: 1.05rem;
+      margin-top: 1.2rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.3rem 0.4rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #fafafa;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.2rem 0.3rem;
+      font-size: 0.85rem;
+    }
+    input[type="number"] {
+      text-align: right;
+    }
+    button {
+      padding: 0.35rem 0.8rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-right: 0.3rem;
+    }
+    button.primary {
+      background: #0070f3;
+      color: #fff;
+    }
+    button.secondary {
+      background: #eee;
+    }
+    button.danger {
+      background: #f56565;
+      color: #fff;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #555;
+    }
+    .flex {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .over-budget {
+      color: #d8000c;
+      font-weight: bold;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+    }
+    .badge.ok {
+      background: #e6ffed;
+      color: #137333;
+    }
+    .badge.ng {
+      background: #ffeaea;
+      color: #b00020;
+    }
+    .results-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ddd;
+    }
+    .course-result {
+      margin-bottom: 1rem;
+    }
+    .course-title {
+      font-weight: bold;
+    }
+    .muted {
+      color: #666;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>ポイント制 一様価格オークション vs 完全抽選 体験アプリ</h1>
+  <p class="small">
+    行が「学生」、列が「科目」です。<br>
+    一度ポイントを入力すると、同じ入力から
+    <strong>一様価格オークション</strong> と <strong>完全抽選（0/非0）</strong>
+    の結果を両方計算して比較できます。
+  </p>
+
+  <!-- 科目設定 -->
+  <h2>① 科目と定員の設定</h2>
+  <p class="small">科目名と定員を編集できます。「科目を追加」ボタンで行を増やせます。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>科目名</th>
+        <th>定員</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="coursesBody">
+      <tr class="course-row">
+        <td><input type="text" class="course-name" value="ミクロ経済学"></td>
+        <td><input type="number" class="course-capacity" min="1" value="3"></td>
+        <td><button class="danger" onclick="removeCourseRow(this)">削除</button></td>
+      </tr>
+      <tr class="course-row">
+        <td><input type="text" class="course-name" value="マクロ経済学"></td>
+        <td><input type="number" class="course-capacity" min="1" value="2"></td>
+        <td><button class="danger" onclick="removeCourseRow(this)">削除</button></td>
+      </tr>
+      <tr class="course-row">
+        <td><input type="text" class="course-name" value="ゲーム理論"></td>
+        <td><input type="number" class="course-capacity" min="1" value="2"></td>
+        <td><button class="danger" onclick="removeCourseRow(this)">削除</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="secondary" onclick="addCourseRow()">科目を追加</button>
+
+  <!-- 学生設定 -->
+  <h2>② 学生数と予算</h2>
+  <div class="flex">
+    <label>学生数：
+      <!-- デフォルトを小さめに -->
+      <input type="number" id="numStudentsInput" min="1" value="4" style="width:80px;">
+    </label>
+    <label>1人あたりの予算（ポイント）：
+      <input type="number" id="budgetInput" min="1" value="100" style="width:100px;">
+    </label>
+    <button class="primary" onclick="buildStudentTable()">学生テーブルを作成</button>
+  </div>
+  <p class="small muted">
+    ※科目設定を変えたら、もう一度「学生テーブルを作成」を押してください。
+  </p>
+
+  <!-- ポイント配分テーブル -->
+  <h2>③ 各学生のポイント配分</h2>
+  <div class="flex" style="margin-bottom:0.3rem;">
+    <span class="small">
+      各学生の行の「残り予算」が 0 以上になるように入力してください。<br>
+      ※<strong>完全抽選</strong> では、「0 なら応募しない」「0 より大きければ応募」として扱い、
+      ポイントの大きさは無視します。
+    </span>
+    <button class="secondary" onclick="fillRandomBids()">ランダム入力</button>
+  </div>
+  <div id="bidsTableWrapper">
+    <!-- ここに動的にテーブルを作る -->
+  </div>
+
+  <!-- 実行 -->
+  <h2>④ 割当を計算</h2>
+  <button class="primary" onclick="runAllocation()">割当を計算する</button>
+  <span class="small muted">　※誰かの予算超過があると計算できません。</span>
+
+  <!-- 結果表示 -->
+  <div id="results" class="results-section"></div>
+</div>
+
+<script>
+  let budgetPerStudent = 100;
+  let numStudents = 0;
+  let courses = [];
+
+  function addCourseRow() {
+    const tbody = document.getElementById("coursesBody");
+    const tr = document.createElement("tr");
+    tr.className = "course-row";
+    tr.innerHTML = `
+      <td><input type="text" class="course-name" value="新しい科目"></td>
+      <td><input type="number" class="course-capacity" min="1" value="2"></td>
+      <td><button class="danger" onclick="removeCourseRow(this)">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function removeCourseRow(btn) {
+    const tbody = document.getElementById("coursesBody");
+    if (tbody.querySelectorAll(".course-row").length <= 1) {
+      alert("科目は少なくとも1つ必要です。");
+      return;
+    }
+    tbody.removeChild(btn.closest("tr"));
+  }
+
+  function readCoursesFromDOM() {
+    const rows = document.querySelectorAll(".course-row");
+    const arr = [];
+    rows.forEach((row, idx) => {
+      const name = row.querySelector(".course-name").value.trim() || `科目${idx+1}`;
+      const cap = parseInt(row.querySelector(".course-capacity").value, 10);
+      if (isNaN(cap) || cap <= 0) {
+        throw new Error("定員は1以上の整数で入力してください。");
+      }
+      arr.push({ index: idx, name, capacity: cap });
+    });
+    return arr;
+  }
+
+  function buildStudentTable() {
+    try {
+      courses = readCoursesFromDOM();
+    } catch (e) {
+      alert(e.message);
+      return;
+    }
+
+    const n = parseInt(document.getElementById("numStudentsInput").value, 10);
+    const b = parseInt(document.getElementById("budgetInput").value, 10);
+    if (isNaN(n) || n <= 0) {
+      alert("学生数は1以上の整数で入力してください。");
+      return;
+    }
+    if (isNaN(b) || b <= 0) {
+      alert("予算は1以上の整数で入力してください。");
+      return;
+    }
+    numStudents = n;
+    budgetPerStudent = b;
+
+    const wrapper = document.getElementById("bidsTableWrapper");
+    wrapper.innerHTML = "";
+
+    const table = document.createElement("table");
+    table.id = "bidsTable";
+
+    // Header
+    const thead = document.createElement("thead");
+    const hr = document.createElement("tr");
+    hr.innerHTML = `<th>学生</th><th>残り予算</th>`;
+    courses.forEach(c => {
+      const th = document.createElement("th");
+      th.textContent = `${c.name}（定員${c.capacity}）`;
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    // Body
+    const tbody = document.createElement("tbody");
+    for (let i = 0; i < numStudents; i++) {
+      const tr = document.createElement("tr");
+      const studentName = `学生${i+1}`;
+      tr.innerHTML = `
+        <td>${studentName}</td>
+        <td><span class="remaining-budget" data-student="${i}">${budgetPerStudent}</span></td>
+      `;
+      courses.forEach((c, j) => {
+        const td = document.createElement("td");
+        td.innerHTML = `
+          <input type="number" class="bid-input"
+                 data-student="${i}" data-course="${j}"
+                 min="0" value="0">
+        `;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+
+    // 予算チェック用のイベント
+    table.addEventListener("input", function(e) {
+      if (e.target.classList.contains("bid-input")) {
+        const sIdx = parseInt(e.target.getAttribute("data-student"), 10);
+        updateRemainingBudgetForStudent(sIdx);
+      }
+    });
+
+    // 初期状態の残り予算
+    for (let i = 0; i < numStudents; i++) {
+      updateRemainingBudgetForStudent(i);
+    }
+
+    document.getElementById("results").innerHTML = "";
+  }
+
+  function updateRemainingBudgetForStudent(studentIndex) {
+    const inputs = document.querySelectorAll(
+      `.bid-input[data-student="${studentIndex}"]`
+    );
+    let sum = 0;
+    inputs.forEach(inp => {
+      const v = parseInt(inp.value, 10);
+      if (!isNaN(v) && v > 0) sum += v;
+    });
+    const remain = budgetPerStudent - sum;
+    const span = document.querySelector(
+      `.remaining-budget[data-student="${studentIndex}"]`
+    );
+    if (!span) return;
+
+    span.textContent = remain;
+    if (remain < 0) {
+      span.classList.add("over-budget");
+    } else {
+      span.classList.remove("over-budget");
+    }
+  }
+
+  function fillRandomBids() {
+    const table = document.getElementById("bidsTable");
+    if (!table) {
+      alert("まず学生テーブルを作成してください。");
+      return;
+    }
+    for (let s = 0; s < numStudents; s++) {
+      const weights = [];
+      let weightSum = 0;
+      for (let j = 0; j < courses.length; j++) {
+        const w = Math.random();
+        weights.push(w);
+        weightSum += w;
+      }
+      let remaining = budgetPerStudent;
+      for (let j = 0; j < courses.length; j++) {
+        let val = Math.round((weights[j] / weightSum) * budgetPerStudent);
+        if (val > remaining) val = remaining;
+        const input = document.querySelector(
+          `.bid-input[data-student="${s}"][data-course="${j}"]`
+        );
+        if (input) {
+          input.value = val;
+        }
+        remaining -= val;
+        if (j === courses.length - 1 && remaining !== 0) {
+          // 最後の科目に誤差を押し込む
+          const lastInput = document.querySelector(
+            `.bid-input[data-student="${s}"][data-course="${j}"]`
+          );
+          if (lastInput) lastInput.value = parseInt(lastInput.value, 10) + remaining;
+        }
+      }
+      updateRemainingBudgetForStudent(s);
+    }
+    document.getElementById("results").innerHTML = "";
+  }
+
+  function hasAnyOverBudget() {
+    const spans = document.querySelectorAll(".remaining-budget");
+    for (const s of spans) {
+      if (parseInt(s.textContent, 10) < 0) return true;
+    }
+    return false;
+  }
+
+  // メイン：同じ入力から両方の結果を計算
+  function runAllocation() {
+    const table = document.getElementById("bidsTable");
+    if (!table) {
+      alert("まず学生テーブルを作成してください。");
+      return;
+    }
+    if (hasAnyOverBudget()) {
+      alert("誰かの予算がマイナスになっています。配分を調整してください。");
+      return;
+    }
+
+    // 学生配列（オークション用と抽選用で別々に持つ）
+    const studentsForAuction = [];
+    const studentsForLottery = [];
+    for (let i = 0; i < numStudents; i++) {
+      const name = `学生${i+1}`;
+      studentsForAuction.push({
+        index: i,
+        name,
+        spent: 0,
+        courses: []
+      });
+      studentsForLottery.push({
+        index: i,
+        name,
+        courses: []
+      });
+    }
+
+    // 科目ごとの入札を集計（共通で使う）
+    const courseBids = courses.map((c, j) => ({
+      courseIndex: j,
+      name: c.name,
+      capacity: c.capacity,
+      bids: []   // { studentIndex, amount }
+    }));
+
+    const bidInputs = document.querySelectorAll(".bid-input");
+    bidInputs.forEach(inp => {
+      const sIdx = parseInt(inp.getAttribute("data-student"), 10);
+      const cIdx = parseInt(inp.getAttribute("data-course"), 10);
+      const v = parseInt(inp.value, 10);
+      if (!isNaN(v) && v > 0) {
+        courseBids[cIdx].bids.push({ studentIndex: sIdx, amount: v });
+      }
+    });
+
+    const auctionHTML = buildUniformAuctionResults(studentsForAuction, courseBids);
+    const lotteryHTML = buildLotteryResults(studentsForLottery, courseBids);
+
+    document.getElementById("results").innerHTML = auctionHTML + lotteryHTML;
+  }
+
+  // 一様価格オークションの結果 HTML を生成
+  function buildUniformAuctionResults(students, courseBids) {
+    let html = `<h2>⑤ 一様価格オークションの結果</h2>`;
+
+    courseBids.forEach(cb => {
+      html += `<div class="course-result">`;
+      html += `<div class="course-title">科目：${cb.name}（定員 ${cb.capacity}）</div>`;
+
+      if (cb.bids.length === 0) {
+        html += `<p class="muted">入札がありませんでした（全員未履修）。</p></div>`;
+        return;
+      }
+
+      const sorted = cb.bids.slice().sort((a, b) => b.amount - a.amount);
+      let winners = [];
+      let price = 0;
+
+      if (sorted.length <= cb.capacity) {
+        // 定員以内なら全員合格、価格は0
+        winners = sorted.slice();
+        price = 0;
+      } else {
+        const cutoffBid = sorted[cb.capacity - 1].amount;
+        let strictWinners = [];
+        let cutoffCandidates = [];
+        sorted.forEach(b => {
+          if (b.amount > cutoffBid) strictWinners.push(b);
+          else if (b.amount === cutoffBid) cutoffCandidates.push(b);
+        });
+        const remainingSlots = cb.capacity - strictWinners.length;
+        if (remainingSlots <= 0) {
+          winners = strictWinners;
+        } else {
+          // 同点をランダム抽選
+          shuffleArray(cutoffCandidates);
+          const chosen = cutoffCandidates.slice(0, remainingSlots);
+          winners = strictWinners.concat(chosen);
+        }
+        price = cutoffBid;
+      }
+
+      const winnerSet = new Set(winners.map(w => w.studentIndex));
+
+      // 学生に結果を記録
+      winners.forEach(w => {
+        students[w.studentIndex].spent += price;
+        students[w.studentIndex].courses.push(`${cb.name}（価格 ${price}）`);
+      });
+
+      html += `<p class="small">この科目の価格（クリアライン）： <strong>${price}</strong> ポイント</p>`;
+      html += `<table><thead><tr><th>順位</th><th>学生</th><th>入札ポイント</th><th>結果</th></tr></thead><tbody>`;
+      sorted.forEach((b, idx) => {
+        const s = students[b.studentIndex];
+        const isWin = winnerSet.has(b.studentIndex);
+        html += `<tr>
+          <td>${idx+1}</td>
+          <td>${s.name}</td>
+          <td>${b.amount}</td>
+          <td>${isWin
+            ? '<span class="badge ok">合格</span>'
+            : '<span class="badge ng">落選</span>'}
+          </td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+
+    // 学生ごとのまとめ（オークション）
+    html += `<h3>学生ごとの結果（オークション）</h3>`;
+    html += `<table><thead><tr><th>学生</th><th>取得科目</th><th>消費した予算</th><th>残り予算</th></tr></thead><tbody>`;
+    students.forEach(st => {
+      const remain = budgetPerStudent - st.spent;
+      html += `<tr>
+        <td>${st.name}</td>
+        <td>${st.courses.length ? st.courses.join("<br>") : "なし"}</td>
+        <td>${st.spent}</td>
+        <td>${remain}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+
+    return html;
+  }
+
+  // 完全抽選の結果 HTML を生成（0=応募しない, >0=応募）
+  function buildLotteryResults(students, courseBids) {
+    let html = `<h2>⑥ 完全抽選登録の結果</h2>`;
+    html += `<p class="small muted">
+      0 は応募せず、0 より大きい値は「応募」とみなします。<br>
+      応募者のあいだではポイントの大きさは無視し、完全ランダムで抽選します。
+    </p>`;
+
+    courseBids.forEach(cb => {
+      html += `<div class="course-result">`;
+      html += `<div class="course-title">科目：${cb.name}（定員 ${cb.capacity}）</div>`;
+
+      const applicants = cb.bids.map(b => b.studentIndex);
+      if (applicants.length === 0) {
+        html += `<p class="muted">応募者がいませんでした。</p></div>`;
+        return;
+      }
+
+      let winnersIdxs = [];
+      if (applicants.length <= cb.capacity) {
+        winnersIdxs = applicants.slice();
+      } else {
+        const tmp = applicants.slice();
+        shuffleArray(tmp);
+        winnersIdxs = tmp.slice(0, cb.capacity);
+      }
+      const winnerSet = new Set(winnersIdxs);
+      const applicantSet = new Set(applicants);
+
+      // 学生に結果を記録
+      winnersIdxs.forEach(sIdx => {
+        students[sIdx].courses.push(cb.name);
+      });
+
+      html += `<p class="small">
+        応募者 ${applicants.length} 人の中から、定員 ${cb.capacity} 人を完全ランダムに選びました。
+      </p>`;
+      html += `<table><thead><tr><th>学生</th><th>応募</th><th>入力値</th><th>結果</th></tr></thead><tbody>`;
+
+      for (let i = 0; i < numStudents; i++) {
+        const st = students[i];
+        const applied = applicantSet.has(i);
+        const bidObj = cb.bids.find(b => b.studentIndex === i);
+        const amount = bidObj ? bidObj.amount : 0;
+        const isWin = winnerSet.has(i);
+
+        html += `<tr>
+          <td>${st.name}</td>
+          <td>${applied ? "応募" : "未応募"}</td>
+          <td>${amount}</td>
+          <td>${
+            applied
+              ? (isWin
+                  ? '<span class="badge ok">当選</span>'
+                  : '<span class="badge ng">落選</span>')
+              : '<span class="muted">対象外</span>'
+          }</td>
+        </tr>`;
+      }
+
+      html += `</tbody></table></div>`;
+    });
+
+    // 学生ごとのまとめ（完全抽選）
+    html += `<h3>学生ごとの結果（完全抽選）</h3>`;
+    html += `<table><thead><tr><th>学生</th><th>取得科目</th><th>取得科目数</th></tr></thead><tbody>`;
+    students.forEach(st => {
+      const count = st.courses.length;
+      html += `<tr>
+        <td>${st.name}</td>
+        <td>${count ? st.courses.join("<br>") : "なし"}</td>
+        <td>${count}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+
+    return html;
+  }
+
+  // フィッシャー–イェーツのシャッフル
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+</script>
+</body>
+</html>

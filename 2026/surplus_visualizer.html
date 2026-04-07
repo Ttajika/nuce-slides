@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>余剰・課税ビジュアライザー — 基礎ミクロ経済学</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e2e2e0;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --header-bg: #1e293b;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+header {
+  background: var(--header-bg);
+  color: #fff;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+header h1 { font-size: 15px; font-weight: 700; }
+header a {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 12px;
+}
+header a:hover { color: rgba(255,255,255,0.9); }
+
+.app {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+/* ── Chart ── */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 20px 12px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.swatch {
+  width: 13px; height: 13px;
+  border-radius: 2px;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+.swatch-cs  { background: rgba(59,130,246,0.2);  border-color: #3b82f6; }
+.swatch-ps  { background: rgba(34,197,94,0.2);   border-color: #16a34a; }
+.swatch-tax { background: rgba(251,191,36,0.3);  border-color: #d97706; }
+.swatch-dwl { background: rgba(220,38,38,0.22);  border-color: #dc2626; }
+
+/* ── Panel ── */
+.panel { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sliders */
+.eq-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.eq-label code {
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.slider-row {
+  margin-bottom: 10px;
+}
+.slider-row:last-child { margin-bottom: 0; }
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.slider-name { font-size: 13px; }
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: #eff6ff;
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 40px;
+  text-align: right;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+
+.sep {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
+/* Tax slider highlight */
+.tax-section .slider-name { color: #b45309; font-weight: 500; }
+.tax-section .slider-val { background: #fffbeb; color: #b45309; }
+input#s-t { accent-color: #d97706; }
+
+/* Stats */
+.stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.stat-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.stat-table td:last-child {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+.row-total td {
+  font-weight: 700;
+  background: #f8fafc;
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+}
+.row-dwl td { color: #dc2626; }
+
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+.dot-cs  { background: #3b82f6; }
+.dot-ps  { background: #16a34a; }
+.dot-tax { background: #d97706; }
+.dot-dwl { background: #dc2626; }
+
+/* Eq grid */
+.eq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.eq-cell {
+  background: #f8fafc;
+  border-radius: 5px;
+  padding: 5px 8px;
+}
+.eq-cell .k { font-size: 11px; color: var(--text-dim); margin-bottom: 1px; }
+.eq-cell .v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.alert {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>余剰・課税ビジュアライザー</h1>
+  <a href="micro-notes.html#sec-surplus">← 講義ノートに戻る</a>
+</header>
+
+<div class="app">
+
+  <!-- ── Chart ── -->
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="swatch swatch-cs"></div>消費者余剰 (CS)</div>
+      <div class="legend-item"><div class="swatch swatch-ps"></div>生産者余剰 (PS)</div>
+      <div class="legend-item" id="leg-tax" style="display:none"><div class="swatch swatch-tax"></div>税収</div>
+      <div class="legend-item" id="leg-dwl" style="display:none"><div class="swatch swatch-dwl"></div>死荷重損失</div>
+    </div>
+  </div>
+
+  <!-- ── Panel ── -->
+  <div class="panel">
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="card-title">パラメータ</div>
+
+      <p class="eq-label">需要曲線: <code>P = a − b·Q</code></p>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">需要切片 <i>a</i></span>
+          <span class="slider-val" id="v-a">20</span>
+        </div>
+        <input type="range" id="s-a" min="5" max="40" value="20" step="1">
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">需要の傾き <i>b</i></span>
+          <span class="slider-val" id="v-b">2.0</span>
+        </div>
+        <input type="range" id="s-b" min="0.5" max="6" value="2" step="0.5">
+      </div>
+
+      <hr class="sep">
+      <p class="eq-label">供給曲線: <code>P = c + d·Q</code></p>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">供給切片 <i>c</i></span>
+          <span class="slider-val" id="v-c">2</span>
+        </div>
+        <input type="range" id="s-c" min="0" max="15" value="2" step="1">
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">供給の傾き <i>d</i></span>
+          <span class="slider-val" id="v-d">1.0</span>
+        </div>
+        <input type="range" id="s-d" min="0.5" max="6" value="1" step="0.5">
+      </div>
+
+      <hr class="sep">
+      <div class="slider-row tax-section">
+        <div class="slider-header">
+          <span class="slider-name">従量税 <i>t</i></span>
+          <span class="slider-val" id="v-t">0</span>
+        </div>
+        <input type="range" id="s-t" min="0" max="20" value="0" step="0.5">
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <div class="card-title">余剰の内訳</div>
+
+      <div id="alert-no-market" class="alert" style="display:none">
+        均衡が存在しません（<i>c</i> ≥ <i>a</i>）
+      </div>
+      <div id="alert-collapse" class="alert" style="display:none">
+        課税により市場が消滅
+      </div>
+
+      <table class="stat-table" id="stat-table">
+        <tr>
+          <td><span class="dot dot-cs"></span>消費者余剰 (CS)</td>
+          <td id="st-cs">—</td>
+        </tr>
+        <tr>
+          <td><span class="dot dot-ps"></span>生産者余剰 (PS)</td>
+          <td id="st-ps">—</td>
+        </tr>
+        <tr id="row-tax" style="display:none">
+          <td><span class="dot dot-tax"></span>税収</td>
+          <td id="st-tax">—</td>
+        </tr>
+        <tr class="row-dwl" id="row-dwl" style="display:none">
+          <td><span class="dot dot-dwl"></span>死荷重損失</td>
+          <td id="st-dwl">—</td>
+        </tr>
+        <tr class="row-total">
+          <td>社会的総余剰</td>
+          <td id="st-ts">—</td>
+        </tr>
+      </table>
+
+      <div class="eq-grid">
+        <div class="eq-cell">
+          <div class="k" id="k-q">均衡取引量 Q*</div>
+          <div class="v" id="ev-q">—</div>
+        </div>
+        <div class="eq-cell">
+          <div class="k" id="k-p">均衡価格 P*</div>
+          <div class="v" id="ev-p">—</div>
+        </div>
+        <div class="eq-cell" id="cell-pd" style="display:none">
+          <div class="k">消費者価格 P_D</div>
+          <div class="v" id="ev-pd">—</div>
+        </div>
+        <div class="eq-cell" id="cell-ps" style="display:none">
+          <div class="k">生産者価格 P_S</div>
+          <div class="v" id="ev-ps">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /app -->
+
+<script>
+// ── Canvas setup (HiDPI) ──────────────────────────────────────────
+const canvas = document.getElementById('chart');
+const ctx    = canvas.getContext('2d');
+const dpr    = window.devicePixelRatio || 1;
+const DW = 620, DH = 500;
+canvas.width  = DW * dpr;
+canvas.height = DH * dpr;
+canvas.style.width  = DW + 'px';
+canvas.style.height = DH + 'px';
+ctx.scale(dpr, dpr);
+
+// ── State ─────────────────────────────────────────────────────────
+const P = { a: 20, b: 2, c: 2, d: 1, t: 0 };
+
+// ── Sliders ───────────────────────────────────────────────────────
+['a','b','c','d','t'].forEach(k => {
+  const sl = document.getElementById('s-' + k);
+  const vl = document.getElementById('v-' + k);
+  sl.addEventListener('input', () => {
+    P[k] = +sl.value;
+    vl.textContent = sl.value;
+    update();
+  });
+});
+
+// ── Formatting ────────────────────────────────────────────────────
+function fmt(x) {
+  if (x == null || !isFinite(x)) return '—';
+  if (Math.abs(x) < 1e-9) return '0';
+  return x.toFixed(1);
+}
+
+// ── Main update ───────────────────────────────────────────────────
+function update() {
+  const { a, b, c, d, t } = P;
+
+  document.getElementById('alert-no-market').style.display = 'none';
+  document.getElementById('alert-collapse').style.display  = 'none';
+  document.getElementById('stat-table').style.opacity = '1';
+
+  // No-market
+  if (c >= a) {
+    document.getElementById('alert-no-market').style.display = '';
+    document.getElementById('stat-table').style.opacity = '0.3';
+    draw(null);
+    return;
+  }
+
+  // No-tax equilibrium
+  const Q0 = (a - c) / (b + d);
+  const P0 = c + d * Q0;
+
+  // Tax equilibrium
+  const Qt = Math.max(0, (a - c - t) / (b + d));
+  const Ps = c + d * Qt;
+  const Pd = Ps + t;
+
+  const hasTax     = t > 0;
+  const collapsed  = hasTax && Qt <= 1e-9;
+
+  if (collapsed) {
+    document.getElementById('alert-collapse').style.display = '';
+  }
+
+  // Surpluses
+  const CS   = Qt > 0 ? 0.5 * b * Qt * Qt : 0;
+  const PS   = Qt > 0 ? 0.5 * d * Qt * Qt : 0;
+  const taxR = t * Qt;
+  const DWL  = 0.5 * t * (Q0 - Qt);
+  const TS   = CS + PS + taxR;
+
+  // Stats table
+  document.getElementById('st-cs').textContent  = fmt(CS);
+  document.getElementById('st-ps').textContent  = fmt(PS);
+  document.getElementById('st-tax').textContent = fmt(taxR);
+  document.getElementById('st-dwl').textContent = fmt(DWL);
+  document.getElementById('st-ts').textContent  = fmt(TS);
+
+  document.getElementById('row-tax').style.display = hasTax ? '' : 'none';
+  document.getElementById('row-dwl').style.display = (hasTax && DWL > 0.01) ? '' : 'none';
+  document.getElementById('leg-tax').style.display = hasTax ? '' : 'none';
+  document.getElementById('leg-dwl').style.display = (hasTax && DWL > 0.01) ? '' : 'none';
+
+  // Eq cells
+  const taxActive = hasTax && !collapsed;
+  document.getElementById('cell-pd').style.display = taxActive ? '' : 'none';
+  document.getElementById('cell-ps').style.display = taxActive ? '' : 'none';
+
+  if (taxActive) {
+    document.getElementById('k-q').textContent  = '均衡取引量 Qt';
+    document.getElementById('k-p').textContent  = 'Q*（課税なし）';
+    document.getElementById('ev-q').textContent = fmt(Qt);
+    document.getElementById('ev-p').textContent = fmt(Q0);
+    document.getElementById('ev-pd').textContent = fmt(Pd);
+    document.getElementById('ev-ps').textContent = fmt(Ps);
+  } else {
+    document.getElementById('k-q').textContent  = '均衡取引量 Q*';
+    document.getElementById('k-p').textContent  = '均衡価格 P*';
+    document.getElementById('ev-q').textContent = collapsed ? '0' : fmt(Q0);
+    document.getElementById('ev-p').textContent = collapsed ? '—' : fmt(P0);
+  }
+
+  draw({ a, b, c, d, t, Q0, P0, Qt, Ps, Pd, CS, PS, taxR, DWL });
+}
+
+// ── Draw ──────────────────────────────────────────────────────────
+function draw(s) {
+  const W = DW, H = DH;
+  const ml = 62, mr = 28, mt = 22, mb = 52;
+  const cw = W - ml - mr, ch = H - mt - mb;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!s) {
+    drawAxes(ml, mr, mt, mb, cw, ch, 10, 20);
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '13px Noto Sans JP, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('均衡が存在しません', W / 2, H / 2);
+    return;
+  }
+
+  const { a, b, c, d, t, Q0, P0, Qt, Ps, Pd } = s;
+
+  // Scale
+  const Qmax = Math.max(Q0 * 1.6, 4);
+  const Pmax = a * 1.1;
+
+  const cx = q => ml + (q / Qmax) * cw;
+  const cy = p => mt + ch - (p / Pmax) * ch;
+
+  // ── Axes & grid ──
+  drawAxes(ml, mr, mt, mb, cw, ch, Qmax, Pmax, cx, cy);
+
+  const hasTax   = t > 0;
+  const collapsed = hasTax && Qt <= 1e-9;
+
+  // ── Shaded areas ──
+
+  // CS
+  if (Qt > 0) {
+    fill3(ctx,
+      cx(0), cy(a),
+      cx(Qt), cy(Pd),
+      cx(0), cy(Pd),
+      'rgba(59,130,246,0.18)', 'rgba(59,130,246,0.45)');
+    label(ctx, cx(Qt * 0.28), cy(Pd + (a - Pd) * 0.52), 'CS', '#1d4ed8');
+  }
+
+  // PS
+  if (Qt > 0 && Ps > c) {
+    fill3(ctx,
+      cx(0), cy(c),
+      cx(Qt), cy(Ps),
+      cx(0), cy(Ps),
+      'rgba(34,197,94,0.18)', 'rgba(34,197,94,0.45)');
+    label(ctx, cx(Qt * 0.28), cy(c + (Ps - c) * 0.52), 'PS', '#15803d');
+  }
+
+  // Tax rectangle
+  if (hasTax && Qt > 0 && Pd > Ps) {
+    const rx = cx(0), ry = cy(Pd);
+    const rw = cx(Qt) - cx(0), rh = cy(Ps) - cy(Pd);
+    ctx.fillStyle   = 'rgba(251,191,36,0.30)';
+    ctx.strokeStyle = 'rgba(217,119,6,0.5)';
+    ctx.lineWidth   = 1;
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeRect(rx, ry, rw, rh);
+    if (rw > 28 && rh > 16) {
+      label(ctx, cx(Qt * 0.5), cy((Ps + Pd) / 2), '税収', '#92400e', '500 11px');
+    }
+  }
+
+  // DWL triangle
+  if (hasTax && Qt < Q0 - 0.01) {
+    fill3(ctx,
+      cx(Qt), cy(Pd),
+      cx(Qt), cy(Ps),
+      cx(Q0), cy(P0),
+      'rgba(220,38,38,0.22)', 'rgba(220,38,38,0.5)');
+    const midX = cx((Qt + Q0) / 2 * 0.9 + Qt * 0.1);
+    const midY = cy((Pd + Ps) / 2 * 0.5 + P0 * 0.5);
+    const pxW = cx(Q0) - cx(Qt), pxH = cy(Ps) - cy(Pd);
+    if (pxW * pxH > 200) label(ctx, midX, midY, 'DWL', '#b91c1c', '500 11px');
+  }
+
+  // ── No-tax reference (ghosted) when tax is active ──
+  if (hasTax && !collapsed) {
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = 'rgba(30,41,59,0.2)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx(Q0), cy(P0)); ctx.lineTo(cx(Q0), cy(0));
+    ctx.moveTo(cx(0),  cy(P0)); ctx.lineTo(cx(Q0), cy(P0));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Ghost dot at Q0,P0
+    ctx.fillStyle = 'rgba(30,41,59,0.18)';
+    ctx.beginPath(); ctx.arc(cx(Q0), cy(P0), 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  // ── Dashed reference lines for active equilibrium ──
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#d1d5db';
+  ctx.lineWidth = 1;
+  if (!hasTax && Q0 > 0) {
+    ctx.beginPath();
+    ctx.moveTo(cx(Q0), cy(P0)); ctx.lineTo(cx(Q0), cy(0));
+    ctx.moveTo(cx(0),  cy(P0)); ctx.lineTo(cx(Q0), cy(P0));
+    ctx.stroke();
+  } else if (hasTax && Qt > 0) {
+    ctx.beginPath();
+    ctx.moveTo(cx(Qt), cy(Pd)); ctx.lineTo(cx(Qt), cy(0));
+    ctx.moveTo(cx(0),  cy(Pd)); ctx.lineTo(cx(Qt), cy(Pd));
+    ctx.moveTo(cx(0),  cy(Ps)); ctx.lineTo(cx(Qt), cy(Ps));
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // ── Axis price labels ──
+  ctx.font = '11px JetBrains Mono, monospace';
+
+  if (!hasTax && Q0 > 0) {
+    axisLabelY(ctx, ml, cy(P0), 'P* = ' + fmt(P0), '#374151');
+    axisLabelX(ctx, cx(Q0), mt + ch, 'Q* = ' + fmt(Q0), '#374151');
+  } else if (hasTax && Qt > 0) {
+    axisLabelY(ctx, ml, cy(Pd), 'P_D = ' + fmt(Pd), '#1d4ed8');
+    axisLabelY(ctx, ml, cy(Ps), 'P_S = ' + fmt(Ps), '#15803d');
+    axisLabelX(ctx, cx(Qt), mt + ch, 'Qt = ' + fmt(Qt), '#374151');
+  }
+
+  // ── Curves ──
+  // Demand
+  const qdEnd = Math.min(a / b, Qmax);
+  ctx.strokeStyle = '#1d4ed8';
+  ctx.lineWidth   = 2.5;
+  ctx.lineJoin    = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx(0), cy(a));
+  ctx.lineTo(cx(qdEnd), cy(Math.max(0, a - b * qdEnd)));
+  ctx.stroke();
+  ctx.fillStyle = '#1d4ed8';
+  ctx.font = '12px Noto Sans JP, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('需要', cx(qdEnd * 0.88) - 2, cy(a - b * qdEnd * 0.88) - 6);
+
+  // Supply — clip at top border (Pmax) not at right border
+  const psAtQmax = c + d * Qmax;
+  const qsEnd = psAtQmax > Pmax ? (Pmax - c) / d : Qmax;
+  ctx.strokeStyle = '#16a34a';
+  ctx.lineWidth   = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx(0), cy(c));
+  ctx.lineTo(cx(qsEnd), cy(c + d * qsEnd));
+  ctx.stroke();
+  const qsLabel = Math.min(qsEnd * 0.75, (Pmax * 0.88 - c) / d);
+  ctx.fillStyle  = '#16a34a';
+  ctx.textAlign  = 'left';
+  ctx.fillText('供給', cx(qsLabel) + 4, cy(c + d * qsLabel) - 4);
+
+  // ── Equilibrium dot ──
+  if (Q0 > 0 && P0 <= Pmax) {
+    ctx.fillStyle   = '#fff';
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.arc(cx(Q0), cy(P0), 5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function drawAxes(ml, mr, mt, mb, cw, ch, Qmax, Pmax, cx, cy) {
+  const W = DW;
+
+  // Background
+  ctx.fillStyle = '#f9fafb';
+  ctx.fillRect(ml, mt, cw, ch);
+
+  // Grid lines
+  if (cx && cy) {
+    ctx.strokeStyle = '#f0f0ee';
+    ctx.lineWidth = 0.8;
+    const qStep = niceStep(Qmax / 5);
+    const pStep = niceStep(Pmax / 5);
+    for (let q = qStep; q < Qmax * 1.01; q += qStep) {
+      ctx.beginPath(); ctx.moveTo(cx(q), mt); ctx.lineTo(cx(q), mt + ch); ctx.stroke();
+    }
+    for (let p = pStep; p < Pmax * 1.01; p += pStep) {
+      ctx.beginPath(); ctx.moveTo(ml, cy(p)); ctx.lineTo(ml + cw, cy(p)); ctx.stroke();
+    }
+
+    // Tick labels
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '11px JetBrains Mono, monospace';
+    for (let q = qStep; q < Qmax * 1.01; q += qStep) {
+      ctx.textAlign = 'center';
+      ctx.fillText(fmtTick(q), cx(q), mt + ch + 14);
+    }
+    for (let p = pStep; p < Pmax * 1.01; p += pStep) {
+      ctx.textAlign = 'right';
+      ctx.fillText(fmtTick(p), ml - 6, cy(p) + 4);
+    }
+  }
+
+  // Axis lines
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(ml, mt); ctx.lineTo(ml, mt + ch + 1);
+  ctx.moveTo(ml - 1, mt + ch); ctx.lineTo(ml + cw, mt + ch);
+  ctx.stroke();
+
+  // Arrows
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(ml - 4, mt + 6); ctx.lineTo(ml, mt - 2); ctx.lineTo(ml + 4, mt + 6);
+  ctx.moveTo(ml + cw - 4, mt + ch - 4); ctx.lineTo(ml + cw + 6, mt + ch); ctx.lineTo(ml + cw - 4, mt + ch + 4);
+  ctx.stroke();
+
+  // Axis names
+  ctx.fillStyle = '#374151';
+  ctx.font = '13px Noto Sans JP, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Q', ml + cw + 16, mt + ch + 4);
+  ctx.textAlign = 'right';
+  ctx.fillText('P', ml - 10, mt - 4);
+}
+
+function fill3(ctx, x1, y1, x2, y2, x3, y3, fill, stroke) {
+  ctx.fillStyle   = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+}
+
+function label(ctx, x, y, text, color, font) {
+  ctx.fillStyle = color;
+  ctx.font = font || 'bold 12px Noto Sans JP, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, y + 4);
+}
+
+function axisLabelY(ctx, ml, y, text, color) {
+  ctx.fillStyle = color;
+  ctx.font = '10.5px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(text, ml - 4, y + 4);
+}
+
+function axisLabelX(ctx, x, yBase, text, color) {
+  ctx.fillStyle = color;
+  ctx.font = '10.5px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, yBase + 28);
+}
+
+function niceStep(raw) {
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / mag;
+  if (n < 1.5) return mag;
+  if (n < 3.5) return 2 * mag;
+  if (n < 7.5) return 5 * mag;
+  return 10 * mag;
+}
+
+function fmtTick(x) {
+  return x % 1 === 0 ? x : x.toFixed(1);
+}
+
+// Initial draw
+update();
+</script>
+</body>
+</html>

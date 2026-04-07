@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基礎ミクロ経済学 — 講義ノート 2026年度</title>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['\\[', '\\]'], ['$$', '$$']],
+    macros: {
+      R: '\\mathbb{R}', P: '\\mathsf{Pr}',
+      condi: '\\mathrel{|}',
+      pd: ['\\frac{\\partial #1}{\\partial #2}', 2],
+      dd: ['\\frac{d #1}{d #2}', 2],
+      eqdef: '\\mathrel{:=}',
+      uu: '\\underline{u}', ou: '\\overline{u}',
+      d: '\\ d',
+    },
+    tags: 'ams',
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap');
+
+/* ━━━ RESET & VARIABLES ━━━ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e2e2e0;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --accent-light: #eff6ff;
+  --accent-mid: #bfdbfe;
+  --header-bg: #1e293b;
+  --sidebar-w: 240px;
+
+  /* box colors */
+  --def-bg: #eff6ff;
+  --def-border: #3b82f6;
+  --thm-bg: #eef2ff;
+  --thm-border: #6366f1;
+  --prop-bg: #f5f3ff;
+  --prop-border: #8b5cf6;
+  --lem-bg: #faf5ff;
+  --lem-border: #a78bfa;
+  --cor-bg: #fdf4ff;
+  --cor-border: #c084fc;
+  --rmk-bg: #f8fafc;
+  --rmk-border: #94a3b8;
+  --ex-bg: #f0fdf4;
+  --ex-border: #22c55e;
+  --exercise-bg: #fff7ed;
+  --exercise-border: #f97316;
+}
+
+/* ━━━ BODY ━━━ */
+body {
+  font-family: 'Noto Serif JP', serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15.5px;
+  line-height: 1.85;
+}
+
+/* ━━━ LAYOUT ━━━ */
+#toc {
+  width: var(--sidebar-w);
+  background: var(--header-bg);
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+#toc-header {
+  padding: 18px 16px 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+#toc-header .subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  margin-top: 3px;
+}
+
+#toc-list { padding: 10px 0 20px; }
+
+.toc-ch {
+  display: block;
+  padding: 8px 16px 5px;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 0.2px;
+}
+
+.toc-sec {
+  display: block;
+  padding: 4px 16px 4px 24px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11.5px;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+
+.toc-ch:hover, .toc-sec:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.07);
+  border-left-color: var(--accent);
+}
+
+.toc-ch.active { color: #fff; background: rgba(29,78,216,0.2); border-left-color: var(--accent); }
+.toc-sec.active { color: rgba(255,255,255,0.9); border-left-color: var(--accent); }
+
+#main-wrap { margin-left: var(--sidebar-w); }
+
+#content {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 3rem 2.5rem 6rem;
+}
+
+/* ━━━ DOCUMENT TITLE ━━━ */
+.doc-title {
+  text-align: center;
+  padding: 1rem 0 2.5rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 3rem;
+}
+
+.doc-title h1 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.doc-title .doc-meta {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ━━━ CHAPTER & SECTION ━━━ */
+/* CSS counters — auto-numbering */
+body {
+  counter-reset: chapter;
+}
+
+.chapter {
+  counter-reset: section definition theorem proposition lemma corollary example exercise;
+  counter-increment: chapter;
+  margin-bottom: 4rem;
+}
+
+.chapter > h1 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  padding-bottom: 0.6rem;
+  border-bottom: 2.5px solid var(--accent);
+  margin-bottom: 1.5rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.chapter > h1::before {
+  content: "第 " counter(chapter) " 章　";
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.section {
+  counter-increment: section;
+  counter-reset: definition theorem proposition lemma corollary example exercise;
+  margin-bottom: 2.5rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.section > h2 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 1.5rem;
+}
+
+.section > h2::before {
+  content: counter(chapter) "." counter(section) "　";
+  color: var(--text-dim);
+  font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* ━━━ PROSE ━━━ */
+p {
+  margin: 0.7em 0;
+}
+
+p:first-child { margin-top: 0; }
+p:last-child  { margin-bottom: 0; }
+
+/* ━━━ BOXES ━━━ */
+.def, .thm, .prop, .lem, .cor, .rmk, .ex, .exercise {
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 1.2em 0;
+  position: relative;
+}
+
+/* label line */
+.box-label {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Definition ── */
+.def {
+  background: var(--def-bg);
+  border-left: 4px solid var(--def-border);
+  counter-increment: definition;
+}
+.def .box-label { color: var(--def-border); }
+.def .box-label::before {
+  content: "定義 " counter(chapter) "." counter(section) "." counter(definition);
+}
+
+/* ── Theorem ── */
+.thm {
+  background: var(--thm-bg);
+  border-left: 4px solid var(--thm-border);
+  counter-increment: theorem;
+}
+.thm .box-label { color: var(--thm-border); }
+.thm .box-label::before {
+  content: "定理 " counter(chapter) "." counter(section) "." counter(theorem);
+}
+
+/* ── Proposition ── */
+.prop {
+  background: var(--prop-bg);
+  border-left: 4px solid var(--prop-border);
+  counter-increment: proposition;
+}
+.prop .box-label { color: var(--prop-border); }
+.prop .box-label::before {
+  content: "命題 " counter(chapter) "." counter(section) "." counter(proposition);
+}
+
+/* ── Lemma ── */
+.lem {
+  background: var(--lem-bg);
+  border-left: 4px solid var(--lem-border);
+  counter-increment: lemma;
+}
+.lem .box-label { color: var(--lem-border); }
+.lem .box-label::before {
+  content: "補題 " counter(chapter) "." counter(section) "." counter(lemma);
+}
+
+/* ── Corollary ── */
+.cor {
+  background: var(--cor-bg);
+  border-left: 4px solid var(--cor-border);
+  counter-increment: corollary;
+}
+.cor .box-label { color: var(--cor-border); }
+.cor .box-label::before {
+  content: "系 " counter(chapter) "." counter(section) "." counter(corollary);
+}
+
+/* ── Remark ── */
+.rmk {
+  background: var(--rmk-bg);
+  border-left: 4px solid var(--rmk-border);
+  counter-increment: remark;
+}
+.rmk .box-label { color: var(--rmk-border); }
+.rmk .box-label::before { content: "注"; }
+
+/* ── Example ── */
+.ex {
+  background: var(--ex-bg);
+  border-left: 4px solid var(--ex-border);
+  counter-increment: example;
+}
+.ex .box-label { color: #16a34a; }
+.ex .box-label::before {
+  content: "例 " counter(chapter) "." counter(section) "." counter(example);
+}
+
+/* ── Exercise ── */
+.exercise {
+  background: var(--exercise-bg);
+  border-left: 4px solid var(--exercise-border);
+  counter-increment: exercise;
+}
+.exercise .box-label { color: #ea580c; }
+.exercise .box-label::before {
+  content: "練習問題 " counter(chapter) "." counter(section) "." counter(exercise);
+}
+
+/* optional title suffix */
+.box-label .box-title {
+  font-weight: 500;
+  color: var(--text);
+}
+.box-label .box-title::before { content: "（"; }
+.box-label .box-title::after  { content: "）"; }
+
+/* body content inside boxes */
+.box-body { font-size: 15px; line-height: 1.85; }
+.box-body p { margin: 0.5em 0; }
+.box-body p:first-child { margin-top: 0; }
+.box-body p:last-child  { margin-bottom: 0; }
+.box-body ul, .box-body ol { padding-left: 1.5em; margin: 0.4em 0; }
+.box-body li { margin: 0.3em 0; }
+
+/* ━━━ PROOF (collapsible) ━━━ */
+details.proof {
+  margin: 0.8em 0;
+}
+
+details.proof summary {
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  user-select: none;
+  padding: 4px 0;
+}
+
+details.proof summary::-webkit-details-marker { display: none; }
+
+details.proof summary::before {
+  content: '▶';
+  font-size: 9px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+details.proof[open] summary::before { transform: rotate(90deg); }
+details.proof[open] summary { color: var(--text); }
+
+.proof-body {
+  padding: 10px 14px;
+  border-left: 2px solid var(--border);
+  margin: 6px 0 6px 6px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--text);
+}
+
+.proof-body p { margin: 0.5em 0; }
+.proof-body p:first-child { margin-top: 0; }
+
+.qed {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.qed::after {
+  content: '□';
+  font-size: 16px;
+}
+
+/* ━━━ REVEAL (exercise answer) ━━━ */
+.reveal-answer {
+  max-height: 0;
+  overflow: hidden;
+  background: #f0fdf4;
+  border-radius: 0 0 4px 4px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+.reveal-answer.open {
+  max-height: 800px;
+  padding: 10px 14px;
+  border-top: 1px solid #86efac;
+}
+
+.reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border: 1px solid var(--exercise-border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--exercise-border);
+  transition: background 0.15s;
+}
+
+.reveal-btn:hover { background: var(--exercise-bg); }
+.reveal-btn.open { color: #065f46; border-color: #22c55e; }
+.reveal-btn::before { content: '▶'; font-size: 9px; }
+.reveal-btn.open::before { content: '▼'; }
+
+/* ━━━ STEP-BY-STEP ━━━ */
+.steps {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0.8em 0;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.steps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.step {
+  padding: 9px 14px;
+  font-size: 14.5px;
+  border-bottom: 1px dashed var(--border);
+  display: none;
+  animation: stepIn 0.2s ease;
+}
+
+.step:last-of-type { border-bottom: none; }
+.step.visible { display: block; }
+
+.steps-controls {
+  padding: 7px 14px;
+  display: flex;
+  gap: 6px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.step-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: background 0.15s;
+}
+
+.step-btn:hover:not(:disabled) { background: var(--accent-light); }
+.step-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ━━━ TERM (glossary popup trigger) ━━━ */
+.term {
+  color: #1d4ed8;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 1.5px dotted #93c5fd;
+  transition: border-color 0.15s;
+}
+.term:hover { border-bottom-color: var(--accent); }
+.term.has-def { }
+
+/* ━━━ INLINE MATH HELPERS ━━━ */
+.math-block { margin: 1em 0; overflow-x: auto; }
+
+/* ━━━ FIGURE ━━━ */
+figure {
+  margin: 1.2em 0;
+  text-align: center;
+}
+
+figure img, figure svg { max-width: 100%; }
+
+figcaption {
+  margin-top: 6px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ━━━ DEFINITION POPUP ━━━ */
+#def-popup {
+  position: fixed;
+  z-index: 500;
+  background: var(--header-bg);
+  color: #f1f5f9;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+  max-width: 320px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+#def-popup.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+#def-popup .popup-term {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #fbbf24;
+  margin-bottom: 5px;
+  padding-right: 20px;
+}
+
+#def-popup .popup-close {
+  position: absolute;
+  top: 8px; right: 10px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 13px;
+}
+#def-popup .popup-close:hover { color: rgba(255,255,255,0.8); }
+
+/* ━━━ MISC ━━━ */
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+ul, ol { padding-left: 1.6em; margin: 0.5em 0; }
+li { margin: 0.3em 0; }
+
+strong { font-weight: 700; font-family: 'Noto Sans JP', sans-serif; }
+em { font-style: italic; }
+
+.text-dim { color: var(--text-dim); }
+.small { font-size: 0.88em; }
+
+/* ━━━ ADVANCED LEVEL ━━━ */
+
+/* star badge on box labels */
+[data-level="advanced"] .box-label::after {
+  content: ' ★';
+  font-size: 10px;
+  color: #f59e0b;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+/* star on section headings */
+.section[data-level="advanced"] > h2::after {
+  content: ' ★';
+  color: #f59e0b;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* dashed left border to distinguish visually */
+[data-level="advanced"].def,
+[data-level="advanced"].thm,
+[data-level="advanced"].prop,
+[data-level="advanced"].lem,
+[data-level="advanced"].cor,
+[data-level="advanced"].rmk,
+[data-level="advanced"].ex,
+[data-level="advanced"].exercise { border-left-style: dashed; }
+
+/* hide mode — toggled by JS */
+body.hide-advanced [data-level="advanced"] { display: none; }
+
+/* TOC: advanced section marker */
+.toc-sec.is-adv::after {
+  content: ' ★';
+  font-size: 9px;
+  color: #f59e0b;
+  opacity: 0.85;
+}
+
+/* toggle button at bottom of TOC */
+#toc-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+#adv-toggle {
+  width: 100%;
+  padding: 7px 10px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 5px;
+  color: #fbbf24;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+#adv-toggle:hover { background: rgba(245,158,11,0.22); }
+#adv-toggle.hiding { background: rgba(245,158,11,0.25); border-color: #f59e0b; }
+
+/* ━━━ MOBILE ━━━ */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  #toc { display: none; }
+  #content { padding: 2rem 1.2rem 5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav id="toc">
+  <div id="toc-header">
+    基礎ミクロ経済学
+    <div class="subtitle">講義ノート — 2026年度</div>
+  </div>
+  <div id="toc-footer">
+    <button id="adv-toggle" onclick="toggleAdvanced()">★ 発展を隠す</button>
+  </div>
+  <div id="toc-list"></div>
+</nav>
+
+<div id="main-wrap">
+<div id="content">
+
+<!-- ━━━ TITLE ━━━ -->
+<div class="doc-title">
+  <h1>基礎ミクロ経済学</h1>
+  <div class="doc-meta">講義ノート — 2026年度 / 多鹿 智哉</div>
+</div>
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第1章 ミクロ経済学の方法
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-micro-method">
+<h1>ミクロ経済学の方法</h1>
+
+<section class="section" id="sec-what-is-micro">
+<h2>ミクロ経済学とは何か</h2>
+
+<p>ミクロ経済学とは，<span class="term" data-term="インセンティブ（誘因）">インセンティブ（誘因）</span>に関わるもの全てを扱う学問であり，キーワードは「最善を尽くす」である．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="インセンティブ（誘因）">インセンティブ（誘因）</span></span></div>
+  <div class="box-body">
+    <p>人々の行動を変える動機・誘因．経済学は，人々がインセンティブに応じて行動すると仮定する．</p>
+  </div>
+</div>
+
+<p>ミクロ経済学にできることは多岐にわたる：</p>
+<ul>
+  <li><strong>意思決定論</strong>：個人が何を選択する（べき）かの理論</li>
+  <li><strong>価格理論</strong>：価格の決まり方と資源配分の探求</li>
+  <li><strong>ゲーム理論</strong>：複数人による決め方の理論</li>
+  <li><strong>行動経済学</strong>：心理学の知見を取り込んだ意思決定論とその応用</li>
+  <li><strong>産業組織論</strong>：企業と競争の問題を研究</li>
+  <li><strong>公共経済学・財政学</strong>：租税・財政政策などを研究</li>
+  <li><strong>メカニズムデザイン・マーケットデザイン</strong>：人がどのように行動するかを読んだ上で，制度を設計する</li>
+</ul>
+<p>この講義で学ぶのは「価格理論」を中心とした内容であり，上記を学ぶためのエッセンスが詰まっている．</p>
+
+</section><!-- /sec-what-is-micro -->
+
+
+<section class="section" id="sec-model">
+<h2>モデル分析</h2>
+
+<p>経済学は「モデル」を作る．モデルとは現実社会の単純化された模型であり，分析のために関係のない部分は切り捨てる．論理的に「何が起きるか」「何が良いか」を調べる道具である．</p>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">モデルの例：自由化・規制の是非</span></div>
+  <div class="box-body">
+    <ul>
+      <li><strong>モデル例1（自由）</strong>：①人々は自分にとって最も良いものを選ぶ，②そのことが望ましい → 自由は良い</li>
+      <li><strong>モデル例2（規制）</strong>：①人々は「今の自分」にとって最善を選ぶ，②「将来の自分」にとって良いことが望ましい，③危険薬物は「今の自分にとっては最善」だが「将来の自分にとっては最悪」 → 規制も正当化できる</li>
+      <li><strong>モデル例3（より細かい分析）</strong>：①将来志向の人と現在志向の人が混在する，②③は同上 → 規制の政策効果がより複雑になる</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>モデルの利点</strong>：実際に起きている「現実の行動」の説明（事実解明的分析）ができ，その良し悪しの判断（規範的分析）もできる．モデル化によって関係ないものを削ぎ落とすので，純粋な影響を知ることができる．</p>
+    <p><strong>モデルの限界</strong>：同じ行動を説明する理論はいくらでもある．理論が違えば「良し悪し」の判断も違う．モデル化はいろんなものを削ぎ落とすので，重要なことが含まれていない可能性もある．</p>
+  </div>
+</div>
+
+</section><!-- /sec-model -->
+
+</article><!-- /ch-micro-method -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第2章 意思決定
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-decision">
+<h1>意思決定</h1>
+
+<section class="section" id="sec-rationality">
+<h2>合理的な行動</h2>
+
+<p>
+ミクロ経済学の出発点は，人々がどのように意思決定を行うかという問いである．
+経済学の基本モデルでは，次の大前提を置く．
+</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">効用最大化原理</span></div>
+  <div class="box-body">
+    <p>人は<span class="term" data-term="効用">効用</span>を最大にするように行動する．</p>
+  </div>
+</div>
+
+<p>
+ここで<span class="term" data-term="効用">効用</span>とは，人々が得る利益・幸せの度合い，およびその逆としての費用を含む広い概念である．
+人々は無制限に何でもできるわけではなく，物理的・経済的な<span class="term" data-term="制約">制約</span>に直面する．
+</p>
+
+<p>
+「人々の好み」とは，任意の2プランを比較したときの順序関係である．
+プラン $a$ とプラン $b$ があるとき，「$a$ の方が好き，あるいは同じくらい好き」であれば
+$a \succsim b$ と書く．
+選択肢のセットが有限で，好みが<strong>合理的</strong>（完備かつ推移的）ならば，
+矛盾なく全プランにランキングをつけることができる．
+</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">合理性の条件</span></div>
+  <div class="box-body">
+    <p>好み $\succsim$ が次の2条件を満たすとき，<span class="term" data-term="合理的">合理的</span>という．</p>
+    <ul>
+      <li><strong>完備性</strong>：任意の $a, b$ に対し，$a \succsim b$ または $b \succsim a$（あるいはその両方）が成立する．</li>
+      <li><strong>推移性</strong>：$a \succsim b$ かつ $b \succsim c$ ならば $a \succsim c$．</li>
+    </ul>
+  </div>
+</div>
+
+<p>
+合理的な好みには，各プランに実数値（<span class="term" data-term="効用">効用</span>）を割り当てることができる．
+重要なのは，この数値の<strong>大小関係のみ</strong>が意味を持ち，絶対的な大きさに意味はないという点である（<span class="term" data-term="序数的">序数的</span>効用）．
+</p>
+
+<div class="rmk" data-level="advanced">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>効用関数 $u$ を任意の単調増加変換 $v = \varphi(u)$（$\varphi' > 0$）に置き換えても，消費者の選択行動は変わらない．$u(a) > u(b)$ と $v(a) > v(b)$ は同値だからである．</p>
+  </div>
+</div>
+
+</section><!-- /sec-rationality -->
+
+
+<section class="section" id="sec-cost-benefit">
+<h2>費用便益分析</h2>
+
+<p>
+プラスの効用を<strong>便益</strong>，マイナスの効用を<strong>費用</strong>と呼ぶ．
+あらゆる行動の価値をお金（<span class="term" data-term="ニュメレール">ニュメレール</span>）に換算できると仮定すれば，意思決定の原理は次のようにまとめられる．
+</p>
+
+\[
+  \text{効用} = \text{便益} - \text{費用}
+\]
+
+<p>
+このとき，「費用」のなかには2種類の異なる概念が含まれることに注意が必要である．
+</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">機会費用</span></div>
+  <div class="box-body">
+    <p>ある行動 $a$ をとることで諦めなければならない<strong>最良の代替行動</strong>から得られる便益を，$a$ の<span class="term" data-term="機会費用">機会費用</span>という．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">埋没費用（サンクコスト）</span></div>
+  <div class="box-body">
+    <p>どのような行動をとっても，すでに回収不可能な費用を<span class="term" data-term="埋没費用（サンクコスト）">埋没費用（サンクコスト）</span>という．</p>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">埋没費用の無関連性</span></div>
+  <div class="box-body">
+    <p>合理的な意思決定において，埋没費用は選択に影響を与えてはならない．</p>
+  </div>
+</div>
+
+<details class="proof">
+  <summary>直観的説明</summary>
+  <div class="proof-body">
+    <p>埋没費用はどの行動をとっても回収できないから，行動 $a$ と行動 $b$ を比較するとき，両者の効用の差に埋没費用は現れない．したがって意思決定に影響しない．</p>
+    <div class="qed"></div>
+  </div>
+</details>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">グレゴリのキノコ狩り</span></div>
+  <div class="box-body">
+    <p>グレゴリはキノコ狩りをするかどうか検討している．数学者として働けば7000万ルーブル，物理学者なら9000万ルーブルの（仕事自体からの効用を含む）利益が得られる．なお，数学教育にはすでに5000万ルーブルを費やしている（回収不能）．キノコ狩りの直接コストは入山・道具・保険合計で46万ルーブルである．</p>
+    <p>キノコ狩りを選ぶために必要な便益はいくらか？</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>上記のグレゴリの例を費用便益分析の観点から解け．教育費5000万は考慮すべきか？</p>
+    <button class="reveal-btn">答えを表示</button>
+    <div class="reveal-answer">
+      <p><strong>機会費用</strong>：最良の代替案は物理学者（9000万 $>$ 数学者7000万）なので，機会費用は9000万ルーブル．</p>
+      <p><strong>埋没費用</strong>：教育費5000万は既払いで回収不能 → 意思決定に無関係．</p>
+      <p>よって，キノコ狩りを選ぶ条件は</p>
+      \[ \text{便益}_\text{キノコ} - 46\text{万} \geq 9000\text{万} \]
+      <p>すなわち便益 $\geq 9046$ 万ルーブル．</p>
+    </div>
+  </div>
+</div>
+
+</section><!-- /sec-cost-benefit -->
+
+
+<section class="section" id="sec-cba-limit">
+<h2>費用便益分析の限界</h2>
+
+<p>費用便益分析には，実際の意思決定と乖離する場面がある．まず行動バイアスとして埋没費用の誤謬がある．次に，分析の枠組みそのものにも限界がある．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">埋没費用の誤謬（コンコルド効果）</span></div>
+  <div class="box-body">
+    <p>合理的な意思決定では無視すべき<span class="term" data-term="埋没費用（サンクコスト）">埋没費用</span>を考慮してしまうことで，意思決定が歪む現象．コンコルド旅客機の開発継続がその典型例として知られる．</p>
+  </div>
+</div>
+
+<p>費用便益分析の欠点として，費用と便益を別々のものとして考えるため，所得の変化を反映させられないという問題がある：</p>
+<ul>
+  <li>「費用」が大きいと所得が大きく変わってしまう</li>
+  <li>所得が変わると「便益」も変わってしまうかもしれない（所得効果）</li>
+</ul>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">費用便益分析が妥当でないケース</span></div>
+  <div class="box-body">
+    <p>所持金が200万円の人が150万円の車を購入するかどうかを考える．購入前（所持金200万円）と購入後（所持金50万円）では，車の持つ価値（＝便益）そのものが異なる可能性がある．費用便益分析はこの「所得効果」を適切に扱えない．</p>
+  </div>
+</div>
+
+<div class="rmk" data-level="advanced">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>〈発展〉 合理的でない人にとっては埋没費用を気にする方が良い場合もある．例えば，事前の自分にとっては運動した方が良いのでジムの会員になるが，事後の自分はめんどうで行きたくないとする（コミットメント問題）．ジムの会費は埋没費用だから，「合理的な」人はジムに行かない．しかし「埋没費用の誤謬にハマる人」はせっかく払ったからと行く．事前の自分にとってはどちらが良いか？</p>
+  </div>
+</div>
+
+</section><!-- /sec-cba-limit -->
+
+</article><!-- /ch-decision -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第3章 需要と供給
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-supply-demand">
+<h1>需要と供給</h1>
+
+<section class="section" id="sec-goods-market">
+<h2>財と市場</h2>
+
+<p>以降の章では「財」の取引を考える．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">財</span></div>
+  <div class="box-body">
+    <p>取引される対象で，商品・サービス・余暇など有形無形を問わない．取引量の数詞として「単位」を用いる（例：商品であれば1個，水などであれば1L）．財の購入時に支払う金額は「価格 $\times$ 数量」である．</p>
+  </div>
+</div>
+
+<p>経済活動の最大の舞台は<span class="term" data-term="市場均衡">市場</span>である．市場ではどのように取引が行われるべきか？例として「家」の市場を考える（買手：支払意思額のある家を欲しい人，売手：費用をかけて家を建てる大工）．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">支払意思額（Willingness to Pay, WTP）</span></div>
+  <div class="box-body">
+    <p>ある財に対して支払ってもよい最大金額．</p>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">家の市場（数値例）</span></div>
+  <div class="box-body">
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">買手</th><td style="border:1px solid var(--border); padding:4px 10px;">天照</td><td style="border:1px solid var(--border); padding:4px 10px;">出雲</td><td style="border:1px solid var(--border); padding:4px 10px;">高木</td><td style="border:1px solid var(--border); padding:4px 10px;">月読</td><td style="border:1px solid var(--border); padding:4px 10px;">大和</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">支払意思額（万円）</th><td style="border:1px solid var(--border); padding:4px 10px;">5000</td><td style="border:1px solid var(--border); padding:4px 10px;">3500</td><td style="border:1px solid var(--border); padding:4px 10px;">2000</td><td style="border:1px solid var(--border); padding:4px 10px;">1000</td><td style="border:1px solid var(--border); padding:4px 10px;">800</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">売手（大工）</th><td style="border:1px solid var(--border); padding:4px 10px;">アダム</td><td style="border:1px solid var(--border); padding:4px 10px;">イヴ</td><td style="border:1px solid var(--border); padding:4px 10px;">ルツ</td><td style="border:1px solid var(--border); padding:4px 10px;">ヤコブ</td><td style="border:1px solid var(--border); padding:4px 10px;">ヨセフ</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">費用（万円）</th><td style="border:1px solid var(--border); padding:4px 10px;">4500</td><td style="border:1px solid var(--border); padding:4px 10px;">3200</td><td style="border:1px solid var(--border); padding:4px 10px;">1800</td><td style="border:1px solid var(--border); padding:4px 10px;">950</td><td style="border:1px solid var(--border); padding:4px 10px;">850</td></tr>
+    </table>
+  </div>
+</div>
+
+</section><!-- /sec-goods-market -->
+
+
+<section class="section" id="sec-demand-supply">
+<h2>需要曲線と供給曲線</h2>
+
+<p>家の市場で，各価格のもとでどれだけ取引が行われるかを考える．支払意思額を高い順に並べると「需要曲線」が，費用を低い順に並べると「供給曲線」が得られる．</p>
+
+<p class="text-dim small">（図：需要曲線 — 階段状のグラフ，横軸：数量，縦軸：支払意思額）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="需要曲線">需要曲線</span></span></div>
+  <div class="box-body">
+    <p>価格と<strong>需要量</strong>（ある価格のもとで消費者が購入しようとする量の総合計）の関係を示す曲線．通常は右下がり（<strong>需要法則</strong>：財の価格が上がると需要量は下がる）．例外：ギッフェン財，ヴェブレン財など．</p>
+  </div>
+</div>
+
+<p class="text-dim small">（図：供給曲線 — 階段状のグラフ，横軸：数量，縦軸：費用）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="供給曲線">供給曲線</span></span></div>
+  <div class="box-body">
+    <p>価格と<strong>供給量</strong>（ある価格のもとで生産者が売ろうとする量の総合計）の関係を示す曲線．通常は右上がり（追加で一個作るための費用の大きさ＝限界費用が供給曲線を形成する）．</p>
+  </div>
+</div>
+
+</section><!-- /sec-demand-supply -->
+
+
+<section class="section" id="sec-equilibrium">
+<h2>市場均衡</h2>
+
+<p>需要曲線と供給曲線が交差する点が市場均衡である．「均衡」は，選択の次に経済学にとって大事な概念である．</p>
+
+<p class="text-dim small">（図：需要曲線と供給曲線の交点 — 均衡価格と均衡取引量）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="市場均衡">市場均衡（均衡価格・均衡取引量）</span></span></div>
+  <div class="box-body">
+    <p>需要量と供給量が一致する状態．<strong>均衡価格</strong>とは需給が一致する価格，<strong>均衡取引量</strong>とはそのときの取引量．均衡価格では「ある意味」不満がない（均衡価格以上の支払意思額を持つ買手と，均衡価格以下の費用で作れる売手がすべてマッチングされる）．</p>
+  </div>
+</div>
+
+</section><!-- /sec-equilibrium -->
+
+
+<section class="section" id="sec-surplus">
+<h2>余剰と効率性</h2>
+
+<p>市場取引から誰がどれだけ利益を得るかを測る概念が「余剰」である．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">消費者余剰</span></div>
+  <div class="box-body">
+    <p>消費者の支払意思額と実際の支払額（均衡価格）の差の合計．需要曲線と均衡価格の間の面積（階段グラフの場合は各段の差の和）に対応する．</p>
+  </div>
+</div>
+
+<p class="text-dim small">（図：消費者余剰 — 需要曲線と均衡価格の間の塗りつぶし領域）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">生産者余剰</span></div>
+  <div class="box-body">
+    <p>生産者が受け取る価格（均衡価格）と費用の差の合計．均衡価格と供給曲線の間の面積に対応する．</p>
+  </div>
+</div>
+
+<p class="text-dim small">（図：生産者余剰 — 均衡価格と供給曲線の間の塗りつぶし領域）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">社会的総余剰</span></div>
+  <div class="box-body">
+    <p>消費者余剰と生産者余剰の和．「支払意思額 $-$ 費用」の合計とも表せる（価格部分は買手が払い売手が受け取るので相殺される）．</p>
+  </div>
+</div>
+
+<p>市場取引では社会的総余剰が最大化される（過少生産・過大生産どちらの場合も余剰が減少することを図で確認できる）．</p>
+
+<p>滑らかな需要曲線・供給曲線は「階段の段差が細かい」極限と考えればよい．数式で需要・供給曲線が与えられている場合（例：需要曲線 $P = 21 - 3Q$，供給曲線 $P = 2Q + 1$），余剰は積分（三角形の面積）で計算できる．</p>
+
+<a href="surplus_visualizer.html" target="_blank" class="qr-link" style="display:inline-flex;">
+  → 余剰・課税ビジュアライザー
+</a>
+
+</section><!-- /sec-surplus -->
+
+
+<section class="section" id="sec-pareto">
+<h2>パレート効率性と社会厚生</h2>
+
+<p>社会的総余剰は「足してよい」のか？すべてをお金に換算でき，そのレートが常に一定ならOKだが，そうでない場合は別の最適性の基準が必要となる．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="パレート効率性">パレート効率性</span></span></div>
+  <div class="box-body">
+    <p>状態 $A$ がパレート効率的であるとは，$A$ から他の状態 $B$ に移るとき，誰かが損することをいう（すなわち，全員が改善するような移動は存在しない）．</p>
+    <ul>
+      <li>$A$ から $B$ に移ったとき，全員が改善する → $B$ の方が $A$ よりよい</li>
+      <li>$A$ から $B$ に移ったとき，誰かが損する → $B$ の方が $A$ よりよいとは言えない</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">パレート効率性の判定例</span></div>
+  <div class="box-body">
+    <p>社会に選択肢が $x_1 \sim x_5$ だけとする：</p>
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;"></th><th style="border:1px solid var(--border); padding:4px 10px;">$x_1$</th><th style="border:1px solid var(--border); padding:4px 10px;">$x_2$</th><th style="border:1px solid var(--border); padding:4px 10px;">$x_3$</th><th style="border:1px solid var(--border); padding:4px 10px;">$x_4$</th><th style="border:1px solid var(--border); padding:4px 10px;">$x_5$</th></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">アダム</th><td style="border:1px solid var(--border); padding:4px 10px;">2</td><td style="border:1px solid var(--border); padding:4px 10px;">4</td><td style="border:1px solid var(--border); padding:4px 10px;">3</td><td style="border:1px solid var(--border); padding:4px 10px;">1</td><td style="border:1px solid var(--border); padding:4px 10px;">5</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">イヴ</th><td style="border:1px solid var(--border); padding:4px 10px;">2</td><td style="border:1px solid var(--border); padding:4px 10px;">0</td><td style="border:1px solid var(--border); padding:4px 10px;">2</td><td style="border:1px solid var(--border); padding:4px 10px;">1</td><td style="border:1px solid var(--border); padding:4px 10px;">5</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">ルツ</th><td style="border:1px solid var(--border); padding:4px 10px;">2</td><td style="border:1px solid var(--border); padding:4px 10px;">4</td><td style="border:1px solid var(--border); padding:4px 10px;">1</td><td style="border:1px solid var(--border); padding:4px 10px;">10</td><td style="border:1px solid var(--border); padding:4px 10px;">1</td></tr>
+    </table>
+    <p>（各選択肢についてパレート効率的かどうかを判定せよ）</p>
+  </div>
+</div>
+
+<p>金銭的価値の足し算ですべての価値が決まり，余剰が譲渡できる世界では「社会的総余剰最大化 $=$ パレート効率的」が成り立つ．そうでなければ社会的総余剰を最大化しなくてもパレート効率的なケースがある．</p>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>社会厚生関数</strong>：パレート効率性だけでは選択肢を絞りきれないため，集計方法として以下が提案されている：</p>
+    <ul>
+      <li><strong>ベンサム型</strong>（功利主義）：各人の効用を足す</li>
+      <li><strong>ナッシュ型</strong>：各人の効用を掛ける</li>
+      <li><strong>レキシミン型</strong>（ロールズ型）：最小値で比較する（最も不遇な人の効用を最大化）</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-pareto -->
+
+
+<section class="section" id="sec-elasticity">
+<h2>価格弾力性</h2>
+
+<p>需要曲線は右下がり，供給曲線は右上がりだが，どれくらいの反応を示すのか？価格と需要量の絶対的な変化量では比較できない（例：駄菓子10円値上がりで需要10万個減，車10円値上がりで需要1台減は，どちらが「価格に敏感」か？）ため，変化率で見ることが必要である．</p>
+
+<p>変化率：
+\[
+  \text{変化率} = \frac{\text{変化後の量} - \text{変化前の量}}{\text{変化前の量}}
+\]
+</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="需要の価格弾力性">需要の価格弾力性</span></span></div>
+  <div class="box-body">
+    <p>価格が $1\%$ 変化したとき，需要量が何 $\%$ 変化するかを示す指標：
+    \[
+      \varepsilon = -\frac{\text{需要量の変化率}}{\text{価格の変化率}}
+    \]
+    （需要量の変化率／価格の変化率はほとんどの場合マイナスなので，マイナスを付けて正の値にしている．）</p>
+    <ul>
+      <li>$\varepsilon > 1$ のとき<strong>弾力的</strong></li>
+      <li>$\varepsilon < 1$ のとき<strong>非弾力的</strong></li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">価格弾力性の計算例</span></div>
+  <div class="box-body">
+    <ul>
+      <li>駄菓子の価格が100円から110円に値上がりし，需要量が120万個から110万個に減った場合の価格弾力性</li>
+      <li>車の価格が100万円から110万円に値上がりし，需要量が12万台から11万台に減った場合の価格弾力性</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>価格が増加すると弾力性はどうなるか？</strong>：価格が低いとき需要量が大きいことに注目する．分数の分母（価格の変化率）が小さく，分子（需要量の変化率）が大きいとき弾力性は大きい．</p>
+    <p><strong>需要曲線の傾きと弾力性</strong>：傾きが急勾配（垂直に近い）だと，同じ価格変化に対して需要量の変化が小さい → 弾力性が小さい（非弾力的）．</p>
+  </div>
+</div>
+
+</section><!-- /sec-elasticity -->
+
+
+<section class="section" id="sec-shift">
+<h2>需要・供給曲線のシフト</h2>
+
+<p>価格以外の理由で需要量や供給量が変わる場合がある：</p>
+<ul>
+  <li>所得の増減 → 需要曲線がシフト</li>
+  <li>製造費用の増減 → 供給曲線がシフト</li>
+  <li>課税 → 供給曲線（または需要曲線）がシフト</li>
+</ul>
+<p>曲線のシフトが起きると，均衡価格・均衡取引量が変化する．</p>
+
+<p class="text-dim small">（図：需要曲線のシフト — シフト前後の均衡点の比較）</p>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>曲線シフトから弾力性を推定する</strong>：需要曲線を右シフトさせるショックが起きたとき，価格と取引量の変化からシフトさせていない側（供給側）の弾力性を推定できる．例：価格が2%上昇，取引量が5%増加 → 供給の価格弾力性 $= 5/2$．注意：観測できるのは均衡点のみであり，シフトの方向に応じてシフトさせていない側の曲線の情報が得られる．</p>
+    <p><strong>実証例：石油市場</strong>：オイルショック（供給側ショック）では価格上昇・消費量減少，コロナショック（需要側ショック）では価格下落・消費量減少が観察された（世界の石油価格・消費量データより）．</p>
+  </div>
+</div>
+
+</section><!-- /sec-shift -->
+
+
+<section class="section" id="sec-market-applications">
+<h2>市場均衡分析の応用</h2>
+
+<p>市場均衡分析は様々な政策分析に応用できる．</p>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">最低賃金制度</span></div>
+  <div class="box-body">
+    <p>「働くこと」を財として，労働者が「労働」の供給者，企業が「労働」の需要者と考える．</p>
+    <ul>
+      <li>均衡賃金を上回る最低賃金が設定されると，労働供給量が需要量を超え，<strong>失業</strong>（＝労働供給量 $-$ 労働需要量）が発生しうる</li>
+      <li>〈実証分析〉Card and Krueger (1994) など：必ずしも最低賃金引き上げで失業が増えるとは言えない → 「労働経済学」という分野でさまざまな視点から分析されている</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">豊作貧乏</span></div>
+  <div class="box-body">
+    <p>農産物の供給が増加（供給曲線が右シフト）すると，均衡価格が下落する．需要が非弾力的な財では，価格の下落率が取引量の増加率を上回るため，生産者の総収入（$p \times q$）が減少する場合がある．</p>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">課税の効果（従量税）</span></div>
+  <div class="box-body">
+    <p><strong>従量税</strong>：一単位購入するごとに税が $t$ 円課される．</p>
+    <ul>
+      <li>消費者の支払額：税込価格 $p + t$</li>
+      <li>生産者の受け取る額：税抜価格 $p$</li>
+      <li>均衡では：税込価格での需要量 $=$ 税抜価格での供給量</li>
+    </ul>
+    <p class="text-dim small">（図：課税下の均衡 — 消費者余剰・生産者余剰・税収・死荷重損失の三角形）</p>
+    <p>課税によって均衡取引量が減少し，<strong>死荷重損失</strong>（課税によって失われた社会的総余剰の大きさ）が生じる．</p>
+    <p><strong>ラムゼイ・ルール</strong>（逆弾力性ルール，Ramsey 1927）：歳入を一定に保ちながら死荷重損失を最小化するには，価格弾力性の低い財に高い税率をかけるべきである（弾力的な財に課税すると取引量が大きく減少し死荷重損失が大きくなる）．</p>
+  </div>
+</div>
+
+</section><!-- /sec-market-applications -->
+
+
+<section class="section" id="sec-stability">
+<h2>均衡の安定性</h2>
+
+<p>調整過程とは，市場均衡にどうやってたどり着くかのプロセスである．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">均衡の安定性</span></div>
+  <div class="box-body">
+    <p>均衡から価格（または生産量）がわずかにずれたとき，その調整過程により元々の均衡に戻ってくること（局所安定性）．戻ってこないときは<strong>不安定</strong>という．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">ワルラス的調整過程</span></div>
+  <div class="box-body">
+    <p>価格 $p$ を調整変数とする：超過需要（需要量 $>$ 供給量）が生じると価格が上昇し，超過供給（需要量 $<$ 供給量）が生じると価格が低下するという価格調整メカニズム（市場の価格調整メカニズムとも呼ばれる）．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">マーシャル的調整過程</span></div>
+  <div class="box-body">
+    <p>取引量 $Q$ を調整変数とする：需要量が取引量になるような価格 $P^D(Q)$ と供給量が取引量になるような価格 $P^S(Q)$ を考えるとき，</p>
+    <ul>
+      <li>$P^D(Q) > P^S(Q)$ なら $Q$ を増やす（買いたい人の価値の方が売りたい人の費用より大きいので取引が進む）</li>
+      <li>$P^D(Q) < P^S(Q)$ なら $Q$ を減らす（売りたい人の費用の方が大きいので取引が減っていく）</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-stability -->
+
+</article><!-- /ch-supply-demand -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第4章 市場の失敗
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-market-failure">
+<h1>市場の失敗</h1>
+
+<section class="section" id="sec-market-conditions">
+<h2>市場取引が機能するための条件</h2>
+
+<p>市場取引では社会的総余剰が最大になるとここまで議論してきた．しかし，これはいつでも成り立つものではない．</p>
+
+<p>市場取引がうまくいくための条件：</p>
+<ul>
+  <li>人々は自分の消費からしか利益や損失を受けない（<strong>私的消費・私的生産</strong>）</li>
+  <li>人々の間で財の性質に関する情報が同じである（<strong>対称情報</strong>）</li>
+  <li>人々は自分一人では価格を変えられないものと考えている（<strong>価格受容者</strong>）</li>
+</ul>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">市場の失敗</span></div>
+  <div class="box-body">
+    <p>上記の条件が成り立たないときに問題が起きることの総称を<span class="term" data-term="外部性">市場の失敗</span>と呼ぶ．上の条件が成り立たないと，市場取引が社会的総余剰を最大にしないときがある．</p>
+  </div>
+</div>
+
+</section><!-- /sec-market-conditions -->
+
+
+<section class="section" id="sec-externality">
+<h2>外部性</h2>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="外部性">外部性</span></span></div>
+  <div class="box-body">
+    <p>他人の行動が自分の効用に直接影響を与えるとき，<strong>外部性</strong>があるという．</p>
+    <ul>
+      <li><strong>正の外部性</strong>：他人の行動が自分にプラスの影響を与える（例：花壇の整備，研究開発のスピルオーバー）</li>
+      <li><strong>負の外部性</strong>：他人の行動が自分にマイナスの影響を与える（例：騒音，公害）</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">負の外部性：家の市場の数値例</span></div>
+  <div class="box-body">
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">買手</th><td style="border:1px solid var(--border); padding:4px 10px;">天照</td><td style="border:1px solid var(--border); padding:4px 10px;">出雲</td><td style="border:1px solid var(--border); padding:4px 10px;">高木</td><td style="border:1px solid var(--border); padding:4px 10px;">月読</td><td style="border:1px solid var(--border); padding:4px 10px;">大和</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">支払意思額（万円）</th><td style="border:1px solid var(--border); padding:4px 10px;">5000</td><td style="border:1px solid var(--border); padding:4px 10px;">3500</td><td style="border:1px solid var(--border); padding:4px 10px;">2000</td><td style="border:1px solid var(--border); padding:4px 10px;">1000</td><td style="border:1px solid var(--border); padding:4px 10px;">800</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">売手（大工）</th><td style="border:1px solid var(--border); padding:4px 10px;">アダム</td><td style="border:1px solid var(--border); padding:4px 10px;">イヴ</td><td style="border:1px solid var(--border); padding:4px 10px;">ルツ</td><td style="border:1px solid var(--border); padding:4px 10px;">ヤコブ</td><td style="border:1px solid var(--border); padding:4px 10px;">ヨセフ</td></tr>
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">費用（万円）</th><td style="border:1px solid var(--border); padding:4px 10px;">4500</td><td style="border:1px solid var(--border); padding:4px 10px;">3200</td><td style="border:1px solid var(--border); padding:4px 10px;">1800</td><td style="border:1px solid var(--border); padding:4px 10px;">950</td><td style="border:1px solid var(--border); padding:4px 10px;">850</td></tr>
+    </table>
+    <p>追加登場人物：近所に住むおじさん「家が一軒建つたびに，500万円だけの騒音被害を受ける」</p>
+    <ul>
+      <li>市場均衡で建つ家の数と，そのときの社会的総余剰（騒音被害を含む）を求める</li>
+      <li>社会的最適（騒音被害を含めた総余剰最大化）では何軒建てるべきか？</li>
+    </ul>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">ピグー税（外部性の内部化）</span></div>
+  <div class="box-body">
+    <p>外部性の問題を税金をかけることで解決できる（<strong>ピグー税</strong>）．外部性によって生じる被害分を当事者に負担させることで，外部性を内部化する．</p>
+    <p>上の例では，買手一人当たり500万円の課税によって，社会的最適と同じ均衡を達成できる．</p>
+  </div>
+</div>
+
+</section><!-- /sec-externality -->
+
+
+<section class="section" id="sec-asymmetric-info">
+<h2>情報の非対称性</h2>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="情報の非対称性">情報の非対称性</span></span></div>
+  <div class="box-body">
+    <p>取引の一方（通常は売り手）が他方（買い手）より財の品質に関して多くの情報を持っている状況（例：フリマアプリで出品される商品の真の品質は売り手にしかわからない）．</p>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">中古品市場の逆選抜（数値例）</span></div>
+  <div class="box-body">
+    <p>中古のスマートフォンを考える：</p>
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">状態</th><th style="border:1px solid var(--border); padding:4px 10px;">売り手評価</th><th style="border:1px solid var(--border); padding:4px 10px;">買い手評価</th></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">良い</td><td style="border:1px solid var(--border); padding:4px 10px;">3万円</td><td style="border:1px solid var(--border); padding:4px 10px;">4万円</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">悪い</td><td style="border:1px solid var(--border); padding:4px 10px;">5千円</td><td style="border:1px solid var(--border); padding:4px 10px;">6千円</td></tr>
+    </table>
+    <p><strong>対称情報の場合</strong>：市場が「良い」市場と「悪い」市場に分かれ，それぞれで取引が成立する．</p>
+    <p><strong>情報の非対称性がある場合</strong>（売り手にしか品質がわからない，良い・悪いが半々）：</p>
+    <ul>
+      <li>買い手の評価（期待値）：$(4 + 0.6) / 2 = 2.3$ 万円 → 買い手は最大2.3万円しか払わない</li>
+      <li>この価格では：良い売り手（評価3万円）は売りたくない → 良い品が市場から退出</li>
+      <li>結果：市場には悪いものしか残らない！ → <strong>逆淘汰（逆選抜）</strong></li>
+    </ul>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">逆選抜（逆選択，逆淘汰）</span></div>
+  <div class="box-body">
+    <p>情報の非対称性により，質の良い財・取引相手が市場から退出し，質の悪い財・取引相手のみが残る現象（Akerlof, 1970 の「レモン市場」）．品質保証や評判（売り手への信頼）が重要な理由はこれによる．</p>
+  </div>
+</div>
+
+</section><!-- /sec-asymmetric-info -->
+
+</article><!-- /ch-market-failure -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第5章 独占市場
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-monopoly">
+<h1>独占市場</h1>
+
+<section class="section" id="sec-monopoly-price">
+<h2>独占市場と独占価格</h2>
+
+<p>ある財についてそれを生産できる企業が一社しかないとき，その状況を<span class="term" data-term="独占">独占</span>と呼ぶ．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">完全競争 vs 独占</span></div>
+  <div class="box-body">
+    <p><strong>完全競争</strong>：売り手・買い手は<strong>価格受容者</strong>（自分がどれだけ買っても売っても価格は変わらないと考える）．売り手や買い手がたくさんいる場合に成り立ちやすい．</p>
+    <p><strong>独占</strong>（不完全競争の一種）：唯一の供給者が<strong>価格設定者</strong>として行動する（自分の行動で市場価格が変わることを意識している）．生産量を減らすことで価格を吊り上げられる（豊作貧乏になることがわかっているならたくさん作らない）．</p>
+  </div>
+</div>
+
+<p class="text-dim small">（図：完全競争均衡点 $E$ と独占点 $p', q'$ の比較 — 独占では生産量が少なく価格が高い）</p>
+
+<p>独占では，意識してないときよりも生産量は減るため，社会的総余剰は最大にはならない（独占によって生じる損失がある）．</p>
+
+</section><!-- /sec-monopoly-price -->
+
+
+<section class="section" id="sec-price-discrimination">
+<h2>価格差別</h2>
+
+<p>同じ財なら同じ価格で売られなければいけないか？</p>
+<ul>
+  <li><strong>一物一価の法則</strong>：裁定取引（同じ財を安く買って高く売る取引）が働くとき成立する（「道端に1万円は落ちていない」）</li>
+  <li>裁定取引ができないとき → <strong>価格差別</strong>のチャンス</li>
+</ul>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">価格差別</span></div>
+  <div class="box-body">
+    <p>裁定取引ができない条件のもとで，同一財を消費者ごとに異なる価格で販売すること．</p>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">完全価格差別（第1種価格差別）</span></div>
+  <div class="box-body">
+    <p>消費者ごとの支払意思額を把握し，それに等しい価格を設定する．</p>
+    <ul>
+      <li>例：アダムは8000円，イヴは10000円の支払意思額がある遊園地チケット</li>
+      <li>8000円で統一 → 売上16000円（イヴの余剰は2000円）</li>
+      <li>10000円で統一 → 売上10000円（アダムは買わない）</li>
+      <li>完全価格差別 → 売上18000円（消費者余剰ゼロ，社会的総余剰は最大）</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">属性による価格差別（第3種価格差別）</span></div>
+  <div class="box-body">
+    <p>証拠がある属性（学割・シニア割・アカデミック版）や地理的要因（国際価格差）など，識別可能な属性でグループ分けして価格を変える方法．</p>
+    <ul>
+      <li>例：学生は8千円まで，社会人は1万円まで払いたい場合，それぞれの集団に異なる価格をつけることで売上最大化</li>
+    </ul>
+  </div>
+</div>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">バンドリング（抱き合わせ販売）</span></div>
+  <div class="box-body">
+    <p>一個あたりの支払意思額が消費量に比例して減っていくケースで，複数単位をまとめて販売することで消費者余剰をより多く搾取する方法．</p>
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">個数</th><th style="border:1px solid var(--border); padding:4px 10px;">効用（支払意思額の累計）</th></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">1</td><td style="border:1px solid var(--border); padding:4px 10px;">200円</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">2</td><td style="border:1px solid var(--border); padding:4px 10px;">350円</td></tr>
+    </table>
+    <p>一個200円で売ると1個しか売れない（売上200円）．一個150円で売ると2個売れる（売上300円）．2個セットで350円で売ると消費者余剰をすべて搾取（売上350円）→ <strong>バンドリング</strong>が最善．</p>
+  </div>
+</div>
+
+</section><!-- /sec-price-discrimination -->
+
+</article><!-- /ch-monopoly -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第6章 消費者の行動
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-consumer">
+<h1>消費者の行動</h1>
+
+<section class="section" id="sec-consumer-problem">
+<h2>消費者の問題の定式化</h2>
+
+<p>ミクロ経済学の行動原理：「選択可能なものの中から最も効用が高くなるものを選ぶ」を消費者問題に応用すると，「限られた予算の中でどの財をどれだけ購入するべきか？」という問題になる．</p>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">回転寿司店での選択</span></div>
+  <div class="box-body">
+    <p>手元に450円，メニュー：ウニ1皿450円・マグロ1皿300円・海鮮サラダ1皿150円．</p>
+    <table style="border-collapse:collapse; margin:8px 0;">
+      <tr><th style="border:1px solid var(--border); padding:4px 10px;">効用</th><th style="border:1px solid var(--border); padding:4px 10px;">選択可能な行動</th></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">4</td><td style="border:1px solid var(--border); padding:4px 10px;">ウニ1皿だけ注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">12</td><td style="border:1px solid var(--border); padding:4px 10px;">マグロ1皿，海鮮サラダ1皿を注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">3</td><td style="border:1px solid var(--border); padding:4px 10px;">マグロ1皿を注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">7</td><td style="border:1px solid var(--border); padding:4px 10px;">海鮮サラダ3皿を注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">5</td><td style="border:1px solid var(--border); padding:4px 10px;">海鮮サラダ2皿を注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">1</td><td style="border:1px solid var(--border); padding:4px 10px;">海鮮サラダ1皿を注文</td></tr>
+      <tr><td style="border:1px solid var(--border); padding:4px 10px;">0</td><td style="border:1px solid var(--border); padding:4px 10px;">何も注文しないで帰る</td></tr>
+    </table>
+    <p>効用最大化：マグロ1皿＋海鮮サラダ1皿を選ぶ（効用12が最大）．</p>
+  </div>
+</div>
+
+<p>以降は二財モデルで一般化して分析する：</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">消費者の効用最大化問題</span></div>
+  <div class="box-body">
+    <p><strong>消費プラン</strong>とは消費者が選ぶ財の消費量の組み合わせ．財 $x, y$ の消費量を $q_x, q_y$（図では横軸・縦軸），価格を $p_x, p_y$，所得を $m$ とする．消費者は次の問題を解く：
+    \[
+      \max_{q_x, q_y} u(q_x, q_y) \quad \text{s.t.} \quad p_x q_x + p_y q_y = m, \quad q_x, q_y \geq 0
+    \]
+    効用関数 $u$ の値の絶対的な大きさは意味を持たず，大小関係のみが重要（<strong>序数性</strong>）．</p>
+    <p class="small">注意：需要と供給の章では横軸が量・縦軸が価格だったが，消費者の行動の章では横軸が $q_x$・縦軸が $q_y$（消費量）になる点に注意．</p>
+  </div>
+</div>
+
+</section><!-- /sec-consumer-problem -->
+
+
+<section class="section" id="sec-budget-constraint">
+<h2>予算制約</h2>
+
+<p><strong>価格受容者の仮定</strong>：どれだけ購入したとしても価格は変化しない．消費量を $q_x, q_y$，価格を $p_x, p_y$，所得を $m$ とするとき，予算制約式は：
+\[
+  m = p_x \cdot q_x + p_y \cdot q_y
+\]
+これを $q_y$ について解くと $q_y = m/p_y - (p_x/p_y) q_x$，これが予算線（傾き $= -p_x/p_y$）である．</p>
+
+<p class="text-dim small">（図：予算線 — 横軸 $q_x$，縦軸 $q_y$，切片 $m/p_x$ と $m/p_y$）</p>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>基本：価格が上昇すると買えるものが減る．所得が上昇すると買えるものが増える．</p>
+    <ul>
+      <li>$p_x$ が上昇 → 予算線の横軸切片 $m/p_x$ が小さくなる（傾きが急になる）</li>
+      <li>$p_y$ が上昇 → 予算線の縦軸切片 $m/p_y$ が小さくなる（傾きが緩くなる）</li>
+      <li>$m$ が増加 → 予算線が平行に外側へシフト</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-budget-constraint -->
+
+
+<section class="section" id="sec-indifference-curve">
+<h2>無差別曲線</h2>
+
+<p>二つの消費プランが<strong>無差別</strong>であるとは，どちらの消費プランから得られる効用も同じことをいう．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="無差別曲線">無差別曲線</span></span></div>
+  <div class="box-body">
+    <p>無差別な消費プランの点を結んだ曲線．通常，以下の性質を仮定する：</p>
+    <ol>
+      <li>無差別曲線は描ける（任意の消費プランから同効用の点がある）</li>
+      <li>どの無差別曲線が高い効用を示すかがわかる（右上ほど高効用）</li>
+      <li>異なる無差別曲線同士は交わらない</li>
+      <li>無差別曲線は原点に対して凸（湾曲している）</li>
+    </ol>
+  </div>
+</div>
+
+<p>無差別曲線の湾曲度（曲がり方）にも意味がある：</p>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">代替性と補完性</span></div>
+  <div class="box-body">
+    <ul>
+      <li><strong>完全代替財</strong>：例 — 財 $x$：2Lペットボトル / 財 $y$：500mLペットボトル（4倍の関係で代替可能）→ 無差別曲線は直線</li>
+      <li><strong>補完財（共に消費したい財）</strong>：例 — 財 $x$：ケーキ / 財 $y$：紅茶 → 無差別曲線はL字型に近い形</li>
+      <li><strong>通常の財</strong>：上の中間的な形で，原点に向かって凸な曲線</li>
+    </ul>
+    <p class="text-dim small">（図：完全代替財の無差別曲線（直線），補完財の無差別曲線（L字型））</p>
+  </div>
+</div>
+
+</section><!-- /sec-indifference-curve -->
+
+
+<section class="section" id="sec-utility-max">
+<h2>効用最大化条件</h2>
+
+<p>無差別曲線と予算線を使って効用最大化行動を考える．ポイント：「改善できるならそこはベストではない」．</p>
+
+<p class="text-dim small">（図：無差別曲線と予算線の接点 — 点A：最適，点B,C：予算線上の非最適，点D：予算線の内側）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="限界効用">限界効用</span>（$MU$）</span></div>
+  <div class="box-body">
+    <p>ある財の消費量をほんの少し増やしたときの効用の増分．$MU_x = \partial u / \partial q_x$，$MU_y = \partial u / \partial q_y$．無差別曲線の凸性から，消費量が増えるにつれ限界効用は逓減する（<strong>限界効用逓減の法則</strong>）．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="限界代替率">限界代替率（$MRS_{xy}$）</span></span></div>
+  <div class="box-body">
+    <p>財 $x$ をほんの少し増やしたとき，効用を一定に保つために減らす財 $y$ の量（交換比率）：</p>
+    <p>無差別曲線上では $MU_x - MU_y \cdot \Delta = 0$ なので，
+    \[
+      MRS_{xy} \coloneqq \Delta = \frac{MU_x}{MU_y}
+    \]
+    これは無差別曲線の傾き（絶対値）に等しい．無差別曲線が原点に向かって凸なら，$x$ の量が増えるにつれ $MRS_{xy}$ は減少する．</p>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">効用最大化の一階条件（内点解）</span></div>
+  <div class="box-body">
+    <p>予算制約の内点で最適消費プランが存在するとき，次の二つの同値な条件が成り立つ：
+    \[
+      \frac{MU_x}{p_x} = \frac{MU_y}{p_y} \iff MRS_{xy} = \frac{MU_x}{MU_y} = \frac{p_x}{p_y}
+    \]
+    直観（最後の1円の使い道）：1円分財 $y$ を減らして1円分財 $x$ を増やすことで効用が変わるなら，そこはベストではない．両辺の「1円で買える効用」が等しいとき最適．</p>
+  </div>
+</div>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>成り立たないケース</strong>：</p>
+    <ul>
+      <li><strong>端点解</strong>：完全代替財の場合など，無差別曲線と予算線が接線を持たず，予算線の端点が最適になる</li>
+      <li><strong>飽和点</strong>：最も好まれる点（飽和点）が予算制約の内点にある場合，予算を使い切らないこともある</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-utility-max -->
+
+
+<section class="section" id="sec-income-price-effects">
+<h2>所得変化と価格変化の効果</h2>
+
+<p>所得の変化と価格の変化がどのように需要に影響するかを分析する．</p>
+
+<p class="text-dim small">（図：所得変化の効果 — 正常財（所得増で両財消費増），劣等財（所得増で x 消費増，y 消費減））</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="正常財">正常財・劣等財</span></span></div>
+  <div class="box-body">
+    <p><strong>正常財（上級財）</strong>：所得が増えると需要量が増える財．<strong>劣等財（下級財）</strong>：所得が増えると需要量が減る財．正常財はずっと正常財とは限らず，劣等財もずっと劣等財とは限らない（<strong>所得消費曲線</strong>：所得増加に伴う最適消費点の軌跡）．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">需要の所得弾力性</span></div>
+  <div class="box-body">
+    <p>所得が $1\%$ 変化したとき，需要量が何 $\%$ 変化するかを示す指標：</p>
+    <ul>
+      <li>所得弾力性が $0$ 以上 $1$ 未満 → <strong>必需財</strong>（所得の変化率 $>$ 需要量の変化率）</li>
+      <li>所得弾力性が $1$ より大 → <strong>贅沢財（奢侈財）</strong>（所得の変化率 $<$ 需要量の変化率）</li>
+      <li>所得弾力性が $0$ 未満 → <strong>劣等財</strong></li>
+    </ul>
+  </div>
+</div>
+
+<p>価格の変化の影響も重要である：</p>
+
+<p class="text-dim small">（図：価格変化の効果 — 粗代替財（$p_x$ 上昇で $q_y$ 増），粗補完財（$p_x$ 上昇で $q_y$ も減））</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">粗代替財・粗補完財</span></div>
+  <div class="box-body">
+    <p>財 $x$ の価格が上昇したとき，財 $y$ の需要量が増加すれば $x$ と $y$ は<strong>粗代替財</strong>，減少すれば<strong>粗補完財</strong>という（所得効果を含む）．</p>
+    <ul>
+      <li>粗代替：$x$ と $y$ のどちらかだけでよい場合（例：異なるブランドの同種商品）</li>
+      <li>粗補完：$x$ と $y$ をペアで消費したい場合（ただし，財 $x$ の価格上昇が実質所得を下げて財 $y$ の消費が減る所得効果も含まれているので注意）</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-income-price-effects -->
+
+
+<section class="section" id="sec-slutsky">
+<h2>スルツキー分解</h2>
+
+<p>財 $x$ の価格が上昇すると実質的に所得が減少する（電気代の値上がりで家計を圧迫 → 牛肉の購入頻度が減る，という現象は電気と牛肉に補完関係があるからか？所得効果のせいか？）．この二つの効果を分離したい．</p>
+
+<p class="text-dim small">（図：スルツキー分解 — 点A：元の最適，点C：補償所得での最適，点B：新しい最適，予算線の回転とシフト）</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="スルツキー分解">スルツキー分解</span></span></div>
+  <div class="box-body">
+    <p>価格変化の需要への効果を，<strong>代替効果</strong>と<strong>所得効果</strong>に分解する手法：
+    \[
+      \underbrace{A \to B}_{\text{価格効果（全体）}} = \underbrace{A \to C}_{\text{代替効果}} + \underbrace{C \to B}_{\text{所得効果}}
+    \]
+    ここで $C$ は<strong>補償所得</strong>（価格変化後も元の効用水準を保つように所得を調整した場合）のもとでの最適点．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">代替財・補完財（純粋な代替効果による分類）</span></div>
+  <div class="box-body">
+    <p>スルツキー分解の代替効果のみで判断する：</p>
+    <ul>
+      <li>財 $x$ の価格増加によって，代替効果により財 $y$ の消費量が増加 → $x$ と $y$ は<strong>代替財</strong></li>
+      <li>代替効果により財 $y$ の消費量が減少 → $x$ と $y$ は<strong>補完財</strong></li>
+    </ul>
+    <p>世の中に財が二種類しかなければ必ず互いに代替財になる（三種類以上あれば補完財になるペアがある）．</p>
+  </div>
+</div>
+
+<div class="rmk" data-level="advanced">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>〈発展〉 <strong>ギッフェン財</strong>：価格が上昇すると需要量が増える財（需要法則の例外）．正常財には起こりえず，劣等財のうち所得効果（負）が代替効果（負）を上回る場合に生じる．</p>
+    <p class="text-dim small">（図：ギッフェン財 — $p_x$ 上昇で $q_x$ が増加する無差別曲線と予算線）</p>
+  </div>
+</div>
+
+</section><!-- /sec-slutsky -->
+
+
+<section class="section" id="sec-labor-supply">
+<h2>応用：労働供給の問題</h2>
+
+<p>消費者問題の重要な応用として，どれだけ働くか（労働供給量）の決定問題を考える．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">労働供給の効用最大化問題</span></div>
+  <div class="box-body">
+    <p>24時間生きる人の問題：</p>
+    <ul>
+      <li>$\ell$：余暇（働かなかった時間），$24 - \ell$：労働時間</li>
+      <li>賃金率 $w$，不労所得 $s$ のもとで所得 $= w(24 - \ell) + s$</li>
+      <li>消費財の価格 $p$，消費量 $c = (w(24-\ell)+s)/p$</li>
+      <li>効用 $u(c, \ell)$ を最大化する $(c, \ell)$ を選ぶ</li>
+    </ul>
+    <p>予算制約（消費と余暇の式）：$p \cdot c + w \cdot \ell = w \cdot 24 + s$（左辺：消費支出＋余暇の機会費用，右辺：時間の総価値＋不労所得）</p>
+  </div>
+</div>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>賃金変化の効果とオファーカーブ</strong>：賃金が上昇すると，「余暇の価格」と「所得」の両方が変化する（ギッフェン財の分析との違い）．</p>
+    <ul>
+      <li>代替効果：余暇が相対的に高くなる → 余暇を減らし，もっと働く</li>
+      <li>所得効果：裕福になる → 正常財なら余暇を増やす（「豊かになれば働かなくていい」）</li>
+      <li>両効果のどちらが大きいかによって，労働供給曲線が後方屈曲する可能性がある</li>
+    </ul>
+    <p class="text-dim small">（図：オファーカーブ — 賃金変化に伴う最適消費・余暇点の軌跡）</p>
+  </div>
+</div>
+
+</section><!-- /sec-labor-supply -->
+
+</article><!-- /ch-consumer -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第7章 複数財市場の均衡
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-general-equilibrium">
+<h1>複数財市場の均衡</h1>
+
+<section class="section" id="sec-exchange-economy">
+<h2>純粋交換経済</h2>
+
+<p>消費者理論を応用して，複数人がいる市場の「均衡」を分析する．均衡では「価格」が決まる．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">純粋交換経済</span></div>
+  <div class="box-body">
+    <p>あらかじめ消費者が持っている財をお互いに交換する経済（生産はない）．消費者レオンとケネスの二人，財 $x$ と $y$ の二財を考える：</p>
+    <ul>
+      <li><strong>初期保有（初期賦存量）</strong>：レオン $(e_{Lx}, e_{Ly})$，ケネス $(e_{Kx}, e_{Ky})$</li>
+      <li>消費者は自分の初期保有を売ってその売り上げを所得とし，効用最大化する消費プランを選ぶ</li>
+    </ul>
+    <p>レオンの予算制約：$p_x q_{Lx} + p_y q_{Ly} = p_x e_{Lx} + p_y e_{Ly}$</p>
+    <p>ケネスの予算制約：$p_x q_{Kx} + p_y q_{Ky} = p_x e_{Kx} + p_y e_{Ky}$</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">市場均衡（完全競争均衡・ワルラス均衡）</span></div>
+  <div class="box-body">
+    <p>以下の二条件を同時に満たす消費プラン $(q_{Lx}, q_{Ly}, q_{Kx}, q_{Ky})$ と価格 $(p_x, p_y)$ の組：</p>
+    <ol>
+      <li>各消費者が予算制約のもとで効用を最大にする消費プランを選んでいる（価格受容者の仮定）</li>
+      <li>各財の<strong>需給一致条件</strong>を満たす：$q_{Lx} + q_{Kx} = e_{Lx} + e_{Kx}$，$q_{Ly} + q_{Ky} = e_{Ly} + e_{Ky}$</li>
+    </ol>
+  </div>
+</div>
+
+</section><!-- /sec-exchange-economy -->
+
+
+<section class="section" id="sec-edgeworth">
+<h2>エッジワースボックス</h2>
+
+<p>二人二財の純粋交換経済を可視化するツールがエッジワースボックスである．</p>
+
+<p class="text-dim small">（図：エッジワースボックス — $O_L$ 原点（左下），$O_K$ 対角（右上），初期保有点 $E$，消費点 $A$，各軸 $q_{Lx}, q_{Ly}, q_{Kx}, q_{Ky}$）</p>
+
+<ul>
+  <li>ボックスの横幅 $= e_{Lx} + e_{Kx}$（財 $x$ の総量），縦幅 $= e_{Ly} + e_{Ky}$（財 $y$ の総量）</li>
+  <li>レオンの消費プランは左下原点 $O_L$ から，ケネスの消費プランは右上原点 $O_K$ から見る</li>
+  <li>ボックス内の一点がそれぞれの消費量の配分を表す</li>
+</ul>
+
+<p>パレート効率的な配分：</p>
+<ul>
+  <li>余剰の計算が複雑なので，パレート効率性で評価する</li>
+  <li>レオンの無差別曲線とケネスの無差別曲線が接する点の集合（<strong>契約曲線</strong>）上にある配分がパレート効率的</li>
+</ul>
+
+<p class="text-dim small">（図：エッジワースボックス内のパレート効率配分 — 両者の無差別曲線の接点群）</p>
+
+</section><!-- /sec-edgeworth -->
+
+
+<section class="section" id="sec-welfare-theorems">
+<h2>厚生経済学の基本定理</h2>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="第一厚生定理">第一厚生定理</span>（厚生経済学の第一基本定理）</span></div>
+  <div class="box-body">
+    <p>市場均衡（ワルラス均衡）の資源配分はパレート効率的である．</p>
+    <p class="small">直観：均衡では各消費者が $MRS = p_x/p_y$ を満たしているため，両者の限界代替率が一致し，互いに改善の余地がない配分になっている．</p>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="第二厚生定理">第二厚生定理</span></span></div>
+  <div class="box-body">
+    <p>任意のパレート効率的な配分は，適切な初期保有の再配分のもとで，市場均衡として達成できる（一定の条件のもと）．</p>
+    <p class="small">含意：「平等と効率のトレードオフ」はない場合がある — 再分配政策（初期保有の操作）と市場効率性は両立しうる．</p>
+  </div>
+</div>
+
+</section><!-- /sec-welfare-theorems -->
+
+
+<section class="section" id="sec-market-design">
+<h2>応用：マーケットデザイン</h2>
+
+<p>市場均衡の考え方を制度設計に応用する分野が<strong>マーケットデザイン</strong>である．</p>
+
+<div class="ex">
+  <div class="box-label"><span class="box-title">講義科目配分（ポイント投票メカニズム）</span></div>
+  <div class="box-body">
+    <p>履修制限のある講義科目について：最大履修可能人数が「供給量」，登録者数が「需要量」になる．「抽選登録」では「履修したい意欲」が反映できず不満が出る．</p>
+    <p><strong>ポイント投票メカニズム</strong>（神戸大学・ペンシルバニア大学・ハーバード大学の一部で導入）：</p>
+    <ol>
+      <li>学生に「予算（ポイント）」を与える</li>
+      <li>学生は予算内で各科目に対して，履修することの効用（支払意思額）を申告する</li>
+      <li>効用の高い順に受講生が割り当てられ，「価格（均衡ポイント）」を基準に足切りされる</li>
+      <li>科目が割り当てられた学生は価格の分だけ予算を消費する</li>
+    </ol>
+    <p>これは市場均衡の考え方を科目配分問題に応用したもので，「支払意思額」に基づくパレート効率的な配分を実現する．</p>
+  </div>
+</div>
+
+<a href="point_mechanism.html" target="_blank" class="qr-link" style="display:inline-flex;">
+  → ポイント制オークション体験アプリ
+</a>
+
+</section><!-- /sec-market-design -->
+
+</article><!-- /ch-general-equilibrium -->
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     第8章 企業の行動
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<article class="chapter" id="ch-firm">
+<h1>企業の行動</h1>
+
+<section class="section" id="sec-profit-max">
+<h2>利潤最大化</h2>
+
+<p>生産者である「企業」を詳しく分析する．基本的な経済学では企業は「利潤」を最大にするように行動すると仮定する．</p>
+<ul>
+  <li>$\text{利潤} = \text{売上金額} - \text{費用}$</li>
+</ul>
+<p>現実の企業が本当に利潤を最大化しているかは議論の余地があるが，利潤を出せないと倒産するため，生き残っている企業は利潤を出していると考えるのが自然である．</p>
+
+<p>最初は最も単純なケース（企業は生産量 $q$ だけを選べる）を考える：</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">利潤最大化問題</span></div>
+  <div class="box-body">
+    <p>価格受容者の企業が生産量 $q$ を選ぶ問題：
+    \[
+      \max_{q \geq 0} \pi(q) = p \cdot q - C(q)
+    \]
+    ここで $C(q)$ は<strong>総費用関数</strong>（$q$ だけ生産するときの費用），$C'(q)$ は<strong>限界費用</strong>（$MC$）と呼ばれる．</p>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">利潤最大化の一階条件</span></div>
+  <div class="box-body">
+    <p>内点解では $p = MC(q^*)$，すなわち<strong>価格 $=$ 限界費用</strong>が成立する．限界費用曲線 $C'(q)$ が供給曲線を形成する．</p>
+    <p class="text-dim small">（図：限界費用曲線 $C'(q)$ と価格 $p$ の水平線の交点 $q^*$）</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>$C(q) = q^2$ のとき，供給関数を求めよ．</p>
+    <p>$C(q) = q^2 + q$ のとき，供給関数を求めよ．</p>
+    <p>$C(q) = 4q$ のとき，供給関数を求めよ（微分では解けない）．</p>
+    <button class="reveal-btn">答えを表示</button>
+    <div class="reveal-answer">
+      <p>$C(q) = q^2$：$MC = 2q$，$p = 2q^* \Rightarrow q^* = p/2$．供給関数 $q^S(p) = p/2$．</p>
+      <p>$C(q) = q^2 + q$：$MC = 2q + 1$，$p = 2q^* + 1 \Rightarrow q^* = (p-1)/2$（$p \geq 1$ のとき）．</p>
+      <p>$C(q) = 4q$：$MC = 4$（一定），$p > 4$ なら無限大，$p < 4$ なら $q^* = 0$，$p = 4$ なら任意の $q \geq 0$．</p>
+    </div>
+  </div>
+</div>
+
+</section><!-- /sec-profit-max -->
+
+
+<section class="section" id="sec-cost-structure">
+<h2>費用の構造</h2>
+
+<p>総費用関数のより細かい構造を見る．例として $C(q) = q^2 + q + 5$：</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">可変費用・固定費用</span></div>
+  <div class="box-body">
+    <ul>
+      <li><strong>可変費用（VC）</strong>：生産量に応じて変化する費用（例：$q^2 + q$）</li>
+      <li><strong>固定費用（FC）</strong>：生産量によらず一定の費用（例：$5$）</li>
+    </ul>
+    <p>注意：<strong>固定費用 $\neq$ 埋没費用</strong>（固定費用は長期には調整可能だが，埋没費用は将来にわたって回収不能）．</p>
+  </div>
+</div>
+
+<p>また，平均費用（$AC = C(q)/q$）と平均可変費用（$AVC = VC(q)/q$）も重要な概念である．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">経済学における短期と長期</span></div>
+  <div class="box-body">
+    <ul>
+      <li><strong>短期</strong>：一部の生産要素が固定されている期間（例：工場設備は変えられない）→ 固定費用がかかる</li>
+      <li><strong>長期</strong>：すべての生産要素を調整可能な期間</li>
+    </ul>
+  </div>
+</div>
+
+</section><!-- /sec-cost-structure -->
+
+
+<section class="section" id="sec-breakeven">
+<h2>損益分岐点と操業停止点</h2>
+
+<p>どのようなときに利益が黒字か（赤字か）？</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">損益分岐点</span></div>
+  <div class="box-body">
+    <p>利潤がちょうど $0$ になる生産量（価格）：$\pi = p \cdot q - C(q) = 0 \Leftrightarrow p = C(q)/q = AC(q)$．損益分岐点での価格は平均費用 $AC$ の最小値に等しい（利潤最大化条件 $p = MC$ と組み合わせる）．この価格を下回ると赤字．</p>
+  </div>
+</div>
+
+<p>利潤が赤字でも（短期的には）店じまいすべきでないかもしれない：短期的には工場などを売れない → 固定費用はかかりっぱなし．可変費用の部分で黒字であれば，固定費用による赤字を少し減らせる！</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">操業停止点</span></div>
+  <div class="box-body">
+    <p>生産するよりも操業停止した方が損失が小さくなる限界：$p \cdot q - C(q) = -FC \Leftrightarrow p = VC(q)/q = AVC(q)$．操業停止点での価格は平均可変費用 $AVC$ の最小値に等しい．この価格を下回ると操業停止が合理的（短期）．</p>
+  </div>
+</div>
+
+<div class="exercise">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>費用関数が $C(q) = q^2 + q + 4$ のとき：</p>
+    <ol>
+      <li>損益分岐点の価格と生産量を求めよ．</li>
+      <li>操業停止点の価格と生産量を求めよ．</li>
+    </ol>
+    <button class="reveal-btn">答えを表示</button>
+    <div class="reveal-answer">
+      <p>$MC = 2q + 1$，$AC = q + 1 + 4/q$，$AVC = q + 1$．</p>
+      <p>損益分岐点：$MC = AC \Rightarrow 2q + 1 = q + 1 + 4/q \Rightarrow q^2 = 4 \Rightarrow q = 2$，$p = 2(2)+1 = 5$．</p>
+      <p>操業停止点：$MC = AVC \Rightarrow 2q + 1 = q + 1 \Rightarrow q = 0$，しかしここは $q > 0$ を前提とするので，実質的な操業停止価格は $AVC$ の最小値 $= 1$（$q \to 0$ で $AVC \to 1$）．</p>
+    </div>
+  </div>
+</div>
+
+</section><!-- /sec-breakeven -->
+
+
+<section class="section" id="sec-entry-exit">
+<h2>企業の参入・退出</h2>
+
+<p>参入していないときの利潤を $0$ とすると：</p>
+<ul>
+  <li>利潤 $> 0$：参入が起きる（より多くの企業が市場に入ってくる）</li>
+  <li>利潤 $< 0$：退出が起きる（市場から出ていく企業がある）</li>
+</ul>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">長期均衡における利潤</span></div>
+  <div class="box-body">
+    <p>自由に参入・退出が可能ならば，安定した長期均衡では利潤がゼロになる（超過利潤はゼロ）．利潤 $> 0$ なら参入が増えて価格が下がり，利潤 $< 0$ なら退出が減って価格が上がるため，最終的に利潤 $= 0$ に収束する．</p>
+  </div>
+</div>
+
+<div class="rmk" data-level="advanced">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p>〈発展〉 <strong>過剰参入定理</strong>（Mankiw and Whinston, 1986; Suzumura and Kiyono, 1987）：不完全競争市場では，自由参入均衡において参入が社会的最適より多くなる場合がある（過剰参入）．逆に過小参入定理も知られている（Ghosh and Morita, 2009）．詳しくは産業組織論で．</p>
+  </div>
+</div>
+
+</section><!-- /sec-entry-exit -->
+
+
+<section class="section" id="sec-production-function">
+<h2>生産関数</h2>
+
+<p>総費用関数はどこから出てくるのか？→ <strong>生産関数</strong>から総費用関数を作る．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title"><span class="term" data-term="生産関数">生産関数</span></span></div>
+  <div class="box-body">
+    <p>生産要素の投入量と最大産出量の関係を表す関数 $f(K, L)$．二つの生産要素を考える：</p>
+    <ul>
+      <li>$K$：資本（使用するには $r \cdot K$ の費用，$r$ は<strong>レンタル率</strong>）</li>
+      <li>$L$：労働（使用するには $w \cdot L$ の費用，$w$ は<strong>賃金率</strong>）</li>
+    </ul>
+    <p>$(K, L)$ の組み合わせを投入すると $f(K, L)$ だけの量の財ができる（例：$f(2, 3) = 8$ は「資本2単位・労働3単位で財8単位を生産できる」）．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">規模に関する収穫（スケールメリット/デメリット）</span></div>
+  <div class="box-body">
+    <p>すべての生産要素を $a$ 倍（$a > 1$）したとき：</p>
+    <ol>
+      <li>$f(aK, aL) > a f(K, L)$：<strong>規模に関して収穫逓増</strong>（スケールメリット）</li>
+      <li>$f(aK, aL) = a f(K, L)$：<strong>規模に関して収穫一定</strong></li>
+      <li>$f(aK, aL) < a f(K, L)$：<strong>規模に関して収穫逓減</strong>（スケールデメリット）</li>
+    </ol>
+    <p class="small">例：小麦粉と卵の量を3倍にするとできるケーキの数が3倍なら → 収穫一定．店舗数と雇用者数を2倍にしたら売上が1.5倍なら → 収穫逓減．</p>
+  </div>
+</div>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">限界生産物（$MP$）</span></div>
+  <div class="box-body">
+    <p>ある生産要素の投入量をほんの少し増やしたときの産出量の増分：$MP_L = \partial f / \partial L$，$MP_K = \partial f / \partial K$．</p>
+  </div>
+</div>
+
+</section><!-- /sec-production-function -->
+
+
+<section class="section" id="sec-cost-minimization">
+<h2>費用最小化問題（長期）</h2>
+
+<p>長期の生産問題：$K$ と $L$ の両方を調整して，生産量 $q$ を達成するような $(K, L)$ の中で費用が最小になる組み合わせを考える（短期の決定より自由度が高い）．</p>
+
+<div class="def">
+  <div class="box-label"><span class="box-title">等産出量曲線（等量曲線）と等費用曲線</span></div>
+  <div class="box-body">
+    <p>（注意：縦軸 $K$，横軸 $L$）</p>
+    <ul>
+      <li><strong>等産出量曲線</strong>：同じ産出量 $f(K, L) = q$ を達成する $(K, L)$ の軌跡（消費者理論の無差別曲線に対応）．曲線の傾きの絶対値 $= MP_L / MP_K$（<strong>限界変形率</strong>，技術的限界代替率）</li>
+      <li><strong>等費用曲線</strong>：同じ費用 $rK + wL = c$ を達成する $(K, L)$ の直線．傾き $= -w/r$（<strong>要素価格比</strong>）</li>
+    </ul>
+    <p class="text-dim small">（図：等産出量曲線 $f(K,L)=q_1, q_2, q_3$ と等費用曲線 $rK+wL=c_1, c_2$）</p>
+  </div>
+</div>
+
+<div class="prop">
+  <div class="box-label"><span class="box-title">費用最小化の一階条件</span></div>
+  <div class="box-body">
+    <p>産出量 $q$ を所与として費用 $rK + wL$ を最小化する $(K^*, L^*)$ では，
+    \[
+      \frac{MP_K}{MP_L} = \frac{r}{w} \quad \text{（限界変形率 $=$ 要素価格比）}
+    \]
+    が成立する．消費者理論の $MRS_{xy} = p_x / p_y$ に対応する．</p>
+    <p>直観：1単位の生産量を追加するために必要な労働量は $1/MP_L$，必要な資本の量は $1/MP_K$．もし $w/MP_L > r/MP_K$ なら，労働より資本を使う方が安い → $K$ を増やし $L$ を減らすことで費用を削減できる．</p>
+  </div>
+</div>
+
+<div class="rmk">
+  <div class="box-label"></div>
+  <div class="box-body">
+    <p><strong>短期費用曲線と長期費用曲線の関係</strong>：</p>
+    <ul>
+      <li>短期では $K = \bar K$ で固定されているため，自由度が制限される → 短期費用 $\geq$ 長期費用（同じ生産量を達成するとき）</li>
+      <li>長期費用曲線は，各生産量での最安の費用で，複数の短期費用曲線の「下包絡線」になる</li>
+    </ul>
+    <p class="text-dim small">（図：短期費用曲線と長期費用曲線の関係 — 長期曲線が短期曲線群の下包絡線）</p>
+  </div>
+</div>
+
+</section><!-- /sec-cost-minimization -->
+
+</article><!-- /ch-firm -->
+
+</div><!-- /#content -->
+</div><!-- /#main-wrap -->
+
+
+<!-- Definition popup -->
+<div id="def-popup">
+  <button class="popup-close" id="popupClose">✕</button>
+  <div class="popup-term" id="popupTerm"></div>
+  <div id="popupBody"></div>
+</div>
+
+
+<script>
+// ━━━ GLOSSARY ━━━
+const GLOSSARY = {
+  "効用": "消費者が財・サービスの消費から得る満足度・利益の度合い。大小関係のみが意味を持つ（序数的効用）。",
+  "制約": "消費者や生産者が行動する際に直面する物理的・経済的な制限（予算制約・技術制約など）。",
+  "合理的": "完備性と推移性（非循環性）を満たす好みを持つこと。効用最大化の前提。",
+  "序数的": "数値の絶対的な大きさではなく、大小関係のみが意味を持つ性質。単調変換に対して選択は不変。",
+  "ニュメレール": "あらゆる財の価値をお金換算する際の基準財（価値尺度財）。",
+  "機会費用": "ある行動をするために諦めた最良の代替行動から得られる便益の最大値。",
+  "埋没費用（サンクコスト）": "どんな行動をとっても回収不可能な費用。合理的な意思決定では考慮すべきでない。",
+  "インセンティブ（誘因）": "人々の行動を変える動機・誘因。経済学は人々がインセンティブに応じて行動すると仮定する。",
+  "需要曲線": "価格と需要量の関係を示す曲線。通常は右下がり（需要法則）。",
+  "需要量": "消費者がある価格のもとで購入しようとする財の量。",
+  "供給曲線": "価格と供給量の関係を示す曲線。通常は右上がり。",
+  "市場均衡": "需要量と供給量が一致する状態。均衡価格と均衡取引量で表される。",
+  "無差別曲線": "同じ効用水準を与える消費プランの集合を平面上に描いた曲線。",
+  "限界効用": "財の消費量を微小に増やしたときの効用の増加量。$MU = \\partial u / \\partial x$。",
+  "限界代替率": "無差別を保ちながら財Xを1単位増やすために手放す財Yの量。無差別曲線の傾きの絶対値。$MRS = MU_x / MU_y$。",
+  "所得効果": "価格変化が実質所得を変化させることによる需要量の変化。スルツキー分解の一部。",
+  "代替効果": "相対価格の変化だけによる需要量の変化（実質所得を一定に保った場合）。",
+  "スルツキー分解": "価格変化の効果を代替効果と所得効果に分解する分析手法。",
+  "正常財": "所得が増えると需要量が増える財。所得効果が正。",
+  "下級財": "所得が増えると需要量が減る財。所得効果が負。劣等財ともいう。",
+  "ギッフェン財": "価格が上昇すると需要量が増える財。下級財のうち所得効果が代替効果を上回る場合。",
+  "需要の価格弾力性": "価格の1%変化に対する需要量の変化率（%）。$\\varepsilon = -(\\partial q/\\partial p)(p/q)$。",
+  "パレート効率性": "誰かを悪化させずには誰の状況も改善できない資源配分の状態。",
+  "第一厚生定理": "完全競争均衡はパレート効率的である、という定理。",
+  "外部性": "ある主体の行動が市場を通じずに他の主体の厚生に影響を与える現象。",
+  "情報の非対称性": "取引の一方が他方より多くの情報を持っている状況。逆選択・モラルハザードの原因。",
+  "生産関数": "生産要素の投入量と最大産出量の関係を表す関数 $f(K, L)$。",
+  "限界費用": "生産量を1単位増やしたときの総費用の増加分。$MC = dC/dq$。",
+  "完全競争": "多数の価格受容者が同質財を取引し、参入・退出が自由な市場形態。",
+  "独占": "単一の供給者が市場を支配する市場形態。",
+};
+
+// ━━━ TOC AUTO-GENERATION ━━━
+function buildTOC() {
+  const list = document.getElementById('toc-list');
+  document.querySelectorAll('.chapter, .section').forEach(el => {
+    const hEl = el.querySelector(':scope > h1, :scope > h2');
+    if (!hEl) return;
+    const isChapter = el.classList.contains('chapter');
+    const a = document.createElement('a');
+    a.href = `#${el.id}`;
+    a.className = isChapter ? 'toc-ch' : 'toc-sec';
+    if (el.dataset.level === 'advanced') a.classList.add('is-adv');
+    a.textContent = hEl.textContent.replace(/^第\s*\d+\s*章\s*/, '').replace(/^\d+\.\d+\s*/, '');
+    list.appendChild(a);
+  });
+}
+
+// ━━━ ADVANCED TOGGLE ━━━
+function toggleAdvanced() {
+  const hiding = document.body.classList.toggle('hide-advanced');
+  const btn = document.getElementById('adv-toggle');
+  btn.textContent = hiding ? '★ 発展を表示' : '★ 発展を隠す';
+  btn.classList.toggle('hiding', hiding);
+  try { localStorage.setItem('hideAdvanced', hiding); } catch(_) {}
+}
+
+function restoreAdvancedState() {
+  try {
+    if (localStorage.getItem('hideAdvanced') === 'true') {
+      document.body.classList.add('hide-advanced');
+      const btn = document.getElementById('adv-toggle');
+      btn.textContent = '★ 発展を表示';
+      btn.classList.add('hiding');
+    }
+  } catch(_) {}
+}
+
+// ━━━ SCROLL SPY ━━━
+function initScrollSpy() {
+  const targets = Array.from(document.querySelectorAll('.chapter, .section'));
+  const links   = document.querySelectorAll('#toc-list a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  targets.forEach(t => obs.observe(t));
+}
+
+// ━━━ TERM POPUP ━━━
+function initTerms() {
+  const popup = document.getElementById('def-popup');
+  const pTerm = document.getElementById('popupTerm');
+  const pBody = document.getElementById('popupBody');
+  let active = null;
+
+  document.querySelectorAll('.term').forEach(el => {
+    const key = el.dataset.term || el.textContent.trim();
+    if (GLOSSARY[key]) el.classList.add('has-def');
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      if (active === el && popup.classList.contains('show')) {
+        popup.classList.remove('show'); active = null; return;
+      }
+      active = el;
+      pTerm.textContent = key;
+      pBody.textContent = GLOSSARY[key] ?? '（定義未登録）';
+      place(popup, el);
+      popup.classList.add('show');
+    });
+  });
+
+  document.getElementById('popupClose').addEventListener('click', () => {
+    popup.classList.remove('show'); active = null;
+  });
+  document.addEventListener('click', e => {
+    if (!popup.contains(e.target)) { popup.classList.remove('show'); active = null; }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { popup.classList.remove('show'); active = null; }
+  });
+}
+
+function place(popup, el) {
+  const r = el.getBoundingClientRect(), W = 320, m = 12;
+  let left = r.left, top = r.bottom + 8;
+  if (left + W > window.innerWidth - m) left = window.innerWidth - W - m;
+  if (left < m) left = m;
+  if (top + 160 > window.innerHeight) top = r.top - 8 - 160;
+  popup.style.cssText = `left:${left}px; top:${top}px;`;
+}
+
+// ━━━ REVEAL ━━━
+function initReveal() {
+  document.querySelectorAll('.reveal-btn').forEach(btn => {
+    const answer = btn.nextElementSibling;
+    btn.addEventListener('click', () => {
+      const open = answer.classList.toggle('open');
+      btn.classList.toggle('open', open);
+    });
+  });
+}
+
+// ━━━ STEPS ━━━
+function initSteps() {
+  document.querySelectorAll('.steps').forEach(sr => {
+    const items   = Array.from(sr.querySelectorAll('.step'));
+    const counter = sr.querySelector('.step-counter');
+    let n = 0;
+    const upd = () => {
+      items.forEach((s, i) => s.classList.toggle('visible', i < n));
+      if (counter) counter.textContent = `${n} / ${items.length}`;
+      sr.querySelector('.step-next').disabled = n >= items.length;
+      sr.querySelector('.step-prev').disabled = n === 0;
+    };
+    sr.querySelector('.step-next')?.addEventListener('click', () => { if (n < items.length) { n++; upd(); } });
+    sr.querySelector('.step-prev')?.addEventListener('click', () => { if (n > 0) { n--; upd(); } });
+    sr.querySelector('.step-all')?.addEventListener('click',  () => { n = items.length; upd(); });
+    upd();
+  });
+}
+
+// ━━━ INIT ━━━
+document.addEventListener('DOMContentLoaded', () => {
+  buildTOC();
+  initScrollSpy();
+  initTerms();
+  initReveal();
+  initSteps();
+  restoreAdvancedState();
+});
+</script>
+</body>
+</html>
