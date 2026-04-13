@@ -506,6 +506,30 @@ body.print-mode .geogebra-embed .print-label {
   border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
 }
 
+/* ═══ FLOATING PEN BUTTON (FAB) ═══ */
+.fab-pen {
+  display: none;
+  position: fixed;
+  bottom: 60px;
+  right: 12px;
+  z-index: 200;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--header-bg);
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.fab-pen.show { display: flex; }
+.fab-pen.active { background: var(--accent); }
+body.print-mode .fab-pen { display: none !important; }
+
 /* ═══ MOBILE (≤768px) ═══ */
 @media (max-width: 768px) {
   .sp-hide { display: none !important; }
@@ -630,6 +654,7 @@ body.print-mode .geogebra-embed .print-label {
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
 
+<button class="fab-pen" id="fabPen" onclick="toggleDraw()" title="ペン ON/OFF">✏️</button>
 <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">📄 印刷用表示</button>
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
@@ -731,6 +756,11 @@ let strokes = {};      // slide index -> array of strokes
 let currentStroke = null;
 let pointerPos = null; // for pointer tool
 
+// ═══ APPLE PENCIL AUTO-DETECTION ═══
+let pencilDetected = false;   // true after first stylus input detected
+let pencilDrawing = false;    // true while stylus stroke is in progress
+let pencilStroke = null;      // current stroke from stylus
+
 function getCanvas() { return document.getElementById('drawCanvas'); }
 function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
 
@@ -742,7 +772,26 @@ function toggleDraw() {
   if (canvas) canvas.classList.toggle('active', drawMode);
   toolbar.classList.toggle('show', drawMode);
   btn.style.background = drawMode ? 'var(--accent)' : '';
+  updateFabPen();
   if (drawMode) resizeDrawCanvas();
+}
+
+function enableDrawMode() {
+  if (drawMode) return;
+  drawMode = true;
+  const canvas = getCanvas();
+  const toolbar = document.getElementById('drawToolbar');
+  const btn = document.getElementById('drawToggleBtn');
+  if (canvas) canvas.classList.add('active');
+  toolbar.classList.add('show');
+  btn.style.background = 'var(--accent)';
+  updateFabPen();
+  resizeDrawCanvas();
+}
+
+function updateFabPen() {
+  const fab = document.getElementById('fabPen');
+  if (fab) fab.classList.toggle('active', drawMode);
 }
 
 function setDrawTool(t) {
@@ -818,6 +867,8 @@ function redrawStrokes() {
 
 function startDraw(e) {
   if (!drawMode) return;
+  // When Apple Pencil detected, ignore finger touches (pencil draws via pointer events)
+  if (pencilDetected && e.touches && (!e.touches[0] || e.touches[0].touchType !== 'stylus')) return;
   e.preventDefault();
   drawingNow = true;
   const pos = getDrawPos(e);
@@ -836,6 +887,8 @@ function startDraw(e) {
 
 function moveDraw(e) {
   if (!drawMode) return;
+  // When Apple Pencil detected, ignore finger touches
+  if (pencilDetected && e.touches && (!e.touches[0] || e.touches[0].touchType !== 'stylus')) return;
   const pos = getDrawPos(e);
   if (drawTool === 'pointer') {
     e.preventDefault();
@@ -1032,6 +1085,88 @@ function bindCanvasEvents() {
 }
 bindCanvasEvents();
 bindBoardCanvasEvents();
+
+// ═══ APPLE PENCIL: Pointer-event based detection on slideArea ═══
+function getDrawPosFromPointer(e) {
+  const c = getCanvas();
+  if (!c) return {x:0, y:0};
+  const rect = c.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function initPencilDetection() {
+  const area = document.getElementById('slideArea');
+  if (!area) return;
+
+  area.addEventListener('pointerdown', function(e) {
+    if (e.pointerType !== 'pen' || mode !== 'slide') return;
+    e.preventDefault();
+    pencilDetected = true;
+
+    // Auto-enable draw mode (shows toolbar, activates canvas)
+    enableDrawMode();
+
+    pencilDrawing = true;
+    const pos = getDrawPosFromPointer(e);
+
+    if (drawTool === 'pointer') {
+      pointerPos = pos; redrawStrokes();
+      this.setPointerCapture(e.pointerId);
+      return;
+    }
+    if (drawTool === 'eraser') {
+      eraseAt(pos);
+      this.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    if (!strokes[current]) strokes[current] = [];
+    const sz = parseInt(document.getElementById('sizeSlider').value);
+    pencilStroke = {
+      color: drawColor,
+      size: drawTool === 'highlight' ? sz * 3 : sz,
+      alpha: drawTool === 'highlight' ? 0.3 : 1,
+      points: [pos]
+    };
+    strokes[current].push(pencilStroke);
+
+    this.setPointerCapture(e.pointerId);
+  });
+
+  area.addEventListener('pointermove', function(e) {
+    if (e.pointerType !== 'pen' || !pencilDrawing) return;
+    e.preventDefault();
+    const pos = getDrawPosFromPointer(e);
+
+    if (drawTool === 'pointer') { pointerPos = pos; redrawStrokes(); return; }
+    if (drawTool === 'eraser') { eraseAt(pos); return; }
+
+    if (pencilStroke) {
+      pencilStroke.points.push(pos);
+      redrawStrokes();
+    }
+  });
+
+  area.addEventListener('pointerup', function(e) {
+    if (e.pointerType !== 'pen') return;
+    if (drawTool === 'pointer') { pointerPos = null; redrawStrokes(); }
+    if (pencilDrawing) scheduleSave();
+    pencilDrawing = false;
+    pencilStroke = null;
+  });
+
+  area.addEventListener('pointercancel', function(e) {
+    if (e.pointerType !== 'pen') return;
+    pencilDrawing = false;
+    pencilStroke = null;
+  });
+}
+initPencilDetection();
+
+// Show floating pen button on touch-capable devices
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  document.getElementById('fabPen').classList.add('show');
+}
 
 window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
 
@@ -1383,17 +1518,22 @@ document.addEventListener('keydown', e => {
 let touchStartX = 0;
 let touchStartY = 0;
 let touchIsSingle = false;
+let touchIsStylus = false;
 document.addEventListener('touchstart', e => {
   touchIsSingle = (e.touches.length === 1);
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
+  touchIsStylus = (e.touches[0].touchType === 'stylus');
 });
 document.addEventListener('touchmove', e => {
   // If additional fingers appear during gesture, it's a pinch — cancel swipe
   if (e.touches.length > 1) touchIsSingle = false;
 }, {passive:true});
 document.addEventListener('touchend', e => {
-  if (mode !== 'slide' || drawMode || !touchIsSingle) return;
+  if (mode !== 'slide' || !touchIsSingle || touchIsStylus) return;
+  // When pencil is detected, finger can still swipe (drawMode was auto-enabled for pencil only).
+  // When no pencil, respect drawMode (manual toggle = user wants to draw with finger).
+  if (!pencilDetected && drawMode) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
   if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
