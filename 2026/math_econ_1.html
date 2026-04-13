@@ -1534,6 +1534,8 @@ document.addEventListener('touchend', e => {
   // When pencil is detected, finger can still swipe (drawMode was auto-enabled for pencil only).
   // When no pencil, respect drawMode (manual toggle = user wants to draw with finger).
   if (!pencilDetected && drawMode) return;
+  // Don't swipe when zoomed in — user is panning the zoomed view
+  if (window.visualViewport && window.visualViewport.scale > 1.05) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
   if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
