@@ -528,6 +528,7 @@ body.print-mode .geogebra-embed .print-label {
 }
 .fab-pen.show { display: flex; }
 .fab-pen.active { background: var(--accent); }
+.fab-pen.zoomed { transition: none; }
 body.print-mode .fab-pen { display: none !important; }
 
 /* ═══ MOBILE (≤768px) ═══ */
@@ -1166,6 +1167,38 @@ initPencilDetection();
 // Show floating pen button on touch-capable devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
   document.getElementById('fabPen').classList.add('show');
+}
+
+// ═══ FAB: follow visual viewport when zoomed ═══
+function repositionFab() {
+  const fab = document.getElementById('fabPen');
+  if (!fab || !window.visualViewport) return;
+  const vv = window.visualViewport;
+
+  if (vv.scale <= 1.05) {
+    fab.classList.remove('zoomed');
+    fab.style.transform = '';
+    return;
+  }
+
+  fab.classList.add('zoomed');
+  const S = vv.scale;
+  // Default CSS position: right:12px, bottom:60px, size:48px
+  const defLeft = window.innerWidth - 12 - 48;
+  const defTop  = window.innerHeight - 60 - 48;
+  // Target: same physical margins from visual viewport edges
+  const tgtLeft = vv.offsetLeft + vv.width  - (12 + 48) / S;
+  const tgtTop  = vv.offsetTop  + vv.height - (60 + 48) / S;
+
+  const dx = tgtLeft - defLeft;
+  const dy = tgtTop  - defTop;
+  fab.style.transformOrigin = 'top left';
+  fab.style.transform = `translate(${dx}px, ${dy}px) scale(${1/S})`;
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', repositionFab);
+  window.visualViewport.addEventListener('scroll', repositionFab);
 }
 
 window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
