@@ -20,7 +20,11 @@ window.MathJax = {
     },
     tags: 'ams',
   },
-  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
+  options: {
+    skipHtmlTags: ['script','noscript','style','textarea','pre','code'],
+    // Ignore <span class="fn"> (footnote sources) — typeset manually on popup open.
+    ignoreHtmlClass: '(^|\\s)fn(\\s|$)',
+  },
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -569,6 +573,65 @@ figcaption {
 }
 #def-popup .popup-close:hover { color: rgba(255,255,255,0.8); }
 
+/* ━━━ FOOTNOTE ━━━ */
+.fn-ref {
+  display: inline-block;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  margin: 0 1px;
+  user-select: none;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.fn-ref::before { content: '['; }
+.fn-ref::after  { content: ']'; }
+.fn-ref:hover   { color: #1e3a8a; text-decoration: underline; }
+.fn-ref.active  { color: #1e3a8a; text-decoration: underline; }
+.fn-content     { display: none; }
+
+#fn-popup {
+  position: fixed;
+  z-index: 500;
+  background: var(--header-bg);
+  color: #f1f5f9;
+  padding: 12px 15px 12px 16px;
+  border-radius: 8px;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 13px;
+  line-height: 1.75;
+  max-width: 360px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+#fn-popup.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#fn-popup .popup-num {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fbbf24;
+  margin-bottom: 6px;
+  padding-right: 20px;
+  letter-spacing: 0.5px;
+}
+#fn-popup .popup-close {
+  position: absolute;
+  top: 8px; right: 10px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 13px;
+}
+#fn-popup .popup-close:hover { color: rgba(255,255,255,0.8); }
+#fn-popup #fnBody p { margin: 0.4em 0; }
+#fn-popup #fnBody p:first-child { margin-top: 0; }
+#fn-popup #fnBody p:last-child  { margin-bottom: 0; }
+
 /* ━━━ MISC ━━━ */
 @keyframes stepIn {
   from { opacity: 0; transform: translateY(-3px); }
@@ -689,8 +752,10 @@ body.hide-advanced [data-level="advanced"] { display: none; }
 <section class="section" id="sec-what-is-micro">
 <h2>ミクロ経済学とは何か</h2>
 
-<p>ミクロ経済学とは，<span class="term" data-term="インセンティブ（誘因）">インセンティブ（誘因）</span>に関わるもの全てを扱う学問であり，キーワードは「最善を尽くす」である．</p>
+<p>ミクロ経済学とは，<span class="term" data-term="インセンティブ（誘因）">インセンティブ（誘因）</span>に関わるもの全てを扱う学問である．インセンティブとは人々が何か行動する時の理由である．そのインセンティブに基づいて，人々は「最善を尽くす」．
+  言い換えれば，人々は自分自身がわずかにでも得できる機会があるならそれを見逃さない，ということを行動の基本にしている．</p>
 
+定義として，まとめると次のとおりである．
 <div class="def">
   <div class="box-label"><span class="box-title"><span class="term" data-term="インセンティブ（誘因）">インセンティブ（誘因）</span></span></div>
   <div class="box-body">
@@ -698,7 +763,7 @@ body.hide-advanced [data-level="advanced"] { display: none; }
   </div>
 </div>
 
-<p>ミクロ経済学にできることは多岐にわたる：</p>
+<p>ミクロ経済学にできることは多岐にわたる．以下の分野はその例である：</p>
 <ul>
   <li><strong>意思決定論</strong>：個人が何を選択する（べき）かの理論</li>
   <li><strong>価格理論</strong>：価格の決まり方と資源配分の探求</li>
@@ -708,7 +773,7 @@ body.hide-advanced [data-level="advanced"] { display: none; }
   <li><strong>公共経済学・財政学</strong>：租税・財政政策などを研究</li>
   <li><strong>メカニズムデザイン・マーケットデザイン</strong>：人がどのように行動するかを読んだ上で，制度を設計する</li>
 </ul>
-<p>この講義で学ぶのは「価格理論」を中心とした内容であり，上記を学ぶためのエッセンスが詰まっている．</p>
+<p>この講義で学ぶのは「価格理論」を中心とした内容であり，その他の分野を学ぶためのエッセンスが詰まっている．</p>
 
 </section><!-- /sec-what-is-micro -->
 
@@ -716,19 +781,23 @@ body.hide-advanced [data-level="advanced"] { display: none; }
 <section class="section" id="sec-model">
 <h2>モデル分析</h2>
 
-<p>経済学は「モデル」を作る．モデルとは現実社会の単純化された模型であり，分析のために関係のない部分は切り捨てる．論理的に「何が起きるか」「何が良いか」を調べる道具である．</p>
+<p>経済学は「モデル」を作る．モデルとは現実社会の単純化された模型であり，分析のために関係のない部分は切り捨てる．論理的に「何が起きるか」「何が良いか」を調べる道具である．以下の例ではモデルとそこから得られる結論を一つ示している．</p>
 
 <div class="ex">
   <div class="box-label"><span class="box-title">モデルの例：自由化・規制の是非</span></div>
   <div class="box-body">
     <ul>
-      <li><strong>モデル例1（自由）</strong>：①人々は自分にとって最も良いものを選ぶ，②そのことが望ましい → 自由は良い</li>
-      <li><strong>モデル例2（規制）</strong>：①人々は「今の自分」にとって最善を選ぶ，②「将来の自分」にとって良いことが望ましい，③危険薬物は「今の自分にとっては最善」だが「将来の自分にとっては最悪」 → 規制も正当化できる</li>
-      <li><strong>モデル例3（より細かい分析）</strong>：①将来志向の人と現在志向の人が混在する，②③は同上 → 規制の政策効果がより複雑になる</li>
+      <li><strong>モデル1（自由）</strong>：①人々は自分にとって最も良いものを選ぶ，②そのことが望ましい → 【結論】自由は良い</li>
+      <li><strong>モデル2（規制）</strong>：①人々は「今の自分」にとって最善を選ぶ（現在志向），②「将来の自分」にとって良いことが望ましい，③授業をサボることは「今の自分にとっては最善」だが「将来の自分にとっては最悪」 → 【結論】授業をサボらせないことを正当化できる</li>
+      <li><strong>モデル3（より細かい分析）</strong>：①将来志向の人<span class="fn">要するに「将来の自分」にとって望ましいことをする</span>と現在志向の人が混在する，②③は同上 → 【結論】規制の効果がより複雑になる</li>
     </ul>
   </div>
 </div>
+モデル1では人々は自分にとって良いものを選び，そのことが望ましい．したがって，どんな行動を取ったとしてもそのことが当事者にとって良いのだからその自由を制限してはいけないという結論を導くことができる<span class="fn">モデルから導くことのできる結論は一つではないが，ここではややこしいので一つだけ示す．</span>．
+モデルを少し変更するとそれとは矛盾する結論を導くことができる．モデル2はその一例である．モデル2では人々は現在の利益のみを追求するが，一方で人々にとって「良い」のは将来の自分の利益を最大にすることである．そうすると，人々は現在の利益だけを考えて行動し，将来の自分は後悔する．後悔させないことが「良い」とみなされる世界では後悔させないように，他人が慈悲の心を持って「人々がしたくないことをさせる」のである<span class="fn">こう言った他者はパターナリスティックであるともいう．</span>．「人の望むままにさせろ」というモデル1とは異なった世界観である．このようにモデルを設計するときには「行動のベースは何か？」「何が良いか」まであらかじめ設定する．こうすることによって，「モデルの妥当さ」と「モデルから得られる結論」を分離できる．これが分離できていないと分析が間違っているのか，考えている世界の設定そのものが違うのかが区別できない．世界観が違う人同士で議論をしても話は平行線である．
 
+
+モデル化の利点と欠点は以下にまとめられる．
 <div class="rmk">
   <div class="box-label"></div>
   <div class="box-body">
@@ -736,6 +805,10 @@ body.hide-advanced [data-level="advanced"] { display: none; }
     <p><strong>モデルの限界</strong>：同じ行動を説明する理論はいくらでもある．理論が違えば「良し悪し」の判断も違う．モデル化はいろんなものを削ぎ落とすので，重要なことが含まれていない可能性もある．</p>
   </div>
 </div>
+
+何をモデル化するかは何を分析したいかによって異なる．
+例えば漁業のシステムについて分析したいときに魚の味について細かくモデル化しても仕方ないので切り捨てるであろう．逆にどの種の魚が需要が高いか調べたいときにはその切り捨てた部分が重要になるかもしれない．
+
 
 </section><!-- /sec-model -->
 
@@ -753,7 +826,7 @@ body.hide-advanced [data-level="advanced"] { display: none; }
 <h2>合理的な行動</h2>
 
 <p>
-ミクロ経済学の出発点は，人々がどのように意思決定を行うかという問いである．
+ミクロ経済学の出発点は，人々がどのように意思決定を行うか（つまり何をするのかをどうやって決めるのか）という問いである．
 経済学の基本モデルでは，次の大前提を置く．
 </p>
 
@@ -770,11 +843,16 @@ body.hide-advanced [data-level="advanced"] { display: none; }
 </p>
 
 <p>
-「人々の好み」とは，任意の2プランを比較したときの順序関係である．
-プラン $a$ とプラン $b$ があるとき，「$a$ の方が好き，あるいは同じくらい好き」であれば
-$a \succsim b$ と書く．
+ここでこの効用というものがどういうものであるのか，について「人々の好み（選好）」をベースに考える．
+「選好」とは，任意の2プランを比較したときの順序関係である．
+「プラン $a$ とプラン $b$ があるとき，$a$を選んでいいですか？」という質問に「はい！」と答えるなら
+$a \succsim b$ と書く．逆に「プラン $a$ とプラン $b$ があるとき，$b$を選んでいいですか？」に「はい」と答えるなら $b \succsim a$と書く．
+
+もちろんどちらの質問にも「はい」と答える人がいるかもしれない．この場合は「$a$と$b$は<span class="term", data-term="無差別">無差別</span>である」という．<br></p>
+
+
 選択肢のセットが有限で，好みが<strong>合理的</strong>（完備かつ推移的）ならば，
-矛盾なく全プランにランキングをつけることができる．
+矛盾なく全プランにランキングをつけることができる．この合理的とは次の定義のとおりである．
 </p>
 
 <div class="def">
@@ -782,7 +860,7 @@ $a \succsim b$ と書く．
   <div class="box-body">
     <p>好み $\succsim$ が次の2条件を満たすとき，<span class="term" data-term="合理的">合理的</span>という．</p>
     <ul>
-      <li><strong>完備性</strong>：任意の $a, b$ に対し，$a \succsim b$ または $b \succsim a$（あるいはその両方）が成立する．</li>
+      <li><strong>完備性</strong>：任意の $a, b$ に対し，$a \succsim b$ または $b \succsim a$（あるいはその両方）が成立する．言い換えればどちらが良いか比べられるということである．</li>
       <li><strong>推移性</strong>：$a \succsim b$ かつ $b \succsim c$ ならば $a \succsim c$．</li>
     </ul>
   </div>
@@ -2072,6 +2150,13 @@ $a \succsim b$ と書く．
   <div id="popupBody"></div>
 </div>
 
+<!-- Footnote popup -->
+<div id="fn-popup">
+  <button class="popup-close" id="fnPopupClose">✕</button>
+  <div class="popup-num" id="fnNum"></div>
+  <div id="fnBody"></div>
+</div>
+
 
 <script>
 // ━━━ GLOSSARY ━━━
@@ -2202,6 +2287,77 @@ function place(popup, el) {
   popup.style.cssText = `left:${left}px; top:${top}px;`;
 }
 
+// ━━━ FOOTNOTE ━━━
+function initFootnotes() {
+  const popup = document.getElementById('fn-popup');
+  const pNum  = document.getElementById('fnNum');
+  const pBody = document.getElementById('fnBody');
+  let active = null;
+
+  // Collect .fn elements, numbering per chapter (or globally if no chapter ancestor).
+  const chapters = new Map(); // chapterEl -> count
+  let globalCount = 0;
+
+  document.querySelectorAll('.fn').forEach(el => {
+    const ch = el.closest('.chapter');
+    let num;
+    if (ch) {
+      num = (chapters.get(ch) || 0) + 1;
+      chapters.set(ch, num);
+    } else {
+      num = ++globalCount;
+    }
+    // Stash raw content before MathJax possibly mutates it.
+    el._fnRaw = el.innerHTML;
+    el.classList.add('fn-content');
+
+    const ref = document.createElement('sup');
+    ref.className = 'fn-ref';
+    ref.textContent = num;
+    el.parentNode.insertBefore(ref, el);
+
+    ref.addEventListener('click', e => {
+      e.stopPropagation();
+      if (active === ref && popup.classList.contains('show')) {
+        popup.classList.remove('show');
+        ref.classList.remove('active');
+        active = null;
+        return;
+      }
+      if (active) active.classList.remove('active');
+      active = ref;
+      ref.classList.add('active');
+      pNum.textContent = `注 ${num}`;
+      pBody.innerHTML = el._fnRaw;
+      place(popup, ref);
+      popup.classList.add('show');
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([pBody]).then(() => place(popup, ref)).catch(() => {});
+      }
+    });
+  });
+
+  document.getElementById('fnPopupClose').addEventListener('click', () => {
+    popup.classList.remove('show');
+    if (active) active.classList.remove('active');
+    active = null;
+  });
+  document.addEventListener('click', e => {
+    if (!popup.contains(e.target) && !e.target.classList.contains('fn-ref')) {
+      popup.classList.remove('show');
+      if (active) active.classList.remove('active');
+      active = null;
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      popup.classList.remove('show');
+      if (active) active.classList.remove('active');
+      active = null;
+    }
+  });
+}
+
 // ━━━ REVEAL ━━━
 function initReveal() {
   document.querySelectorAll('.reveal-btn').forEach(btn => {
@@ -2237,6 +2393,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildTOC();
   initScrollSpy();
   initTerms();
+  initFootnotes();
   initReveal();
   initSteps();
   restoreAdvancedState();
