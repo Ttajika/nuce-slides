@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>価格弾力性ビジュアライザー — 基礎ミクロ経済学</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e2e2e0;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --header-bg: #1e293b;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+header {
+  background: var(--header-bg);
+  color: #fff;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+header h1 { font-size: 15px; font-weight: 700; }
+header a {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 12px;
+}
+header a:hover { color: rgba(255,255,255,0.9); }
+
+.app {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+/* ── Chart ── */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 20px 12px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.swatch {
+  width: 13px; height: 13px;
+  border-radius: 2px;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+.swatch-before { background: #fff; border-color: #1e293b; }
+.swatch-after  { background: #dc2626; border-color: #dc2626; }
+.swatch-dp     { background: rgba(251,191,36,0.3); border-color: #d97706; }
+.swatch-dq     { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
+
+/* ── Panel ── */
+.panel { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sliders */
+.eq-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.eq-label code {
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.slider-row {
+  margin-bottom: 10px;
+}
+.slider-row:last-child { margin-bottom: 0; }
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.slider-name { font-size: 13px; }
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: #eff6ff;
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 40px;
+  text-align: right;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+
+.sep {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
+/* Price sliders highlighted */
+.price-before .slider-val { background: #f1f5f9; color: #1e293b; }
+.price-after  .slider-name { color: #dc2626; font-weight: 500; }
+.price-after  .slider-val  { background: #fef2f2; color: #dc2626; }
+input#s-p2 { accent-color: #dc2626; }
+
+/* Stats */
+.stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.stat-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.stat-table td:last-child {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+.row-eps td {
+  font-weight: 700;
+  background: #f8fafc;
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.row-eps td:last-child { color: var(--accent); }
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 6px;
+}
+.badge-elastic    { background: #fee2e2; color: #b91c1c; }
+.badge-inelastic  { background: #dbeafe; color: #1e40af; }
+.badge-unit       { background: #fef3c7; color: #92400e; }
+.badge-undef      { background: #f3f4f6; color: #6b7280; }
+
+.eq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.eq-cell {
+  background: #f8fafc;
+  border-radius: 5px;
+  padding: 5px 8px;
+}
+.eq-cell .k { font-size: 11px; color: var(--text-dim); margin-bottom: 1px; }
+.eq-cell .v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+.eq-cell.before .k { color: #1e293b; }
+.eq-cell.after  .k { color: #dc2626; }
+.eq-cell.after  .v { color: #dc2626; }
+
+.alert {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.formula {
+  background: #f8fafc;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  margin-top: 10px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.formula .num { color: var(--accent); font-weight: 500; }
+
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>価格弾力性ビジュアライザー</h1>
+  <a href="micro-notes.html#sec-elasticity">← 講義ノートに戻る</a>
+</header>
+
+<div class="app">
+
+  <!-- ── Chart ── -->
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="swatch swatch-before"></div>変化前 (P₁, Q₁)</div>
+      <div class="legend-item"><div class="swatch swatch-after"></div>変化後 (P₂, Q₂)</div>
+      <div class="legend-item"><div class="swatch swatch-dp"></div>価格変化 ΔP</div>
+      <div class="legend-item"><div class="swatch swatch-dq"></div>需要量変化 ΔQ</div>
+    </div>
+  </div>
+
+  <!-- ── Panel ── -->
+  <div class="panel">
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="card-title">パラメータ</div>
+
+      <p class="eq-label">需要曲線: <code>P = a − b·Q</code></p>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">需要切片 <i>a</i></span>
+          <span class="slider-val" id="v-a">20</span>
+        </div>
+        <input type="range" id="s-a" min="5" max="40" value="20" step="1">
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">需要の傾き <i>b</i></span>
+          <span class="slider-val" id="v-b">2.0</span>
+        </div>
+        <input type="range" id="s-b" min="0.5" max="6" value="2" step="0.5">
+      </div>
+
+      <hr class="sep">
+      <p class="eq-label">価格の変化</p>
+
+      <div class="slider-row price-before">
+        <div class="slider-header">
+          <span class="slider-name">変化前価格 <i>P₁</i></span>
+          <span class="slider-val" id="v-p1">8</span>
+        </div>
+        <input type="range" id="s-p1" min="0.5" max="40" value="8" step="0.5">
+      </div>
+
+      <div class="slider-row price-after">
+        <div class="slider-header">
+          <span class="slider-name">変化後価格 <i>P₂</i></span>
+          <span class="slider-val" id="v-p2">12</span>
+        </div>
+        <input type="range" id="s-p2" min="0.5" max="40" value="12" step="0.5">
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <div class="card-title">弾力性の計算</div>
+
+      <div id="alert-no-q" class="alert" style="display:none">
+        価格が需要切片以上（需要量 $= 0$）
+      </div>
+      <div id="alert-nochange" class="alert" style="display:none" role="alert">
+        価格が変化していません（ΔP $= 0$）
+      </div>
+
+      <div class="eq-grid">
+        <div class="eq-cell before">
+          <div class="k">変化前 P₁</div>
+          <div class="v" id="ev-p1">—</div>
+        </div>
+        <div class="eq-cell before">
+          <div class="k">変化前 Q₁</div>
+          <div class="v" id="ev-q1">—</div>
+        </div>
+        <div class="eq-cell after">
+          <div class="k">変化後 P₂</div>
+          <div class="v" id="ev-p2">—</div>
+        </div>
+        <div class="eq-cell after">
+          <div class="k">変化後 Q₂</div>
+          <div class="v" id="ev-q2">—</div>
+        </div>
+      </div>
+
+      <table class="stat-table" id="stat-table" style="margin-top:10px;">
+        <tr>
+          <td>価格の変化率 ΔP/P₁</td>
+          <td id="st-dp">—</td>
+        </tr>
+        <tr>
+          <td>需要量の変化率 ΔQ/Q₁</td>
+          <td id="st-dq">—</td>
+        </tr>
+        <tr class="row-eps">
+          <td>価格弾力性 ε</td>
+          <td id="st-eps">—</td>
+        </tr>
+      </table>
+
+      <div style="text-align:center;">
+        <span class="badge" id="badge">—</span>
+      </div>
+
+      <div class="formula" id="formula">
+        ε = −(ΔQ/Q₁) / (ΔP/P₁)
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /app -->
+
+<script>
+// ── Canvas setup (HiDPI) ───────────────────────────────────────
+const canvas = document.getElementById('chart');
+const ctx    = canvas.getContext('2d');
+const dpr    = window.devicePixelRatio || 1;
+const DW = 620, DH = 500;
+canvas.width  = DW * dpr;
+canvas.height = DH * dpr;
+canvas.style.width  = DW + 'px';
+canvas.style.height = DH + 'px';
+ctx.scale(dpr, dpr);
+
+// ── State ─────────────────────────────────────────────────────
+const P = { a: 20, b: 2, p1: 8, p2: 12 };
+
+// ── Sliders ───────────────────────────────────────────────────
+const sliderKey = { a: 'a', b: 'b', p1: 'p1', p2: 'p2' };
+['a','b','p1','p2'].forEach(k => {
+  const sl = document.getElementById('s-' + k);
+  const vl = document.getElementById('v-' + k);
+  sl.addEventListener('input', () => {
+    P[k] = +sl.value;
+    vl.textContent = (+sl.value).toFixed(k === 'b' ? 1 : 0).replace(/\.0$/, k === 'b' ? '.0' : '');
+    vl.textContent = sl.value;
+    update();
+  });
+});
+
+// ── Formatting ────────────────────────────────────────────────
+function fmt(x, d = 2) {
+  if (x == null || !isFinite(x)) return '—';
+  if (Math.abs(x) < 1e-9) return '0';
+  return x.toFixed(d);
+}
+function fmtPct(x) {
+  if (x == null || !isFinite(x)) return '—';
+  return (x * 100).toFixed(1) + '%';
+}
+function fmtSigned(x, d = 2) {
+  if (x == null || !isFinite(x)) return '—';
+  if (Math.abs(x) < 1e-9) return '0';
+  return (x > 0 ? '+' : '') + x.toFixed(d);
+}
+function fmtSignedPct(x) {
+  if (x == null || !isFinite(x)) return '—';
+  if (Math.abs(x) < 1e-9) return '0%';
+  return (x > 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
+}
+
+// ── Main update ───────────────────────────────────────────────
+function update() {
+  const { a, b, p1, p2 } = P;
+
+  document.getElementById('alert-no-q').style.display = 'none';
+  document.getElementById('alert-nochange').style.display = 'none';
+
+  // Demand: Q = (a - P) / b, constrained to Q >= 0
+  const q1raw = (a - p1) / b;
+  const q2raw = (a - p2) / b;
+  const q1 = Math.max(0, q1raw);
+  const q2 = Math.max(0, q2raw);
+
+  const p1OutOfRange = p1 >= a;
+  const p2OutOfRange = p2 >= a;
+
+  if (p1OutOfRange || p2OutOfRange) {
+    document.getElementById('alert-no-q').style.display = '';
+  }
+
+  // Changes
+  const dP = p2 - p1;
+  const dQ = q2 - q1;
+
+  const pctP = dP / p1;      // price change rate (signed)
+  const pctQ = q1 > 0 ? dQ / q1 : NaN;  // quantity change rate
+
+  // Elasticity (positive by convention)
+  let eps = NaN;
+  if (Math.abs(dP) > 1e-9 && q1 > 0) {
+    eps = -(pctQ) / (pctP);
+  }
+
+  if (Math.abs(dP) < 1e-9) {
+    document.getElementById('alert-nochange').style.display = '';
+  }
+
+  // Update eq cells
+  document.getElementById('ev-p1').textContent = fmt(p1, 1);
+  document.getElementById('ev-q1').textContent = p1OutOfRange ? '0' : fmt(q1, 2);
+  document.getElementById('ev-p2').textContent = fmt(p2, 1);
+  document.getElementById('ev-q2').textContent = p2OutOfRange ? '0' : fmt(q2, 2);
+
+  // Update stat table
+  document.getElementById('st-dp').textContent = fmtSignedPct(pctP);
+  document.getElementById('st-dq').textContent = isFinite(pctQ) ? fmtSignedPct(pctQ) : '—';
+  document.getElementById('st-eps').textContent = isFinite(eps) ? eps.toFixed(3) : '—';
+
+  // Badge
+  const badge = document.getElementById('badge');
+  if (!isFinite(eps)) {
+    badge.className = 'badge badge-undef';
+    badge.textContent = '定義できません';
+  } else if (eps > 1.001) {
+    badge.className = 'badge badge-elastic';
+    badge.textContent = '弾力的 (ε > 1)';
+  } else if (eps < 0.999) {
+    badge.className = 'badge badge-inelastic';
+    badge.textContent = '非弾力的 (ε < 1)';
+  } else {
+    badge.className = 'badge badge-unit';
+    badge.textContent = '単位弾力的 (ε = 1)';
+  }
+
+  // Formula display with values
+  const formulaEl = document.getElementById('formula');
+  if (isFinite(eps)) {
+    formulaEl.innerHTML =
+      'ε = −(ΔQ/Q₁) / (ΔP/P₁)<br>' +
+      '&nbsp;&nbsp;= −(<span class="num">' + fmtSigned(pctQ * 100, 1) + '%</span>) / (<span class="num">' +
+      fmtSigned(pctP * 100, 1) + '%</span>)<br>' +
+      '&nbsp;&nbsp;= <span class="num">' + eps.toFixed(3) + '</span>';
+  } else {
+    formulaEl.innerHTML = 'ε = −(ΔQ/Q₁) / (ΔP/P₁)';
+  }
+
+  draw({ a, b, p1, p2, q1, q2, q1raw, q2raw, dP, dQ, eps });
+}
+
+// ── Draw ──────────────────────────────────────────────────────
+function draw(s) {
+  const W = DW, H = DH;
+  const ml = 62, mr = 28, mt = 22, mb = 52;
+  const cw = W - ml - mr, ch = H - mt - mb;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const { a, b, p1, p2, q1, q2 } = s;
+
+  // Scale
+  const qIntercept = a / b;
+  const Qmax = Math.max(qIntercept * 1.15, 4);
+  const Pmax = a * 1.15;
+
+  const cx = q => ml + (q / Qmax) * cw;
+  const cy = p => mt + ch - (p / Pmax) * ch;
+
+  // ── Axes & grid ──
+  drawAxes(ml, mr, mt, mb, cw, ch, Qmax, Pmax, cx, cy);
+
+  const pLow  = Math.min(p1, p2);
+  const pHigh = Math.max(p1, p2);
+  const qLow  = Math.min(q1, q2);
+  const qHigh = Math.max(q1, q2);
+
+  const validQ1 = p1 < a;
+  const validQ2 = p2 < a;
+
+  // ── ΔP band (horizontal band between p1 & p2) ──
+  if (validQ1 && validQ2 && Math.abs(p1 - p2) > 1e-9) {
+    ctx.fillStyle = 'rgba(251,191,36,0.18)';
+    ctx.fillRect(ml, cy(pHigh), cw, cy(pLow) - cy(pHigh));
+  }
+
+  // ── ΔQ band (vertical band between q1 & q2) ──
+  if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
+    ctx.fillStyle = 'rgba(59,130,246,0.12)';
+    ctx.fillRect(cx(qLow), mt, cx(qHigh) - cx(qLow), ch);
+  }
+
+  // ── Demand curve ──
+  const qdEnd = Math.min(qIntercept, Qmax);
+  ctx.strokeStyle = '#1d4ed8';
+  ctx.lineWidth   = 2.5;
+  ctx.lineJoin    = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx(0), cy(a));
+  ctx.lineTo(cx(qdEnd), cy(Math.max(0, a - b * qdEnd)));
+  ctx.stroke();
+  ctx.fillStyle = '#1d4ed8';
+  ctx.font = '12px Noto Sans JP, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('需要', cx(qdEnd * 0.88) - 2, cy(a - b * qdEnd * 0.88) - 6);
+
+  // ── Dashed reference lines ──
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (validQ1) {
+    ctx.moveTo(ml, cy(p1)); ctx.lineTo(cx(q1), cy(p1));
+    ctx.moveTo(cx(q1), cy(p1)); ctx.lineTo(cx(q1), mt + ch);
+  }
+  if (validQ2) {
+    ctx.moveTo(ml, cy(p2)); ctx.lineTo(cx(q2), cy(p2));
+    ctx.moveTo(cx(q2), cy(p2)); ctx.lineTo(cx(q2), mt + ch);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── ΔP arrow on left side ──
+  if (validQ1 && validQ2 && Math.abs(p1 - p2) > 1e-9) {
+    const ax = ml + 16;
+    drawArrow(ctx, ax, cy(p1), ax, cy(p2), '#d97706', 2);
+    ctx.fillStyle = '#92400e';
+    ctx.font = 'bold 12px Noto Sans JP, sans-serif';
+    ctx.textAlign = 'left';
+    const midY = (cy(p1) + cy(p2)) / 2;
+    ctx.fillText('ΔP', ax + 6, midY + 4);
+  }
+
+  // ── ΔQ arrow on bottom ──
+  if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
+    const ay = mt + ch - 14;
+    drawArrow(ctx, cx(q1), ay, cx(q2), ay, '#3b82f6', 2);
+    ctx.fillStyle = '#1d4ed8';
+    ctx.font = 'bold 12px Noto Sans JP, sans-serif';
+    ctx.textAlign = 'center';
+    const midX = (cx(q1) + cx(q2)) / 2;
+    ctx.fillText('ΔQ', midX, ay - 6);
+  }
+
+  // ── Axis labels for P1, P2, Q1, Q2 ──
+  ctx.font = '11px JetBrains Mono, monospace';
+  if (validQ1) {
+    axisLabelY(ctx, ml, cy(p1), 'P₁=' + fmt(p1, 1), '#1e293b');
+    axisLabelX(ctx, cx(q1), mt + ch, 'Q₁=' + fmt(q1, 1), '#1e293b');
+  }
+  if (validQ2) {
+    axisLabelY(ctx, ml, cy(p2), 'P₂=' + fmt(p2, 1), '#dc2626');
+    axisLabelX(ctx, cx(q2), mt + ch, 'Q₂=' + fmt(q2, 1), '#dc2626');
+  }
+
+  // ── Points ──
+  if (validQ1) drawPoint(ctx, cx(q1), cy(p1), '#fff', '#1e293b', 6, 2.2);
+  if (validQ2) drawPoint(ctx, cx(q2), cy(p2), '#dc2626', '#7f1d1d', 6, 2);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function drawAxes(ml, mr, mt, mb, cw, ch, Qmax, Pmax, cx, cy) {
+  // Background
+  ctx.fillStyle = '#f9fafb';
+  ctx.fillRect(ml, mt, cw, ch);
+
+  // Grid lines
+  if (cx && cy) {
+    ctx.strokeStyle = '#f0f0ee';
+    ctx.lineWidth = 0.8;
+    const qStep = niceStep(Qmax / 5);
+    const pStep = niceStep(Pmax / 5);
+    for (let q = qStep; q < Qmax * 1.01; q += qStep) {
+      ctx.beginPath(); ctx.moveTo(cx(q), mt); ctx.lineTo(cx(q), mt + ch); ctx.stroke();
+    }
+    for (let p = pStep; p < Pmax * 1.01; p += pStep) {
+      ctx.beginPath(); ctx.moveTo(ml, cy(p)); ctx.lineTo(ml + cw, cy(p)); ctx.stroke();
+    }
+
+    // Tick labels
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '11px JetBrains Mono, monospace';
+    for (let q = qStep; q < Qmax * 1.01; q += qStep) {
+      ctx.textAlign = 'center';
+      ctx.fillText(fmtTick(q), cx(q), mt + ch + 14);
+    }
+    for (let p = pStep; p < Pmax * 1.01; p += pStep) {
+      ctx.textAlign = 'right';
+      ctx.fillText(fmtTick(p), ml - 6, cy(p) + 4);
+    }
+  }
+
+  // Axis lines
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(ml, mt); ctx.lineTo(ml, mt + ch + 1);
+  ctx.moveTo(ml - 1, mt + ch); ctx.lineTo(ml + cw, mt + ch);
+  ctx.stroke();
+
+  // Arrows
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(ml - 4, mt + 6); ctx.lineTo(ml, mt - 2); ctx.lineTo(ml + 4, mt + 6);
+  ctx.moveTo(ml + cw - 4, mt + ch - 4); ctx.lineTo(ml + cw + 6, mt + ch); ctx.lineTo(ml + cw - 4, mt + ch + 4);
+  ctx.stroke();
+
+  // Axis names
+  ctx.fillStyle = '#374151';
+  ctx.font = '13px Noto Sans JP, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Q', ml + cw + 16, mt + ch + 4);
+  ctx.textAlign = 'right';
+  ctx.fillText('P', ml - 10, mt - 4);
+}
+
+function drawPoint(ctx, x, y, fill, stroke, r, lw) {
+  ctx.fillStyle   = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth   = lw || 2;
+  ctx.beginPath();
+  ctx.arc(x, y, r || 5, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle   = color;
+  ctx.lineWidth   = lw || 2;
+
+  const head = 6;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return;
+  const ux = dx / len, uy = dy / len;
+
+  // Shorten segment so heads fit
+  const sx1 = x1 + ux * head, sy1 = y1 + uy * head;
+  const sx2 = x2 - ux * head, sy2 = y2 - uy * head;
+
+  ctx.beginPath();
+  ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2);
+  ctx.stroke();
+
+  // Two arrow heads (both ends)
+  drawHead(ctx, x1, y1, -ux, -uy, head);
+  drawHead(ctx, x2, y2,  ux,  uy, head);
+}
+
+function drawHead(ctx, x, y, ux, uy, size) {
+  const px = -uy, py = ux;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - ux * size + px * size * 0.5, y - uy * size + py * size * 0.5);
+  ctx.lineTo(x - ux * size - px * size * 0.5, y - uy * size - py * size * 0.5);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function axisLabelY(ctx, ml, y, text, color) {
+  ctx.fillStyle = color;
+  ctx.font = '10.5px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(text, ml - 4, y + 4);
+}
+
+function axisLabelX(ctx, x, yBase, text, color) {
+  ctx.fillStyle = color;
+  ctx.font = '10.5px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, yBase + 28);
+}
+
+function niceStep(raw) {
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / mag;
+  if (n < 1.5) return mag;
+  if (n < 3.5) return 2 * mag;
+  if (n < 7.5) return 5 * mag;
+  return 10 * mag;
+}
+
+function fmtTick(x) {
+  return x % 1 === 0 ? x : x.toFixed(1);
+}
+
+// Initial draw
+update();
+</script>
+</body>
+</html>
