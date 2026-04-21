@@ -91,6 +91,9 @@ canvas {
 .swatch-after  { background: #dc2626; border-color: #dc2626; }
 .swatch-dp     { background: rgba(251,191,36,0.3); border-color: #d97706; }
 .swatch-dq     { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
+.swatch-d1     { background: #1d4ed8; border-color: #1d4ed8; }
+.swatch-d2     { background: #ea580c; border-color: #ea580c; }
+.swatch-after2 { background: #ea580c; border-color: #9a3412; }
 
 /* ── Panel ── */
 .panel { display: flex; flex-direction: column; gap: 14px; }
@@ -167,6 +170,38 @@ input[type="range"] {
 .price-after  .slider-name { color: #dc2626; font-weight: 500; }
 .price-after  .slider-val  { background: #fef2f2; color: #dc2626; }
 input#s-p2 { accent-color: #dc2626; }
+
+/* Compare mode toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-row input { cursor: pointer; accent-color: #ea580c; }
+.toggle-row label { font-size: 12.5px; cursor: pointer; flex: 1; }
+
+.curve2-section .slider-name { color: #ea580c; font-weight: 500; }
+.curve2-section .slider-val  { background: #fff7ed; color: #ea580c; }
+input#s-b2 { accent-color: #ea580c; }
+
+.row-eps2 td { color: #ea580c; font-weight: 600; }
+.row-eps2 td:last-child { color: #ea580c; }
+
+.curve-note {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+  line-height: 1.5;
+}
 
 /* Stats */
 .stat-table {
@@ -266,11 +301,18 @@ input#s-p2 { accent-color: #dc2626; }
   <!-- ── Chart ── -->
   <div class="chart-wrap">
     <canvas id="chart"></canvas>
-    <div class="legend">
+    <div class="legend" id="legend-single">
       <div class="legend-item"><div class="swatch swatch-before"></div>変化前 (P₁, Q₁)</div>
       <div class="legend-item"><div class="swatch swatch-after"></div>変化後 (P₂, Q₂)</div>
       <div class="legend-item"><div class="swatch swatch-dp"></div>価格変化 ΔP</div>
       <div class="legend-item"><div class="swatch swatch-dq"></div>需要量変化 ΔQ</div>
+    </div>
+    <div class="legend" id="legend-compare" style="display:none">
+      <div class="legend-item"><div class="swatch swatch-d1"></div>需要1（傾き b）</div>
+      <div class="legend-item"><div class="swatch swatch-d2"></div>需要2（傾き b₂）</div>
+      <div class="legend-item"><div class="swatch swatch-before"></div>共通点 (P₁, Q₁)</div>
+      <div class="legend-item"><div class="swatch swatch-after"></div>需要1 の P₂</div>
+      <div class="legend-item"><div class="swatch swatch-after2"></div>需要2 の P₂</div>
     </div>
   </div>
 
@@ -280,6 +322,11 @@ input#s-p2 { accent-color: #dc2626; }
     <!-- Controls -->
     <div class="card">
       <div class="card-title">パラメータ</div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="s-compare">
+        <label for="s-compare">比較モード：同じ点 (Q₁, P₁) を通る別の傾きの需要曲線を表示</label>
+      </div>
 
       <p class="eq-label">需要曲線: <code>P = a − b·Q</code></p>
 
@@ -317,6 +364,20 @@ input#s-p2 { accent-color: #dc2626; }
         </div>
         <input type="range" id="s-p2" min="0.5" max="40" value="12" step="0.5">
       </div>
+
+      <div id="compare-controls" style="display:none">
+        <hr class="sep">
+        <div class="slider-row curve2-section">
+          <div class="slider-header">
+            <span class="slider-name">需要2 の傾き <i>b₂</i></span>
+            <span class="slider-val" id="v-b2">4.0</span>
+          </div>
+          <input type="range" id="s-b2" min="0.5" max="6" value="4" step="0.5">
+        </div>
+        <div class="curve-note">
+          両曲線は共通点 (Q₁, P₁) で交差し、そこでの価格変化 <i>P₁ → P₂</i> に対する需要量の反応を比較します。
+        </div>
+      </div>
     </div>
 
     <!-- Stats -->
@@ -340,12 +401,16 @@ input#s-p2 { accent-color: #dc2626; }
           <div class="v" id="ev-q1">—</div>
         </div>
         <div class="eq-cell after">
+          <div class="k" id="k-q2">変化後 Q₂</div>
+          <div class="v" id="ev-q2">—</div>
+        </div>
+        <div class="eq-cell after" id="cell-q2b" style="display:none">
+          <div class="k" style="color:#ea580c">需要2 の Q₂</div>
+          <div class="v" id="ev-q2b" style="color:#ea580c">—</div>
+        </div>
+        <div class="eq-cell after" id="cell-p2">
           <div class="k">変化後 P₂</div>
           <div class="v" id="ev-p2">—</div>
-        </div>
-        <div class="eq-cell after">
-          <div class="k">変化後 Q₂</div>
-          <div class="v" id="ev-q2">—</div>
         </div>
       </div>
 
@@ -355,12 +420,20 @@ input#s-p2 { accent-color: #dc2626; }
           <td id="st-dp">—</td>
         </tr>
         <tr>
-          <td>需要量の変化率 ΔQ/Q₁</td>
+          <td id="lbl-dq">需要量の変化率 ΔQ/Q₁</td>
           <td id="st-dq">—</td>
         </tr>
+        <tr id="row-dq2" style="display:none">
+          <td style="color:#ea580c">需要2 の ΔQ/Q₁</td>
+          <td id="st-dq2" style="color:#ea580c">—</td>
+        </tr>
         <tr class="row-eps">
-          <td>価格弾力性 ε</td>
+          <td id="lbl-eps">価格弾力性 ε</td>
           <td id="st-eps">—</td>
+        </tr>
+        <tr class="row-eps2" id="row-eps2" style="display:none">
+          <td>需要2 の価格弾力性 ε₂</td>
+          <td id="st-eps2">—</td>
         </tr>
       </table>
 
@@ -389,19 +462,33 @@ canvas.style.height = DH + 'px';
 ctx.scale(dpr, dpr);
 
 // ── State ─────────────────────────────────────────────────────
-const P = { a: 20, b: 2, p1: 8, p2: 12 };
+const P = { a: 20, b: 2, p1: 8, p2: 12, b2: 4, compare: false };
 
 // ── Sliders ───────────────────────────────────────────────────
-const sliderKey = { a: 'a', b: 'b', p1: 'p1', p2: 'p2' };
-['a','b','p1','p2'].forEach(k => {
+['a','b','p1','p2','b2'].forEach(k => {
   const sl = document.getElementById('s-' + k);
   const vl = document.getElementById('v-' + k);
   sl.addEventListener('input', () => {
     P[k] = +sl.value;
-    vl.textContent = (+sl.value).toFixed(k === 'b' ? 1 : 0).replace(/\.0$/, k === 'b' ? '.0' : '');
     vl.textContent = sl.value;
     update();
   });
+});
+
+// Compare toggle
+document.getElementById('s-compare').addEventListener('change', (e) => {
+  P.compare = e.target.checked;
+  document.getElementById('compare-controls').style.display = P.compare ? '' : 'none';
+  document.getElementById('legend-single').style.display    = P.compare ? 'none' : '';
+  document.getElementById('legend-compare').style.display   = P.compare ? '' : 'none';
+  document.getElementById('cell-q2b').style.display = P.compare ? '' : 'none';
+  document.getElementById('cell-p2').style.display  = P.compare ? 'none' : '';
+  document.getElementById('row-dq2').style.display  = P.compare ? '' : 'none';
+  document.getElementById('row-eps2').style.display = P.compare ? '' : 'none';
+  document.getElementById('k-q2').textContent  = P.compare ? '需要1 の Q₂' : '変化後 Q₂';
+  document.getElementById('lbl-dq').textContent  = P.compare ? '需要1 の ΔQ/Q₁' : '需要量の変化率 ΔQ/Q₁';
+  document.getElementById('lbl-eps').textContent = P.compare ? '需要1 の価格弾力性 ε₁' : '価格弾力性 ε';
+  update();
 });
 
 // ── Formatting ────────────────────────────────────────────────
@@ -427,12 +514,12 @@ function fmtSignedPct(x) {
 
 // ── Main update ───────────────────────────────────────────────
 function update() {
-  const { a, b, p1, p2 } = P;
+  const { a, b, p1, p2, b2, compare } = P;
 
   document.getElementById('alert-no-q').style.display = 'none';
   document.getElementById('alert-nochange').style.display = 'none';
 
-  // Demand: Q = (a - P) / b, constrained to Q >= 0
+  // Curve 1: Q = (a - P) / b
   const q1raw = (a - p1) / b;
   const q2raw = (a - p2) / b;
   const q1 = Math.max(0, q1raw);
@@ -445,17 +532,25 @@ function update() {
     document.getElementById('alert-no-q').style.display = '';
   }
 
+  // Curve 2 passes through (Q₁, P₁) with slope b₂:  P = a₂ - b₂·Q,  a₂ = P₁ + b₂·Q₁
+  const a2 = p1 + b2 * q1;
+  const q2b_raw = (a2 - p2) / b2;   // = q1 + (p1 - p2)/b2
+  const q2b = Math.max(0, q2b_raw);
+  const p2OutOfRange2 = p2 >= a2;
+
   // Changes
   const dP = p2 - p1;
-  const dQ = q2 - q1;
+  const dQ  = q2  - q1;
+  const dQb = q2b - q1;
 
-  const pctP = dP / p1;      // price change rate (signed)
-  const pctQ = q1 > 0 ? dQ / q1 : NaN;  // quantity change rate
+  const pctP  = dP / p1;
+  const pctQ  = q1 > 0 ? dQ  / q1 : NaN;
+  const pctQb = q1 > 0 ? dQb / q1 : NaN;
 
-  // Elasticity (positive by convention)
-  let eps = NaN;
+  let eps = NaN, eps2 = NaN;
   if (Math.abs(dP) > 1e-9 && q1 > 0) {
-    eps = -(pctQ) / (pctP);
+    eps  = -(pctQ)  / (pctP);
+    eps2 = -(pctQb) / (pctP);
   }
 
   if (Math.abs(dP) < 1e-9) {
@@ -467,31 +562,41 @@ function update() {
   document.getElementById('ev-q1').textContent = p1OutOfRange ? '0' : fmt(q1, 2);
   document.getElementById('ev-p2').textContent = fmt(p2, 1);
   document.getElementById('ev-q2').textContent = p2OutOfRange ? '0' : fmt(q2, 2);
+  document.getElementById('ev-q2b').textContent = p2OutOfRange2 ? '0' : fmt(q2b, 2);
 
   // Update stat table
-  document.getElementById('st-dp').textContent = fmtSignedPct(pctP);
-  document.getElementById('st-dq').textContent = isFinite(pctQ) ? fmtSignedPct(pctQ) : '—';
-  document.getElementById('st-eps').textContent = isFinite(eps) ? eps.toFixed(3) : '—';
+  document.getElementById('st-dp').textContent  = fmtSignedPct(pctP);
+  document.getElementById('st-dq').textContent  = isFinite(pctQ)  ? fmtSignedPct(pctQ)  : '—';
+  document.getElementById('st-dq2').textContent = isFinite(pctQb) ? fmtSignedPct(pctQb) : '—';
+  document.getElementById('st-eps').textContent  = isFinite(eps)  ? eps.toFixed(3)  : '—';
+  document.getElementById('st-eps2').textContent = isFinite(eps2) ? eps2.toFixed(3) : '—';
 
-  // Badge
+  // Badge (always based on curve 1)
   const badge = document.getElementById('badge');
   if (!isFinite(eps)) {
     badge.className = 'badge badge-undef';
     badge.textContent = '定義できません';
   } else if (eps > 1.001) {
     badge.className = 'badge badge-elastic';
-    badge.textContent = '弾力的 (ε > 1)';
+    badge.textContent = compare ? '需要1: 弾力的 (ε > 1)' : '弾力的 (ε > 1)';
   } else if (eps < 0.999) {
     badge.className = 'badge badge-inelastic';
-    badge.textContent = '非弾力的 (ε < 1)';
+    badge.textContent = compare ? '需要1: 非弾力的 (ε < 1)' : '非弾力的 (ε < 1)';
   } else {
     badge.className = 'badge badge-unit';
-    badge.textContent = '単位弾力的 (ε = 1)';
+    badge.textContent = compare ? '需要1: 単位弾力的' : '単位弾力的 (ε = 1)';
   }
 
   // Formula display with values
   const formulaEl = document.getElementById('formula');
-  if (isFinite(eps)) {
+  if (compare && isFinite(eps) && isFinite(eps2)) {
+    const ratio = b2 / b;
+    formulaEl.innerHTML =
+      '同じ (P₁, Q₁) でも傾きで弾力性が変わる：<br>' +
+      '&nbsp;&nbsp;ε₁ = P₁/(b·Q₁) = <span class="num">' + eps.toFixed(3) + '</span><br>' +
+      '&nbsp;&nbsp;ε₂ = P₁/(b₂·Q₁) = <span class="num" style="color:#ea580c">' + eps2.toFixed(3) + '</span><br>' +
+      '&nbsp;&nbsp;比 ε₁/ε₂ = b₂/b = <span class="num">' + ratio.toFixed(2) + '</span>';
+  } else if (isFinite(eps)) {
     formulaEl.innerHTML =
       'ε = −(ΔQ/Q₁) / (ΔP/P₁)<br>' +
       '&nbsp;&nbsp;= −(<span class="num">' + fmtSigned(pctQ * 100, 1) + '%</span>) / (<span class="num">' +
@@ -501,7 +606,7 @@ function update() {
     formulaEl.innerHTML = 'ε = −(ΔQ/Q₁) / (ΔP/P₁)';
   }
 
-  draw({ a, b, p1, p2, q1, q2, q1raw, q2raw, dP, dQ, eps });
+  draw({ a, b, p1, p2, q1, q2, b2, a2, q2b, compare, eps, eps2 });
 }
 
 // ── Draw ──────────────────────────────────────────────────────
@@ -512,12 +617,18 @@ function draw(s) {
 
   ctx.clearRect(0, 0, W, H);
 
-  const { a, b, p1, p2, q1, q2 } = s;
+  const { a, b, p1, p2, q1, q2, b2, a2, q2b, compare } = s;
 
-  // Scale
-  const qIntercept = a / b;
-  const Qmax = Math.max(qIntercept * 1.15, 4);
-  const Pmax = a * 1.15;
+  // Scale — in compare mode, extend Q-axis to include curve 2
+  const qIntercept  = a  / b;
+  const qIntercept2 = a2 / b2;
+  const qMaxData = compare
+    ? Math.max(qIntercept, qIntercept2, q2b)
+    : qIntercept;
+  const pMaxData = compare ? Math.max(a, a2) : a;
+
+  const Qmax = Math.max(qMaxData * 1.15, 4);
+  const Pmax = pMaxData * 1.15;
 
   const cx = q => ml + (q / Qmax) * cw;
   const cy = p => mt + ch - (p / Pmax) * ch;
@@ -525,31 +636,40 @@ function draw(s) {
   // ── Axes & grid ──
   drawAxes(ml, mr, mt, mb, cw, ch, Qmax, Pmax, cx, cy);
 
-  const pLow  = Math.min(p1, p2);
-  const pHigh = Math.max(p1, p2);
-  const qLow  = Math.min(q1, q2);
-  const qHigh = Math.max(q1, q2);
+  const validQ1 = p1 < a;   // curve 1 intercept — but in compare mode, (Q₁,P₁) is the anchor, both curves valid there
+  const validQ2  = p2 < a;
+  const validQ2b = p2 < a2;
 
-  const validQ1 = p1 < a;
-  const validQ2 = p2 < a;
+  // ── Bands only in single mode ──
+  if (!compare) {
+    const pLow  = Math.min(p1, p2);
+    const pHigh = Math.max(p1, p2);
+    const qLow  = Math.min(q1, q2);
+    const qHigh = Math.max(q1, q2);
 
-  // ── ΔP band (horizontal band between p1 & p2) ──
-  if (validQ1 && validQ2 && Math.abs(p1 - p2) > 1e-9) {
-    ctx.fillStyle = 'rgba(251,191,36,0.18)';
-    ctx.fillRect(ml, cy(pHigh), cw, cy(pLow) - cy(pHigh));
+    if (validQ1 && validQ2 && Math.abs(p1 - p2) > 1e-9) {
+      ctx.fillStyle = 'rgba(251,191,36,0.18)';
+      ctx.fillRect(ml, cy(pHigh), cw, cy(pLow) - cy(pHigh));
+    }
+    if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
+      ctx.fillStyle = 'rgba(59,130,246,0.12)';
+      ctx.fillRect(cx(qLow), mt, cx(qHigh) - cx(qLow), ch);
+    }
+  } else {
+    // Compare mode: only horizontal P-band to highlight the common ΔP
+    if (validQ1 && Math.abs(p1 - p2) > 1e-9) {
+      const pLow  = Math.min(p1, p2);
+      const pHigh = Math.max(p1, p2);
+      ctx.fillStyle = 'rgba(251,191,36,0.14)';
+      ctx.fillRect(ml, cy(pHigh), cw, cy(pLow) - cy(pHigh));
+    }
   }
 
-  // ── ΔQ band (vertical band between q1 & q2) ──
-  if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
-    ctx.fillStyle = 'rgba(59,130,246,0.12)';
-    ctx.fillRect(cx(qLow), mt, cx(qHigh) - cx(qLow), ch);
-  }
-
-  // ── Demand curve ──
+  // ── Demand curve 1 ──
+  ctx.lineJoin = 'round';
   const qdEnd = Math.min(qIntercept, Qmax);
   ctx.strokeStyle = '#1d4ed8';
   ctx.lineWidth   = 2.5;
-  ctx.lineJoin    = 'round';
   ctx.beginPath();
   ctx.moveTo(cx(0), cy(a));
   ctx.lineTo(cx(qdEnd), cy(Math.max(0, a - b * qdEnd)));
@@ -557,7 +677,21 @@ function draw(s) {
   ctx.fillStyle = '#1d4ed8';
   ctx.font = '12px Noto Sans JP, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('需要', cx(qdEnd * 0.88) - 2, cy(a - b * qdEnd * 0.88) - 6);
+  ctx.fillText(compare ? '需要1' : '需要', cx(qdEnd * 0.88) - 2, cy(a - b * qdEnd * 0.88) - 6);
+
+  // ── Demand curve 2 ──
+  if (compare) {
+    const qd2End = Math.min(qIntercept2, Qmax);
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth   = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx(0), cy(a2));
+    ctx.lineTo(cx(qd2End), cy(Math.max(0, a2 - b2 * qd2End)));
+    ctx.stroke();
+    ctx.fillStyle = '#ea580c';
+    ctx.textAlign = 'right';
+    ctx.fillText('需要2', cx(qd2End * 0.88) - 2, cy(a2 - b2 * qd2End * 0.88) - 6);
+  }
 
   // ── Dashed reference lines ──
   ctx.setLineDash([4, 4]);
@@ -568,15 +702,25 @@ function draw(s) {
     ctx.moveTo(ml, cy(p1)); ctx.lineTo(cx(q1), cy(p1));
     ctx.moveTo(cx(q1), cy(p1)); ctx.lineTo(cx(q1), mt + ch);
   }
-  if (validQ2) {
+  if (!compare && validQ2) {
     ctx.moveTo(ml, cy(p2)); ctx.lineTo(cx(q2), cy(p2));
     ctx.moveTo(cx(q2), cy(p2)); ctx.lineTo(cx(q2), mt + ch);
+  }
+  if (compare) {
+    // P₂ line across chart
+    if (validQ1) {
+      const rightmostQ = Math.max(validQ2 ? q2 : 0, validQ2b ? q2b : 0);
+      ctx.moveTo(ml, cy(p2));
+      ctx.lineTo(cx(rightmostQ), cy(p2));
+    }
+    if (validQ2)  { ctx.moveTo(cx(q2),  cy(p2)); ctx.lineTo(cx(q2),  mt + ch); }
+    if (validQ2b) { ctx.moveTo(cx(q2b), cy(p2)); ctx.lineTo(cx(q2b), mt + ch); }
   }
   ctx.stroke();
   ctx.setLineDash([]);
 
   // ── ΔP arrow on left side ──
-  if (validQ1 && validQ2 && Math.abs(p1 - p2) > 1e-9) {
+  if (validQ1 && Math.abs(p1 - p2) > 1e-9) {
     const ax = ml + 16;
     drawArrow(ctx, ax, cy(p1), ax, cy(p2), '#d97706', 2);
     ctx.fillStyle = '#92400e';
@@ -586,31 +730,60 @@ function draw(s) {
     ctx.fillText('ΔP', ax + 6, midY + 4);
   }
 
-  // ── ΔQ arrow on bottom ──
-  if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
-    const ay = mt + ch - 14;
-    drawArrow(ctx, cx(q1), ay, cx(q2), ay, '#3b82f6', 2);
-    ctx.fillStyle = '#1d4ed8';
-    ctx.font = 'bold 12px Noto Sans JP, sans-serif';
-    ctx.textAlign = 'center';
-    const midX = (cx(q1) + cx(q2)) / 2;
-    ctx.fillText('ΔQ', midX, ay - 6);
+  // ── ΔQ arrows ──
+  if (!compare) {
+    if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
+      const ay = mt + ch - 14;
+      drawArrow(ctx, cx(q1), ay, cx(q2), ay, '#3b82f6', 2);
+      ctx.fillStyle = '#1d4ed8';
+      ctx.font = 'bold 12px Noto Sans JP, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('ΔQ', (cx(q1) + cx(q2)) / 2, ay - 6);
+    }
+  } else {
+    // Two ΔQ arrows at slightly different heights so they don't overlap
+    if (validQ1 && validQ2 && Math.abs(q1 - q2) > 1e-9) {
+      const ay = mt + ch - 14;
+      drawArrow(ctx, cx(q1), ay, cx(q2), ay, '#1d4ed8', 2);
+      ctx.fillStyle = '#1d4ed8';
+      ctx.font = 'bold 11px Noto Sans JP, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('ΔQ₁', (cx(q1) + cx(q2)) / 2, ay - 5);
+    }
+    if (validQ1 && validQ2b && Math.abs(q1 - q2b) > 1e-9) {
+      const ay = mt + ch - 32;
+      drawArrow(ctx, cx(q1), ay, cx(q2b), ay, '#ea580c', 2);
+      ctx.fillStyle = '#ea580c';
+      ctx.font = 'bold 11px Noto Sans JP, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('ΔQ₂', (cx(q1) + cx(q2b)) / 2, ay - 5);
+    }
   }
 
-  // ── Axis labels for P1, P2, Q1, Q2 ──
+  // ── Axis labels ──
   ctx.font = '11px JetBrains Mono, monospace';
   if (validQ1) {
     axisLabelY(ctx, ml, cy(p1), 'P₁=' + fmt(p1, 1), '#1e293b');
     axisLabelX(ctx, cx(q1), mt + ch, 'Q₁=' + fmt(q1, 1), '#1e293b');
   }
-  if (validQ2) {
+  if (!compare && validQ2) {
     axisLabelY(ctx, ml, cy(p2), 'P₂=' + fmt(p2, 1), '#dc2626');
     axisLabelX(ctx, cx(q2), mt + ch, 'Q₂=' + fmt(q2, 1), '#dc2626');
+  }
+  if (compare) {
+    if (validQ1) axisLabelY(ctx, ml, cy(p2), 'P₂=' + fmt(p2, 1), '#374151');
+    if (validQ2)  axisLabelX(ctx, cx(q2),  mt + ch, 'Q₂(1)=' + fmt(q2,  1), '#1d4ed8');
+    if (validQ2b) axisLabelX(ctx, cx(q2b), mt + ch, 'Q₂(2)=' + fmt(q2b, 1), '#ea580c');
   }
 
   // ── Points ──
   if (validQ1) drawPoint(ctx, cx(q1), cy(p1), '#fff', '#1e293b', 6, 2.2);
-  if (validQ2) drawPoint(ctx, cx(q2), cy(p2), '#dc2626', '#7f1d1d', 6, 2);
+  if (!compare) {
+    if (validQ2) drawPoint(ctx, cx(q2), cy(p2), '#dc2626', '#7f1d1d', 6, 2);
+  } else {
+    if (validQ2)  drawPoint(ctx, cx(q2),  cy(p2), '#1d4ed8', '#1e3a8a', 6, 2);
+    if (validQ2b) drawPoint(ctx, cx(q2b), cy(p2), '#ea580c', '#9a3412', 6, 2);
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────
