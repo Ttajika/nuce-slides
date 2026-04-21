@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グループ分けツール（人数設定・履歴・Excel対応）</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6; }
+        h1 { text-align: center; color: #444; margin-bottom: 30px; }
+        
+        /* セクション共通 */
+        .section { background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #ddd; }
+        .hidden { display: none; }
+        h3 { margin-top: 0; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2em; }
+
+        /* ボタン */
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.3s; margin: 5px 5px 5px 0; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; } 
+        button.secondary:hover { background-color: #545b62; }
+        button.save { background-color: #28a745; } 
+        button.save:hover { background-color: #218838; }
+        button.delete { background-color: #dc3545; font-size: 12px; padding: 5px 10px; margin-left: 10px; } 
+        button.delete:hover { background-color: #c82333; }
+        
+        /* 入力エリア */
+        textarea { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-height: 100px; }
+        input[type="file"] { margin-bottom: 15px; }
+        
+        /* 設定エリア */
+        .settings-area { text-align: center; margin-bottom: 15px; background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #eee; }
+        select { padding: 8px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; }
+
+        /* 名簿リスト */
+        #memberList { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 15px; }
+        .member-item { background: white; padding: 10px; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; transition: background 0.2s; }
+        .member-item:hover { border-color: #007bff; }
+        .member-item input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+        .member-item label { cursor: pointer; user-select: none; width: 100%; word-break: break-all; }
+        .member-item.absent { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; text-decoration: line-through; opacity: 0.7; }
+
+        /* 結果表示カード */
+        .group-card { background: white; border-left: 6px solid #007bff; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 0 4px 4px 0; }
+        .group-title { font-weight: bold; margin-bottom: 8px; color: #007bff; font-size: 1.1em; }
+        .group-members { font-size: 1.05em; }
+
+        /* 履歴エリア */
+        .history-item { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: #555; }
+        .history-content { font-size: 0.95em; color: #444; }
+        .history-group-row { margin-bottom: 5px; padding-left: 10px; border-left: 3px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>🎲 グループ分けツール</h1>
+
+    <div class="section">
+        <h3>1. メンバーの登録</h3>
+        <p>Excelの列をコピーして、下の枠に貼り付けてください。<br><small>※ CSVファイル読み込みも可能です。</small></p>
+        
+        <textarea id="manualInput" placeholder="ここにExcelからペーストしてください&#13;&#10;（例）&#13;&#10;佐藤&#13;&#10;鈴木&#13;&#10;田中..."></textarea>
+        <br>
+        <div style="margin-top: 10px;">
+            <input type="file" id="csvFileInput" accept=".csv,.txt">
+        </div>
+        <div style="text-align: right;">
+            <button onclick="loadMembers()">名簿を作成する &raquo;</button>
+        </div>
+    </div>
+
+    <div id="checkSection" class="section hidden">
+        <h3>2. 欠席者と設定の確認</h3>
+        
+        <div class="settings-area">
+            <label for="groupMode"><strong>グループの作り方：</strong></label>
+            <select id="groupMode">
+                <option value="2">2人グループ優先 (端数は3人)</option>
+                <option value="3" selected>3人グループ優先 (端数は2人)</option>
+            </select>
+        </div>
+
+        <p>今回<strong>欠席する人</strong>にチェックを入れてください。</p>
+        <div id="memberList"></div>
+        <br>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="generateGroups()" style="font-weight: bold; padding: 15px 40px;">グループ分けを実行！</button>
+        </div>
+    </div>
+
+    <div id="resultSection" class="section hidden">
+        <h3>3. 今回の結果</h3>
+        <div id="resultOutput"></div>
+        <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+            <button class="save" onclick="saveCurrentResult()">💾 履歴に保存</button>
+            <button class="secondary" onclick="copyResult()">📋 結果をコピー</button>
+            <button class="secondary" onclick="resetCheck()">🔄 設定変更・やり直し</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>📂 過去の保存データ</h3>
+        <div id="historyList"></div>
+        <div style="text-align: right;">
+            <button class="delete" onclick="clearAllHistory()" style="background-color:#666;">全ての履歴を削除</button>
+        </div>
+    </div>
+
+    <script>
+        let allMembers = [];
+        let currentGroupsData = null; 
+        const STORAGE_KEY = 'grouping_app_history_v3';
+
+        window.onload = function() { renderHistory(); };
+
+        // --- 1. 名簿読み込み ---
+        function loadMembers() {
+            const fileInput = document.getElementById('csvFileInput');
+            const manualInput = document.getElementById('manualInput');
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) { parseAndRender(e.target.result); };
+                reader.readAsText(file);
+            } else if (manualInput.value.trim() !== "") {
+                parseAndRender(manualInput.value);
+            } else {
+                alert("テキストエリアに入力するか、ファイルを選択してください。");
+            }
+        }
+
+        function parseAndRender(text) {
+            allMembers = text.split(/[\n,、\t]+/).map(s => s.trim()).filter(s => s !== "");
+            
+            if(allMembers.length < 2) {
+                alert("リストには少なくとも2人の名前が必要です。");
+                return;
+            }
+
+            const listContainer = document.getElementById('memberList');
+            listContainer.innerHTML = "";
+            allMembers.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'member-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="mem-${index}" onchange="toggleAbsentStyle(this)">
+                    <label for="mem-${index}">${name}</label>
+                `;
+                listContainer.appendChild(div);
+            });
+            
+            document.getElementById('checkSection').classList.remove('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('checkSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleAbsentStyle(checkbox) {
+            const parent = checkbox.parentElement;
+            if (checkbox.checked) parent.classList.add('absent');
+            else parent.classList.remove('absent');
+        }
+
+        // --- 2. グループ分け ---
+        function generateGroups() {
+            const presentMembers = [];
+            allMembers.forEach((name, index) => {
+                if (!document.getElementById(`mem-${index}`).checked) {
+                    presentMembers.push(name);
+                }
+            });
+
+            if (presentMembers.length < 2) {
+                alert("出席者が少なすぎます（2名以上必要です）。");
+                return;
+            }
+
+            // シャッフル
+            for (let i = presentMembers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [presentMembers[i], presentMembers[j]] = [presentMembers[j], presentMembers[i]];
+            }
+
+            // 設定を取得
+            const mode = document.getElementById('groupMode').value;
+            const groups = [];
+            let remaining = presentMembers;
+
+            if (mode === "2") {
+                // --- 2人優先モード ---
+                // 全体が奇数の場合、最後に1人にならないよう、先に3人組を1つ作る
+                if (remaining.length % 2 !== 0) {
+                    // もし人数が3人以上の奇数なら
+                    if (remaining.length >= 3) {
+                        groups.push(remaining.slice(0, 3));
+                        remaining = remaining.slice(3);
+                    }
+                }
+                // 残りは偶数なので2人ずつペアにする
+                while (remaining.length > 0) {
+                    groups.push(remaining.slice(0, 2));
+                    remaining = remaining.slice(2);
+                }
+
+            } else {
+                // --- 3人優先モード (従来のロジック) ---
+                while (remaining.length > 0) {
+                    if (remaining.length === 4) {
+                        groups.push(remaining.slice(0, 2));
+                        groups.push(remaining.slice(2, 4));
+                        break;
+                    } else if (remaining.length === 2) {
+                        groups.push(remaining.slice(0, 2));
+                        break;
+                    } else {
+                        const size = 3;
+                        groups.push(remaining.slice(0, size));
+                        remaining = remaining.slice(size);
+                    }
+                }
+            }
+
+            currentGroupsData = groups;
+            displayResults(groups);
+        }
+
+        // --- 3. 結果表示 ---
+        function displayResults(groups) {
+            const container = document.getElementById('resultOutput');
+            container.innerHTML = "";
+
+            groups.forEach((group, index) => {
+                const div = document.createElement('div');
+                div.className = 'group-card';
+                div.innerHTML = `
+                    <div class="group-title">グループ ${index + 1} (${group.length}名)</div>
+                    <div class="group-members">${group.join(' / ')}</div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('resultSection').classList.remove('hidden');
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyResult() {
+            if (!currentGroupsData) return;
+            let text = "";
+            currentGroupsData.forEach((group, i) => {
+                text += `グループ ${i + 1}: ${group.join(' / ')}\n`;
+            });
+            navigator.clipboard.writeText(text).then(() => alert("クリップボードにコピーしました！"));
+        }
+        
+        function resetCheck() {
+            document.getElementById('checkSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- 4. 履歴管理 ---
+        function saveCurrentResult() {
+            if (!currentGroupsData) return;
+            const now = new Date();
+            const dateStr = now.getFullYear() + "/" + 
+                            (now.getMonth()+1).toString().padStart(2, '0') + "/" + 
+                            now.getDate().toString().padStart(2, '0') + " " + 
+                            now.getHours().toString().padStart(2, '0') + ":" + 
+                            now.getMinutes().toString().padStart(2, '0');
+            
+            // モード名も保存したいので取得
+            const mode = document.getElementById('groupMode').value;
+            const modeLabel = (mode === "2") ? "2人優先" : "3人優先";
+
+            const newEntry = {
+                id: Date.now(),
+                date: dateStr,
+                modeLabel: modeLabel, // 履歴表示用にモードも保存
+                groups: currentGroupsData
+            };
+
+            let history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            history.unshift(newEntry);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            
+            alert("履歴に保存しました！");
+            renderHistory();
+            document.getElementById('historyList').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const container = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="color:#888; text-align:center;">履歴はまだありません。</p>';
+                return;
+            }
+
+            container.innerHTML = "";
+            history.forEach(item => {
+                let groupsHtml = "";
+                item.groups.forEach((g, i) => {
+                    groupsHtml += `<div class="history-group-row"><strong>G${i+1}:</strong> ${g.join(', ')}</div>`;
+                });
+
+                // 以前のバージョンのデータには modeLabel がないかもしれないので対策
+                const modeInfo = item.modeLabel ? `<span style="font-size:0.8em; background:#eee; padding:2px 6px; border-radius:3px; margin-left:10px;">${item.modeLabel}</span>` : "";
+
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-header">
+                        <span>📅 ${item.date} ${modeInfo}</span>
+                        <button class="delete" onclick="deleteHistory(${item.id})">削除</button>
+                    </div>
+                    <div class="history-content">${groupsHtml}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteHistory(id) {
+            if (!confirm("この履歴を削除しますか？")) return;
+            let history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            renderHistory();
+        }
+
+        function clearAllHistory() {
+            if (!confirm("本当に全ての履歴を削除しますか？")) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistory();
+        }
+    </script>
+</body>
+</html>
