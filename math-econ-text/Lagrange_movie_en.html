@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagrange Multiplier Method – Geometric Intuition</title>
+<style>
+:root {
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #999;
+  --color-text-info: #2563eb;
+  --color-background-secondary: #f5f5f4;
+  --color-background-tertiary: #e5e5e4;
+  --color-border-secondary: #ccc;
+  --color-border-info: #3b82f6;
+  --border-radius-md: 8px;
+  --font-sans: system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #e5e5e4;
+    --color-text-secondary: #a1a1a0;
+    --color-text-tertiary: #777;
+    --color-text-info: #60a5fa;
+    --color-background-secondary: #2a2a28;
+    --color-background-tertiary: #3a3a38;
+    --color-border-secondary: #555;
+    --color-border-info: #3b82f6;
+  }
+  body { background: #1a1a18; color: #e5e5e4; }
+}
+body { font-family: var(--font-sans); max-width: 840px; margin: 2rem auto; padding: 0 1rem; }
+#cv{box-shadow:0 4px 18px rgba(0,0,0,0.07),inset 0 0 0 1px rgba(0,0,0,0.04);transition:box-shadow .3s;}
+#pp,#cl{border:none;cursor:pointer;font-family:inherit;transition:all .18s;outline:none;}
+#pp{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5b8def 0%,#3568d6 100%);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(53,104,214,.32);}
+#pp:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(53,104,214,.45);}
+#pp:active{transform:translateY(0);}
+#cl{padding:7px 14px;border-radius:18px;font-size:12px;background:var(--color-background-tertiary);color:var(--color-text-primary);border:1px solid var(--color-border-secondary);}
+#cl:hover{border-color:var(--color-border-info);color:var(--color-border-info);}
+#ch button{border:1px solid var(--color-border-secondary);border-radius:14px;padding:4px 12px;font-size:11px;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-family:inherit;transition:all .18s;outline:none;}
+#ch button:hover{background:var(--color-background-tertiary);border-color:var(--color-border-info);color:var(--color-text-primary);transform:translateY(-1px);}
+#ch button.active{background:linear-gradient(135deg,#5b8def 0%,#3568d6 100%);color:#fff;border-color:transparent;box-shadow:0 2px 7px rgba(53,104,214,.35);}
+#mk > div{transition:transform .15s,background .15s;}
+#mk > div:hover{transform:translateX(-5px) scale(1.5);background:var(--color-border-info)!important;}
+#mk > div.active{background:#3568d6!important;transform:translateX(-5px) scale(1.4);box-shadow:0 0 0 3px rgba(91,141,239,.25);}
+#pb{background:linear-gradient(90deg,#5b8def,#3568d6)!important;box-shadow:0 0 6px rgba(91,141,239,.45);}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Lagrange Multiplier Method – 3D Animated Explanation</h2>
+<div style="padding:0.5rem 0;">
+<div id="nar" style="font-size:14.5px;color:var(--color-text-primary);height:74px;line-height:1.65;margin-bottom:6px;transition:opacity 0.4s;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border-left:3px solid var(--color-border-info);overflow:hidden;display:flex;align-items:center;"><span id="narIn"></span></div>
+<div id="lv" style="display:none;"></div>
+<canvas id="cv" style="width:100%;height:440px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);cursor:grab;"></canvas>
+<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+  <button id="pp" aria-label="Play/Pause">⏸</button>
+  <button id="cl">Camera: lock</button>
+  <div style="flex:1;position:relative;height:28px;">
+    <div style="position:absolute;top:12px;left:0;right:0;height:4px;background:var(--color-background-tertiary);border-radius:2px;">
+      <div id="pb" style="height:100%;width:0%;background:var(--color-border-info);border-radius:2px;transition:width 0.1s;"></div>
+    </div>
+    <div id="mk" style="position:absolute;top:0;left:0;right:0;height:28px;"></div>
+  </div>
+  <span id="tl" style="font-size:12px;color:var(--color-text-tertiary);min-width:70px;text-align:right;"></span>
+</div>
+<div id="ch" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
+</div>
+<script>
+(function(){
+const cv=document.getElementById('cv'),g=cv.getContext('2d');
+const narEl=document.getElementById('nar'),narIn=document.getElementById('narIn'),lvEl=document.getElementById('lv');
+const pbEl=document.getElementById('pb'),tlEl=document.getElementById('tl');
+const ppB=document.getElementById('pp'),clB=document.getElementById('cl');
+const mkEl=document.getElementById('mk'),chEl=document.getElementById('ch');
+const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+let W,H,dp;
+function rsz(){dp=devicePixelRatio||1;const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dp;cv.height=H*dp;g.setTransform(dp,0,0,dp,0,0);}
+rsz();
+
+const EP=0.12,XM=5.2,CN=2.6,CR=2.6,ZS=2.8,ZCL=-2;
+const fv=(x,y)=>x>EP&&y>EP?Math.log(x)+2*Math.log(y):-8;
+const Lv=(x,y,l)=>fv(x,y)+l*(x+y-5);
+const XO=5/3,YO=10/3,FO=Math.log(XO)+2*Math.log(YO),LO=-0.6;
+
+const HN=150,hD=[];
+for(let i=0;i<HN;i++){const l=-1.25+i*1.2/(HN-1);let mx=-1e9,bx=1,by=2;
+  for(let gi=0;gi<=60;gi++)for(let gj=0;gj<=60;gj++){const x=EP+(XM-EP)*gi/60,y=EP+(XM-EP)*gj/60,v=Lv(x,y,l);if(v>mx){mx=v;bx=x;by=y;}}
+  if(l<-0.05){const ax=-1/l,ay=-2/l;if(ax>EP&&ax<XM&&ay>EP&&ay<XM){const v=Lv(ax,ay,l);if(v>mx){mx=v;bx=ax;by=ay;}}}
+  hD.push({l,h:mx,x:bx,y:by});}
+function gH(l){return hD[Math.max(0,Math.min(HN-1,Math.round((l+1.25)/(1.2/(HN-1)))))]}
+
+const st='style';
+const cF=dk?'#85b7eb':'#2a6ab5',cL=dk?'#f0b050':'#b5710e',cR=dk?'#f09595':'#c03030',cK=dk?'#d0cec6':'#333';
+const F=`<span ${st}="color:${cF};font-weight:500">f</span>`;
+const Lh=`<span ${st}="color:${cL};font-weight:500">L</span>`;
+const Fs=`<span ${st}="color:${cR};font-weight:500">f*</span>`;
+const La=`<span ${st}="font-weight:500">\u03bb</span>`;
+const Las=`<span ${st}="font-weight:500">\u03bb*</span>`;
+const Bk=`<span ${st}="font-weight:500;border-bottom:2px solid ${cK};padding-bottom:1px">black band</span>`;
+const Od=`<span ${st}="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dk?'#f0b050':'#c47a20'};vertical-align:middle;margin:0 1px;border:1.5px solid #fff"></span>`;
+const Rd=`<span ${st}="display:inline-block;color:${cR};font-size:15px;line-height:1;vertical-align:middle;margin:0 1px;text-shadow:0 0 1px ${dk?'rgba(0,0,0,0.6)':'rgba(255,255,255,0.9)'};">\u2605</span>`;
+const Gr=`<span ${st}="display:inline-block;width:14px;height:9px;border-radius:2px;background:${dk?'#97c459':'#3b6d11'};vertical-align:middle;margin:0 2px"></span>`;
+
+const sc=[
+{time:0,dur:8,title:"Objective function",
+ t:`The surface of the objective function ${F}.`,
+ sF:true,fA:.85,sL:false,lA:0,lam:0,sC:false,sD:false,sM:false,sH:false,cA:false,
+ cam:{rx:-.55,ry:.5,z:1},camTo:{rx:-.5,ry:1.6,z:1.05}},
+{time:8,dur:9,title:"Constraint",
+ t:`Adding the constraint. First, the constraint line on the floor (dashed, g(x,y)=0). Its projection onto the surface is the ${Bk}.`,
+ sF:true,fA:.85,sL:false,lA:0,lam:0,sC:true,sD:false,sM:false,sH:false,cA:true,
+ cam:{rx:-.5,ry:1.6,z:1.05},camTo:{rx:-.5,ry:2.5,z:1.1}},
+{time:17,dur:6,title:"Constrained max f*",
+ t:`The highest point on the ${Bk} is the constrained maximum ${Fs}. This is what we want to find.`,
+ sF:true,fA:.85,sL:false,lA:0,lam:0,sC:true,sD:true,sM:false,sH:false,cA:false,
+ cam:{rx:-.5,ry:2.5,z:1.1},camTo:{rx:-.48,ry:3.1,z:1.12}},
+{time:23,dur:7,title:"Lagrangian L",
+ t:`Overlay the Lagrangian ${Lh} = ${F} + ${La}\u00b7g(x,y). At ${La}=0, ${Lh}=${F}. On the constraint (g=0), ${Lh}=${F} always.`,
+ sF:true,fA:.4,sL:true,lA:.75,lam:0,sC:true,sD:true,sM:false,sH:false,cA:false,
+ cam:{rx:-.48,ry:3.1,z:1.12},camTo:{rx:-.5,ry:3.7,z:1.08}},
+ {time:30,dur:10,title:"Hinge",
+ t:`Varying ${La} tilts the ${Lh} surface, pivoting around the ${Bk}. On the constraint, ${Lh}=${F} regardless of ${La}.`,
+ sF:true,fA:.25,sL:true,lA:.82,lamPath:[[0,-.3],[.18,-.95],[.36,-.3],[.54,-.95],[.72,-.3],[.88,-.95],[1,-.6]],
+ sC:true,sD:true,sM:false,sH:false,cA:false,
+ cam:{rx:-.5,ry:6.5,z:1.04},camTo:{rx:-.5,ry:7.3,z:1.06}},
+ {time:40,dur:6,title:"\u03bb fixed",
+ t:`Fix ${La} and maximize ${Lh}. The maximizer ${Od} lies away from the constraint, so max ${Lh} > ${Fs}. This is because any point on the ${Bk} is achievable regardless of ${La}.`,
+ sF:true,fA:.3,sL:true,lA:.8,lam:-.35,sC:true,sD:true,sM:true,sH:false,cA:false,
+ cam:{rx:-.5,ry:3.7,z:1.08},camTo:{rx:-.5,ry:4.2,z:1.06}},
+{time:46,dur:24,title:"\u03bb varies",
+ t:`As ${La} changes, ${Od} moves. Overshoot and max ${Lh} rises again \u2014 there exists a ${Las} that minimizes it. Watch ${Gr} at bottom-right.`,
+ sF:true,fA:.25,sL:true,lA:.8,lamPath:[[0,-.3],[.52,-1.1],[1,-.6]],
+ sC:true,sD:true,sM:true,sH:true,cA:false,
+ cam:{rx:-.5,ry:4.2,z:1.06},camTo:{rx:-.5,ry:6.5,z:1.04}},
+{time:70,dur:8,title:"Optimal \u03bb",
+ t:`At ${Las} where ${Gr} h(${La}) is minimized, ${Lh} is flat at its maximum. \u2207${Lh}=0. ${Od} coincides with ${Rd}.`,
+ sF:true,fA:.3,sL:true,lA:.85,lam:LO,sC:true,sD:true,sM:true,sH:true,cA:false,
+ cam:{rx:-.5,ry:7.3,z:1.06},camTo:{rx:-.48,ry:7.9,z:1.12}},
+{time:78,dur:6,title:"\u2202L/\u2202\u03bb = 0",
+ t:`\u2202${Lh}/\u2202${La} = 0 means the solution lies on the constraint. Differentiating w.r.t. ${La} and setting it to zero is the constraint itself.`,
+ sF:false,fA:0,sL:true,lA:.88,lam:LO,sC:true,sD:true,sM:true,sH:true,cA:false,
+ cam:{rx:-.48,ry:7.9,z:1.12},camTo:{rx:-.5,ry:8.4,z:1.08}},
+{time:84,dur:10,title:"Saddle point",
+ t:`The saddle point \u2014 max over (x,y), min over ${La} \u2014 coincides with ${Fs}. This is the geometric reason the Lagrange multiplier method works.`,
+ sF:true,fA:.35,sL:true,lA:.8,lam:LO,sC:true,sD:true,sM:true,sH:true,cA:false,
+ cam:{rx:-.5,ry:8.4,z:1.08},camTo:{rx:-.52,ry:9.4,z:1.02}},
+];
+const TD=sc[sc.length-1].time+sc[sc.length-1].dur;
+
+function lamEndOf(sn){if(sn.lamPath)return sn.lamPath[sn.lamPath.length-1][1];return sn.lam!==undefined?sn.lam:0;}
+for(let i=1;i<sc.length;i++)sc[i].cam={...sc[i-1].camTo};
+let _pLam=lamEndOf(sc[0]);
+for(let i=1;i<sc.length;i++){const sn=sc[i];
+  if(sn.lamPath){sn.lamPath=[[0,_pLam],...sn.lamPath.slice(1)];}
+  else{const tgt=sn.lam!==undefined?sn.lam:0;
+    if(Math.abs(tgt-_pLam)>0.001)sn.lamPath=[[0,_pLam],[0.3,tgt],[1,tgt]];}
+  _pLam=lamEndOf(sn);}
+
+mkEl.innerHTML='';chEl.innerHTML='';
+sc.forEach((s,i)=>{const p=(s.time/TD*100).toFixed(1);
+  const m=document.createElement('div');m.style.cssText='position:absolute;top:4px;width:9px;height:9px;border-radius:50%;background:var(--color-border-secondary);cursor:pointer;transform:translateX(-4.5px);';
+  m.style.left=p+'%';m.dataset.idx=i;m.onclick=()=>{ct=s.time+.01;};mkEl.appendChild(m);
+  const b=document.createElement('button');b.textContent=s.title;
+  b.onclick=()=>{ct=s.time+.01;if(!pl){pl=true;ppB.textContent='\u23f8';}};chEl.appendChild(b);});
+
+let pl=true,ct=0,lf=null,pi=-1,rx=-.55,ry=.5,sz=1,dg=false,dmx,dmy,camLock=true;
+cv.addEventListener('pointerdown',e=>{dg=true;dmx=e.clientX;dmy=e.clientY;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
+cv.addEventListener('pointermove',e=>{if(!dg)return;ry+=(e.clientX-dmx)*.008;rx+=(e.clientY-dmy)*.008;rx=Math.max(-Math.PI/2,Math.min(.1,rx));dmx=e.clientX;dmy=e.clientY;});
+cv.addEventListener('pointerup',()=>{dg=false;cv.style.cursor='grab';});
+cv.addEventListener('wheel',e=>{e.preventDefault();sz*=e.deltaY>0?.93:1.07;sz=Math.max(.4,Math.min(3,sz));},{passive:false});
+ppB.addEventListener('click',()=>{pl=!pl;ppB.textContent=pl?'\u23f8':'\u25b6';});
+clB.addEventListener('click',()=>{camLock=!camLock;clB.textContent=camLock?'Camera: lock':'Camera: auto';});
+
+function lr(a,b,t){return a+(b-a)*t;}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function gs(t){for(let i=sc.length-1;i>=0;i--)if(t>=sc[i].time)return{s:sc[i],i};return{s:sc[0],i:0};}
+function lamAt(e,sn){if(sn.lamPath){const p=sn.lamPath;for(let k=p.length-2;k>=0;k--)if(e>=p[k][0]){const s2=Math.min(1,(e-p[k][0])/(p[k+1][0]-p[k][0]));return lr(p[k][1],p[k+1][1],ease(s2));}return p[0][1];}return sn.lam||0;}
+function proj(x,y,z){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);let x1=x*cy-y*sy,y1=x*sy+y*cy,y2=y1*cx-z*sx,z2=y1*sx+z*cx;const s=sz*Math.min(W,H)*.26;return[W/2+x1*s,H/2-z2*s,y2];}
+function p2d(gx,gy,gz){return proj((gx-CN)/CR,(gy-CN)/CR,Math.max(-0.8,Math.min(2.2,Math.max(ZCL,gz)/ZS)));}
+function genQ(fn,N,ci,al){const qs=[],pts=[];
+  for(let i=0;i<=N;i++){pts[i]=[];for(let j=0;j<=N;j++){const x=EP+(XM-EP)*i/N,y=EP+(XM-EP)*j/N;pts[i][j]={x,y,z:Math.max(ZCL,fn(x,y))};}}
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const v=[pts[i][j],pts[i+1][j],pts[i+1][j+1],pts[i][j+1]];const pp=v.map(p=>p2d(p.x,p.y,p.z));
+    qs.push({pp,d:(pp[0][2]+pp[1][2]+pp[2][2]+pp[3][2])/4,az:(v[0].z+v[1].z+v[2].z+v[3].z)/4,ci,a:al});}return qs;}
+const fP=dk?[[40,90,210],[140,195,248]]:[[30,80,200],[120,185,248]];
+const lP=dk?[[195,115,30],[250,200,75]]:[[185,95,22],[245,185,55]];
+function qC(q){const t=Math.max(0,Math.min(1,(q.az-ZCL)/(5-ZCL)));const p=q.ci===0?fP:lP;
+  return[Math.round(lr(p[0][0],p[1][0],t)),Math.round(lr(p[0][1],p[1][1],t)),Math.round(lr(p[0][2],p[1][2],t))];}
+function drawCon(lift){const flPts=[],sfPts=[];
+  for(let k=0;k<=80;k++){const t=k/80,x=EP+(5-2*EP)*t,y=5-x;if(y<EP)continue;const fz=Math.max(ZCL,fv(x,y));
+    flPts.push(p2d(x,y,0));sfPts.push({p:p2d(x,y,fz*lift),x,y,fz});}
+  g.beginPath();flPts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+  g.strokeStyle=dk?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.18)';g.lineWidth=2;g.setLineDash([6,4]);g.stroke();g.setLineDash([]);
+  if(lift>0.01){if(lift<0.98){for(let k=0;k<sfPts.length;k+=8){const s2=sfPts[k],fp=p2d(s2.x,s2.y,0);
+    g.beginPath();g.moveTo(fp[0],fp[1]);g.lineTo(s2.p[0],s2.p[1]);g.strokeStyle=dk?`rgba(255,255,255,${.25*lift})`:`rgba(0,0,0,${.15*lift})`;g.lineWidth=1;g.setLineDash([2,3]);g.stroke();g.setLineDash([]);}}
+    g.beginPath();sfPts.forEach((s2,i)=>i?g.lineTo(s2.p[0],s2.p[1]):g.moveTo(s2.p[0],s2.p[1]));
+    g.strokeStyle=dk?`rgba(255,255,255,${.22*lift})`:`rgba(0,0,0,${.1*lift})`;g.lineWidth=13;g.stroke();
+    g.beginPath();sfPts.forEach((s2,i)=>i?g.lineTo(s2.p[0],s2.p[1]):g.moveTo(s2.p[0],s2.p[1]));
+    g.strokeStyle=dk?`rgba(221,221,221,${lift})`:`rgba(34,34,34,${lift})`;g.lineWidth=2.5;g.stroke();}}
+function starPath(cx,cy,rOut,rIn){g.beginPath();
+  for(let i=0;i<10;i++){const r=i%2===0?rOut:rIn,a=-Math.PI/2+i*Math.PI/5,x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);
+    if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.closePath();}
+function drawDot(){const p=p2d(XO,YO,FO),ps=p2d(XO,YO,0);
+  g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(ps[0],ps[1]);g.strokeStyle=dk?'rgba(240,149,149,0.55)':'rgba(192,48,48,0.45)';g.lineWidth=1.2;g.setLineDash([3,3]);g.stroke();g.setLineDash([]);
+  starPath(ps[0],ps[1],5.5,2.4);g.fillStyle=dk?'rgba(240,149,149,0.32)':'rgba(192,48,48,0.28)';g.fill();
+  starPath(p[0],p[1],10,4.5);g.fillStyle='#e24b4a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.8;g.stroke();
+  g.font='500 11px var(--font-sans)';g.fillStyle=dk?'#f7c1c1':'#791f1f';g.fillText('f*',p[0]+12,p[1]-10);}
+function drawMM(lam){const h=gH(lam);const bz=Math.max(ZCL,Lv(h.x,h.y,lam));const p=p2d(h.x,h.y,bz),ps=p2d(h.x,h.y,0);
+  g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(ps[0],ps[1]);g.strokeStyle=dk?'rgba(240,176,80,0.45)':'rgba(196,122,32,0.40)';g.lineWidth=1.2;g.setLineDash([3,3]);g.stroke();g.setLineDash([]);
+  g.beginPath();g.ellipse(ps[0],ps[1],4.5,1.8,0,0,Math.PI*2);g.fillStyle=dk?'rgba(240,176,80,0.28)':'rgba(196,122,32,0.24)';g.fill();
+  g.beginPath();g.arc(p[0],p[1],5,0,Math.PI*2);g.fillStyle=dk?'#f0b050':'#c47a20';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();
+  g.font='500 11px var(--font-sans)';g.fillStyle=dk?'#fac775':'#854f0b';g.fillText('max L\u2248'+h.h.toFixed(2),p[0]+10,p[1]+14);}
+function drawHC(cur){const cw=150,ch2=90,cx0=W-cw-14,cy0=H-ch2-12;
+  g.fillStyle=dk?'rgba(30,30,28,0.88)':'rgba(255,255,255,0.92)';g.strokeStyle=dk?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.1)';g.lineWidth=.5;
+  g.beginPath();g.roundRect(cx0-10,cy0-24,cw+20,ch2+32,6);g.fill();g.stroke();
+  g.font='500 11px var(--font-sans)';g.fillStyle=dk?'#d3d1c7':'#5f5e5a';g.fillText('h(\u03bb) = max L',cx0,cy0-10);
+  const lMn=-1.25,lMx=-.1,hMn=2.3,hMx=5;
+  const tx=l=>(l-lMn)/(lMx-lMn)*cw+cx0,ty=h=>cy0+ch2-(h-hMn)/(hMx-hMn)*ch2;
+  g.beginPath();g.moveTo(tx(lMn),ty(hMn));g.lineTo(tx(lMx),ty(hMn));g.moveTo(tx(lMn),ty(hMn));g.lineTo(tx(lMn),ty(hMx));
+  g.strokeStyle=dk?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.15)';g.lineWidth=1;g.stroke();
+  g.font='10px var(--font-sans)';g.fillStyle=dk?'#b4b2a9':'#888780';
+  g.fillText('\u03bb',tx(lMx)-8,ty(hMn)+12);g.fillText('\u03bb*',tx(LO)-6,ty(hMn)+12);g.fillText('f*',tx(lMn)-10,ty(FO)+3);
+  g.beginPath();for(let i=0;i<HN;i++){const d=hD[i];if(d.l<lMn||d.l>lMx)continue;const px=tx(d.l),py=ty(Math.max(hMn,Math.min(hMx,d.h)));i?g.lineTo(px,py):g.moveTo(px,py);}
+  g.strokeStyle=dk?'#97c459':'#3b6d11';g.lineWidth=2;g.stroke();
+  g.setLineDash([3,3]);g.beginPath();g.moveTo(tx(LO),ty(FO));g.lineTo(tx(LO),ty(hMn));g.strokeStyle=dk?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.15)';g.lineWidth=1;g.stroke();
+  g.beginPath();g.moveTo(tx(lMn),ty(FO));g.lineTo(tx(LO),ty(FO));g.stroke();g.setLineDash([]);
+  const hc=gH(cur);g.beginPath();g.arc(tx(cur),ty(Math.max(hMn,Math.min(hMx,hc.h))),5,0,Math.PI*2);g.fillStyle='#e24b4a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();}
+function drawXY(){
+  const corners=[p2d(EP,EP,0),p2d(XM,EP,0),p2d(XM,XM,0),p2d(EP,XM,0)];
+  g.beginPath();corners.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();
+  g.fillStyle=dk?'rgba(160,170,190,0.10)':'rgba(60,90,140,0.07)';g.fill();
+  g.strokeStyle=dk?'rgba(255,255,255,0.30)':'rgba(0,0,0,0.25)';g.lineWidth=1;g.setLineDash([4,3]);g.stroke();g.setLineDash([]);
+  g.strokeStyle=dk?'rgba(255,255,255,0.10)':'rgba(0,0,0,0.08)';g.lineWidth=.7;
+  for(let i=1;i<5;i++){const t=i/5,x=EP+(XM-EP)*t,y=EP+(XM-EP)*t;
+    const a1=p2d(x,EP,0),b1=p2d(x,XM,0),a2=p2d(EP,y,0),b2=p2d(XM,y,0);
+    g.beginPath();g.moveTo(a1[0],a1[1]);g.lineTo(b1[0],b1[1]);g.stroke();
+    g.beginPath();g.moveTo(a2[0],a2[1]);g.lineTo(b2[0],b2[1]);g.stroke();}}
+function drawLC(){
+  const levels=[0.5,1.5,FO,4.0];
+  for(const c of levels){const ec=Math.exp(c),xMn=Math.max(EP,ec/(XM*XM)),xMx=Math.min(XM,ec/(EP*EP));
+    if(xMn>=xMx-0.01)continue;
+    const isOpt=Math.abs(c-FO)<0.01,pts=[];
+    for(let k=0;k<=80;k++){const x=xMn+(xMx-xMn)*k/80,y=Math.exp((c-Math.log(x))/2);
+      if(y>=EP&&y<=XM)pts.push(p2d(x,y,0));}
+    if(pts.length<2)continue;
+    g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+    if(isOpt){g.strokeStyle=dk?'rgba(240,149,149,0.65)':'rgba(192,48,48,0.55)';g.lineWidth=1.8;}
+    else{g.strokeStyle=dk?'rgba(133,183,235,0.38)':'rgba(42,106,181,0.30)';g.lineWidth=1;}
+    g.stroke();
+    if(isOpt){const lp=pts[Math.floor(pts.length*0.15)];g.font='italic 10px var(--font-sans)';g.fillStyle=dk?'rgba(240,149,149,0.85)':'rgba(150,30,30,0.75)';g.fillText('f = f*',lp[0]+4,lp[1]-2);}}}
+function drawAx(){g.lineWidth=1.5;const cls=[dk?'#F09595':'#A32D2D',dk?'#97C459':'#3B6D11',dk?'#85B7EB':'#185FA5'];
+  const ox=-1,oy=-1,oz=0;
+  [[2.2,0,0,'x'],[0,2.2,0,'y'],[0,0,1.1,'z']].forEach(([dx,dy,dz,lb],i)=>{const a=proj(ox,oy,oz),b=proj(ox+dx,oy+dy,oz+dz);
+    g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.strokeStyle=cls[i];g.stroke();
+    const dxs=b[0]-a[0],dys=b[1]-a[1],L=Math.hypot(dxs,dys);
+    if(L>1){const ux=dxs/L,uy=dys/L,ah=8,aw=4;
+      g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(b[0]-ah*ux+aw*uy,b[1]-ah*uy-aw*ux);g.lineTo(b[0]-ah*ux-aw*uy,b[1]-ah*uy+ux*aw);g.closePath();g.fillStyle=cls[i];g.fill();}
+    g.fillStyle=cls[i];g.font='italic 500 13px var(--font-sans)';g.fillText(lb,b[0]+6,b[1]-4);});}
+function drawTitle(){g.font='italic 500 12px var(--font-sans)';
+  g.fillStyle=dk?'rgba(220,220,220,0.55)':'rgba(60,60,60,0.55)';
+  g.fillText('f(x,y) = log x + 2 log y,   s.t.  x + y = 5',14,22);}
+function fmt(s2){return Math.floor(s2/60)+':'+String(Math.floor(s2%60)).padStart(2,'0');}
+
+function render(t){
+  const{s:sn,i:si}=gs(t);const lt=Math.max(0,Math.min(1,(t-sn.time)/sn.dur)),e=ease(lt);
+  if(si!==pi){narEl.style.opacity=0;setTimeout(()=>{narIn.innerHTML=sn.t;narEl.style.opacity=1;},250);
+    Array.from(chEl.children).forEach((c,k)=>c.classList.toggle('active',k===si));
+    Array.from(mkEl.children).forEach((c,k)=>c.classList.toggle('active',k===si));
+    pi=si;}
+  if(!dg&&!camLock){const trx=lr(sn.cam.rx,sn.camTo.rx,e),try2=lr(sn.cam.ry,sn.camTo.ry,e),tz=lr(sn.cam.z,sn.camTo.z,e);
+    rx+=(trx-rx)*.05;ry+=(try2-ry)*.05;sz+=(tz-sz)*.05;}
+  const cur=lamAt(e,sn);lvEl.textContent=(sn.sL||sn.lamPath)?'\u03bb = '+cur.toFixed(3):'';
+  const N=26,allQ=[];
+  if(sn.sF)allQ.push(...genQ((x,y)=>fv(x,y),N,0,sn.fA));
+  if(sn.sL)allQ.push(...genQ((x,y)=>Lv(x,y,cur),N,1,sn.lA));
+  allQ.sort((a,b)=>a.d-b.d);g.clearRect(0,0,W,H);
+  const bg=g.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,dk?'rgba(60,80,120,0.32)':'rgba(210,225,245,0.45)');
+  bg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=bg;g.fillRect(0,0,W,H);
+  drawXY();drawLC();
+  for(const q of allQ){const[r,gb,b]=qC(q);g.beginPath();g.moveTo(q.pp[0][0],q.pp[0][1]);g.lineTo(q.pp[1][0],q.pp[1][1]);g.lineTo(q.pp[2][0],q.pp[2][1]);g.lineTo(q.pp[3][0],q.pp[3][1]);g.closePath();
+    g.fillStyle=`rgba(${r},${gb},${b},${q.a})`;g.fill();g.strokeStyle=dk?`rgba(255,255,255,${q.a*.07})`:`rgba(0,0,0,${q.a*.09})`;g.lineWidth=.5;g.stroke();}
+  if(sn.sC){let cLift=1;if(sn.cA)cLift=e<.3?0:ease(Math.min(1,(e-.3)/.5));drawCon(cLift);}
+  if(sn.sD)drawDot();if(sn.sM)drawMM(cur);drawAx();if(sn.sH)drawHC(cur);
+  drawTitle();
+  pbEl.style.width=(t/TD*100).toFixed(1)+'%';tlEl.textContent=fmt(t)+' / '+fmt(TD);}
+
+function loop(ts){if(lf===null)lf=ts;const dt=(ts-lf)/1000;lf=ts;if(pl)ct+=dt;if(ct>=TD){ct=0;pi=-1;}render(ct);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);window.addEventListener('resize',()=>rsz());
+})();
+</script>
+</body>
+</html>
