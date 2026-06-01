@@ -1,0 +1,3906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>金融公共分析手法入門1</title>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$','$']],
+    displayMath: [['\\[','\\]'],['$$','$$']],
+    macros: {
+      R: '\\mathbb{R}',
+      P: '\\mathsf{Pr}',
+      pd: ['\\frac{\\partial #1}{\\partial #2}', 2],
+      dd: ['\\frac{d #1}{d #2}', 2],
+      br: '\\mathrel{\\phantom{=}}',
+      brr: '\\\\&\\mathrel{\\phantom{=}}',
+      inte: '\\mathop{\\mathrm{int}}',
+      condi: '\\mathrel{|}',
+      eqdef: '\\coloneqq',
+      coloneq: '\\coloneqq',
+      uu: '\\underline{u}',
+      ou: '\\overline{u}',
+      ua: '\\underline{a}',
+      oa: '\\overline{a}',
+      tcs: ['\\textcolor{#2563eb}{#1}',1],
+    },
+    processEscapes: false,
+    tags: 'none',
+    packages: {'[+]': ['mathtools']},
+  },
+  loader: {
+    load: ['[tex]/mathtools'],
+  },
+  options: {
+    skipHtmlTags: ['script','noscript','style','textarea','pre','code'],
+  },
+  startup: { typeset: false }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --accent: #1d4ed8;
+  --accent-light: #eff6ff;
+  --border: #e2e2e0;
+  --keyword-bg: #fef2f2;
+  --keyword: #dc2626;
+  --note-bg: #fffbeb;
+  --note-border: #fbbf24;
+  --phantom-bg: #e0e7ff;
+  --header-bg: #1e293b;
+  --tikz-bg: #f0fdf4;
+  --tikz-border: #86efac;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ═══ SLIDE VIEW MODE ═══ */
+body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 16px;
+  background: var(--header-bg); color:#fff;
+  flex-shrink:0; z-index:100;
+}
+.topbar-title { font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.topbar-nav { display:flex; align-items:center; gap:6px; }
+.nav-btn {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+  color:#fff; padding:4px 10px; border-radius:4px; cursor:pointer;
+  font-size:13px; font-family:inherit; transition:all 0.15s;
+}
+.nav-btn:hover { background:rgba(255,255,255,0.25); }
+.page-info {
+  font-size:13px; color:rgba(255,255,255,0.7);
+  font-family:'JetBrains Mono',monospace; min-width:70px; text-align:center;
+}
+.section-select {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+  color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
+  font-family:inherit; cursor:pointer; max-width:200px;
+}
+.section-select option { background:#1e293b; color:#fff; }
+
+/* Main layout */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.slide-area {
+  flex:1; display:flex; align-items:stretch; justify-content:center;
+  overflow:auto; background:var(--bg); padding:8px 32px;
+  position: relative;
+}
+.slide-content {
+  max-width:1200px; width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 36px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  overflow:auto;
+}
+.slide-content .frame-title {
+  font-size:20px; font-weight:700; color:var(--accent);
+  border-bottom:2px solid var(--accent);
+  padding-bottom:8px; margin-bottom:16px;
+}
+.slide-content .section-badge {
+  font-size:11px; color:var(--text-dim); margin-bottom:4px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+
+/* ---- Board popup ---- */
+.board-popup { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:none; z-index:300; align-items:center; justify-content:center; }
+.board-popup.show { display:flex; }
+.board-popup-inner { position:relative; width:min(900px,90vw); height:min(600px,80vh); background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.3); overflow:hidden; }
+.board-popup-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--header-bg); color:#fff; font-size:13px; }
+.board-popup-header button { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:4px; cursor:pointer; padding:4px 8px; font-size:13px; }
+.board-popup-header button:hover { background:rgba(255,255,255,0.3); }
+.board-popup-canvas-wrap { position:relative; width:100%; height:calc(100% - 40px); }
+.board-popup-canvas-wrap canvas { position:absolute; top:0; left:0; width:100%; height:100%; cursor:crosshair; }
+
+/* ---- Drawing canvas ---- */
+.draw-canvas {
+  position:absolute; top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  z-index:10;
+}
+.draw-canvas.active { pointer-events:auto; cursor:crosshair; }
+.draw-canvas.pointer { cursor:none; }
+
+/* ---- Draw toolbar ---- */
+.draw-toolbar {
+  display:none; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:var(--header-bg); color:#fff;
+  flex-shrink:0; z-index:200;
+}
+.draw-toolbar.show { display:flex; }
+.tool-group {
+  display:flex; align-items:center; gap:4px;
+  padding-right:10px; border-right:1px solid rgba(255,255,255,0.15);
+  margin-right:4px;
+}
+.tool-group:last-child { border-right:none; }
+.draw-toolbar button {
+  width:30px; height:30px; border-radius:4px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.1); color:#fff;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:14px; transition:all 0.15s;
+}
+.draw-toolbar button:hover { background:rgba(255,255,255,0.25); }
+.draw-toolbar button.active { background:var(--accent); border-color:var(--accent); }
+.color-dot {
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid rgba(255,255,255,0.3); cursor:pointer;
+  transition:transform 0.1s;
+}
+.color-dot:hover { transform:scale(1.2); }
+.color-dot.active { border-color:#fff; transform:scale(1.2); }
+.size-range { width:70px; accent-color:var(--accent); }
+.tool-label { font-size:11px; color:rgba(255,255,255,0.6); margin-right:4px; }
+
+/* Notes panel */
+.notes-panel {
+  width:300px; background:var(--note-bg);
+  border-left:3px solid var(--note-border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  transition:width 0.2s;
+}
+.notes-panel.collapsed { width:0; overflow:hidden; border-left:none; }
+.notes-header {
+  padding:8px 12px; background:rgba(251,191,36,0.15);
+  border-bottom:1px solid var(--note-border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.notes-header h3 { font-size:13px; font-weight:500; color:#92400e; }
+.notes-textarea {
+  flex:1; background:transparent; border:none; color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; font-size:14px; line-height:1.8;
+  padding:12px; resize:none; outline:none;
+}
+.notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
+
+/* ---- Columns layout ---- */
+.columns { display:flex; gap:24px; }
+.column { flex:1; min-width:0; }
+
+/* ---- Lists ---- */
+ul, ol { padding-left: 1.5em; margin:0.3em 0; }
+li { margin: 0.4em 0; }
+li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
+li.sub-item::before { content:''; }
+li.spacer { list-style:none; height:0.8em; }
+li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
+li.custom-label { list-style:none; }
+li.custom-label .label { font-weight:500; margin-right:4px; }
+ol.custom-enum { padding-left:1.5em; }
+
+.slide-table {
+  border-collapse:collapse; margin:8px auto;
+}
+.slide-table td {
+  border:1px solid var(--border); padding:4px 12px; text-align:center;
+}
+
+.keyword {
+  color:var(--keyword); background:var(--keyword-bg);
+  padding:1px 4px; border-radius:3px; font-weight:700;
+}
+.accent { color:var(--accent); }
+.red { color:#9b2d86; }
+strong.keyword { font-weight:700; }
+
+.math-display { margin:10px 0; overflow-x:auto; text-align:left; }
+
+/* ---- TikZ ---- */
+.tikz-figure {
+  text-align: center;
+  margin: 10px 0;
+  cursor: zoom-in;
+  transition: opacity 0.15s;
+}
+.tikz-figure:hover { opacity:0.85; }
+.tikz-figure svg {
+  max-height:260px;
+}
+body.print-mode .tikz-figure svg {
+  max-height:180px;
+}
+body.print-mode .tikz-figure { cursor:default; }
+.tikz-placeholder {
+  background:var(--tikz-bg);
+  border:2px dashed var(--tikz-border);
+  padding: 20px;
+  text-align: center;
+  color: #166534;
+  font-size: 14px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+/* ---- Links ---- */
+a { color:var(--accent); text-decoration:underline; }
+a:hover { color:#1e40af; }
+
+/* ---- QR links ---- */
+.qr-link {
+  display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px;
+  background:var(--accent-light); padding:4px 10px; border-radius:4px;
+  text-decoration:none; margin:4px 0; font-size:13px; cursor:pointer;
+  color:var(--accent);
+}
+.qr-link:hover { background:#dbeafe; }
+.qr-link .qr-img {
+  display:none; width:100%; margin-top:6px; padding:4px;
+  background:#fff; border-radius:4px;
+}
+.qr-link.qr-open .qr-img { display:block; }
+.qr-link.qr-open { flex-direction:column; }
+
+/* ---- Phantom ---- */
+.phantom {
+  background:var(--phantom-bg); color:transparent;
+  padding:2px 8px; border-radius:3px; border:1px dashed #818cf8;
+  user-select:none; cursor:pointer; transition:color 0.3s;
+}
+.phantom.revealed { color:var(--accent); background:#c7d2fe; }
+
+/* ---- Box frame ---- */
+.box-frame {
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  background: var(--panel-bg);
+}
+.note-frame {
+  display:flex; align-items:center; justify-content:center;
+  min-height:200px; color:var(--text-dim); font-size:16px;
+}
+.note-frame::before { content:'📝 ノート用スペース'; }
+
+.framed { border:1px solid var(--border); padding:8px; border-radius:4px; margin:8px 0; }
+
+/* ---- Multicol ---- */
+.multicols { column-count:2; column-gap:24px; }
+
+.section-title-big {
+  text-align:center; font-size:36px; font-weight:700;
+  color:var(--accent); padding:60px 0;
+  font-family:'Noto Serif JP',serif;
+}
+
+/* ---- Code ---- */
+pre {
+  background: #f3f4f6;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 10px 0;
+  position: relative;
+}
+pre .copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--fg);
+  transition: background .15s;
+}
+pre .copy-btn:hover { background: var(--accent-light); }
+pre .copy-btn.copied { background: #d1fae5; border-color: #6ee7b7; }
+code { font-family: 'JetBrains Mono', "SF Mono", "Fira Code", monospace; }
+
+/* ═══ LIGHTBOX ═══ */
+.lightbox {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.85);
+  align-items:center; justify-content:center;
+  cursor:zoom-out;
+}
+.lightbox.open { display:flex; }
+.lightbox-inner {
+  background:#fff; border-radius:8px; padding:20px;
+  max-width:90vw; max-height:90vh; overflow:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+  cursor:default;
+}
+.lightbox-inner svg { width:100%; height:auto; max-height:80vh; display:block; }
+.lightbox-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
+  align-items:center; justify-content:center;
+}
+.lightbox.open + .lightbox-close { display:flex; }
+
+/* Video modal */
+.video-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.9); align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.video-overlay.open { display:flex; }
+.video-container {
+  width:min(80vw, 800px); aspect-ratio:16/9;
+  cursor:default;
+}
+.video-container iframe { width:100%; height:100%; border:none; border-radius:8px; }
+.video-close {
+  position:fixed; top:16px; right:20px; z-index:1001;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+  color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; display:none;
+  align-items:center; justify-content:center;
+}
+.video-overlay.open ~ .video-close { display:flex; }
+
+/* ═══ KEYBOARD HINTS ═══ */
+.hints {
+  position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:6px;
+  font-size:11px; color:#ccc; display:none; z-index:200; white-space:nowrap;
+}
+.hints.show { display:block; }
+kbd {
+  background:#374151; padding:1px 5px; border-radius:3px;
+  border:1px solid #4b5563; font-family:'JetBrains Mono',monospace; font-size:11px;
+}
+
+/* ═══ MODE TOGGLE ═══ */
+.mode-toggle {
+  position:fixed; bottom:12px; right:12px; z-index:200;
+  background:var(--header-bg); color:#fff;
+  padding:8px 16px; border-radius:6px; cursor:pointer;
+  font-size:13px; font-family:inherit; border:none;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* ---- Print mode ---- */
+body.print-mode {
+  background:#fff;
+}
+body.print-mode .topbar,
+body.print-mode .notes-panel,
+body.print-mode .nav-btn,
+body.print-mode .topbar-nav { display:none !important; }
+body.print-mode .main {
+  display:block; overflow:visible;
+}
+body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
+
+.print-slide {
+  page-break-inside:auto;
+  border:none;
+  padding:0px 28px;
+  margin:-30px auto;
+  max-width:870px;
+  background:#fff;
+  position:relative;
+  overflow:visible;
+}
+.print-slide .slide-number {
+  position:absolute; top:8px; right:12px;
+  font-size:11px; color:#999;
+  font-family:'JetBrains Mono',monospace;
+}
+.print-slide .frame-title {
+  font-size:16px; font-weight:700; color:var(--accent);
+  border-bottom:1.5px solid var(--accent);
+  padding-bottom:4px; margin-bottom:10px;
+}
+.print-slide .section-badge {
+  font-size:10px; color:#999; margin-bottom:2px;
+}
+.print-slide-title {
+  padding-top:8px; padding-bottom:8px;
+}
+.print-slide-title .section-title-big {
+  padding:12px 0;
+}
+
+/* Print: figures get proper spacing */
+.print-slide .tikz-figure { margin:8px 0 12px; }
+.print-slide .tikz-figure svg { max-height:160px; }
+
+/* Print: QR codes always visible */
+body.print-mode .qr-link .qr-img { display:block !important; }
+body.print-mode .qr-link { flex-direction:column; }
+
+.print-note-area {
+  margin-top:8px;
+}
+
+.print-header {
+  text-align:center; padding:20px 0 10px;
+  border-bottom:2px solid var(--accent);
+  margin:0 auto 20px; max-width:870px;
+}
+.print-header h1 { font-size:22px; color:var(--accent); }
+.print-header p { font-size:12px; color:#666; }
+.print-header .page-break-toggle {
+  margin-top:8px; padding:4px 12px;
+  font-size:12px; cursor:pointer;
+  border:1px solid #ccc; border-radius:4px;
+  background:#f5f5f5; color:#333;
+}
+.print-header .page-break-toggle:hover { background:#e8e8e8; }
+body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
+
+/* ---- Responsive ---- */
+@media (max-width:768px) {
+  .slide-area { padding: 16px; }
+  .slide-content { padding: 20px 16px; }
+  .columns { flex-direction:column; gap:10px; }
+  .notes-panel { width:100%; }
+  .topbar-title { max-width:120px; }
+}
+@media print {
+  body.print-mode .print-slide { border:none; box-shadow:none; }
+  .print-note-area { min-height:60px; }
+  .topbar,.draw-toolbar,.notes-panel { display:none !important; }
+}
+
+/* ═══ UNDERSTANDING BAR ═══ */
+.understanding-bar {
+  display:flex; gap:6px; justify-content:center; padding:8px 0;
+  border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--surface); z-index:4;
+}
+.understanding-btn {
+  padding:5px 14px; border-radius:16px; border:1.5px solid var(--border);
+  background:var(--surface); cursor:pointer; font-size:13px; font-family:inherit;
+  transition:all 0.15s; color:var(--text-dim);
+}
+.understanding-btn:hover { background:var(--accent-light); }
+.understanding-btn.active-ok { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+.understanding-btn.active-unsure { background:#fef3c7; border-color:#fbbf24; color:#92400e; }
+.understanding-btn.active-ng { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+
+/* ═══ BOOKMARK ═══ */
+.bookmark-btn {
+  position:absolute; top:8px; right:8px; background:none; border:none;
+  font-size:20px; cursor:pointer; opacity:0.3; transition:opacity 0.15s, transform 0.15s;
+  z-index:5; padding:4px;
+}
+.bookmark-btn:hover { opacity:0.7; transform:scale(1.15); }
+.bookmark-btn.active { opacity:1; color:#f59e0b; }
+
+/* ═══ STATUS DOT ═══ */
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-left:6px; vertical-align:middle;
+}
+.status-dot.ok { background:#10b981; }
+.status-dot.unsure { background:#f59e0b; }
+.status-dot.ng { background:#ef4444; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  display:none; align-items:center; gap:6px; padding:4px 16px;
+  background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px;
+}
+.filter-bar.show { display:flex; }
+.filter-chip {
+  padding:3px 10px; border-radius:12px; border:1px solid var(--border);
+  background:#fff; cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.15s;
+}
+.filter-chip:hover { background:var(--accent-light); }
+.filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
+
+/* hide in print */
+body.print-mode .understanding-bar,
+body.print-mode .bookmark-btn,
+body.print-mode .filter-bar { display:none !important; }
+body.hide-understanding .understanding-bar,
+body.hide-understanding .bookmark-btn { display:none !important; }
+
+/* ═══ GEOGEBRA EMBED ═══ */
+.geogebra-embed iframe { width:100%; max-width:800px; height:500px; border:1px solid #e4e4e4; border-radius:8px; display:block; margin:8px 0; }
+.geogebra-embed .print-label { display:none; }
+body.print-mode .geogebra-embed iframe { display:none; }
+body.print-mode .geogebra-embed .print-label {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
+
+/* ═══ FLOATING PEN BUTTON (FAB) ═══ */
+.fab-pen {
+  display: none;
+  position: fixed;
+  bottom: 60px;
+  right: 12px;
+  z-index: 200;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--header-bg);
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.fab-pen.show { display: flex; }
+.fab-pen.active { background: var(--accent); }
+.fab-pen.zoomed { transition: none; }
+body.print-mode .fab-pen { display: none !important; }
+
+/* ═══ MOBILE (≤768px) ═══ */
+@media (max-width: 768px) {
+  .sp-hide { display: none !important; }
+
+  .topbar { padding: 4px 8px; }
+  .topbar-title { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .section-select { max-width: 110px; font-size: 11px; }
+  .nav-btn { padding: 4px 7px; font-size: 12px; }
+  .topbar-nav { gap: 4px; flex-wrap: wrap; }
+
+  .slide-area { padding: 8px 10px; }
+  .slide-content { padding: 14px 16px; border-radius: 6px; }
+  .slide-content .frame-title { font-size: 17px; }
+
+  .notes-panel:not(.collapsed) {
+    position: fixed; inset: 0;
+    width: 100% !important; z-index: 50;
+    border-left: none; border-top: 3px solid var(--note-border);
+  }
+
+  .mode-toggle { display: none; }
+  .columns { flex-direction: column; gap: 12px; }
+  .draw-toolbar { overflow-x: auto; }
+  .understanding-btn { padding: 4px 10px; font-size: 12px; }
+
+  /* Safe area / dynamic viewport */
+  body.slide-mode { height: 100dvh; }
+  .slide-area { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .understanding-bar { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+</style>
+<script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
+<style>
+/* SageMath Cell styling */
+.sage-cell { margin:12px 0; }
+.sage-cell .sagecell_editor { border-radius:6px; }
+.sage-cell .sagecell_evalButton {
+  background:var(--accent) !important; color:#fff !important; border:none !important;
+  border-radius:4px !important; padding:6px 16px !important; font-family:inherit !important;
+  cursor:pointer !important; font-size:13px !important;
+}
+.sage-cell .sagecell_evalButton:hover { background:#1e40af !important; }
+.sage-cell .sagecell_output { border-radius:6px; margin-top:8px; }
+.sage-cell-label { font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+body.print-mode .sage-cell { display:none; }
+body.print-mode .sage-cell-print {
+  display:block; padding:12px; border:2px dashed var(--border);
+  border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
+}
+.sage-cell-print { display:none; }
+</style>
+</head>
+<body class="slide-mode">
+
+<!-- Top bar -->
+<div class="topbar" id="topbar">
+  <span class="topbar-title">金融公共分析手法入門1</span>
+  <div class="topbar-nav">
+    <select class="section-select" id="sectionSelect" onchange="goToSection(this.value)"></select>
+    <button class="nav-btn sp-hide" onclick="goToSlide(0)">⏮</button>
+    <button class="nav-btn" onclick="prevSlide()">◀</button>
+    <span class="page-info" id="slideNum">1 / 1</span>
+    <button class="nav-btn" onclick="nextSlide()">▶</button>
+    <button class="nav-btn sp-hide" onclick="goToSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn" onclick="toggleNotes()">📝</button>
+    <button class="nav-btn" onclick="toggleDraw()" id="drawBtn">✏️</button>
+    <button class="nav-btn sp-hide" onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
+    <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
+    <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
+    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
+    <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar" id="filterBar">
+  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
+  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
+  <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
+  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
+  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
+  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
+  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
+  <span class="filter-count" id="filterCount"></span>
+</div>
+
+<!-- Draw toolbar -->
+<div class="draw-toolbar" id="drawToolbar">
+  <div class="tool-group">
+    <span class="tool-label">ツール:</span>
+    <button onclick="setTool('pen')" id="toolPen" class="active" title="ペン (P)">✏️</button>
+    <button onclick="setTool('highlighter')" id="toolHighlighter" title="蛍光ペン (H)">🖍️</button>
+    <button onclick="setTool('pointer')" id="toolPointer" title="ポインタ (L)">🔴</button>
+    <button onclick="setTool('eraser')" id="toolEraser" title="消しゴム (E)">🧹</button>
+  </div>
+  <div class="tool-group">
+    <span class="tool-label">色:</span>
+    <div class="color-dot active" style="background:#e94560" onclick="setDrawColor('#e94560',this)"></div>
+    <div class="color-dot" style="background:#4cc9f0" onclick="setDrawColor('#4cc9f0',this)"></div>
+    <div class="color-dot" style="background:#f9c74f" onclick="setDrawColor('#f9c74f',this)"></div>
+    <div class="color-dot" style="background:#333" onclick="setDrawColor('#333',this)"></div>
+    <div class="color-dot" style="background:#1d4ed8" onclick="setDrawColor('#1d4ed8',this)"></div>
+  </div>
+  <div class="tool-group">
+    <span class="tool-label">太さ:</span>
+    <input type="range" class="size-range" min="1" max="16" value="3" id="sizeSlider">
+  </div>
+  <div class="tool-group">
+    <button onclick="undoStroke()" title="取消 (Ctrl+Z)">↩️</button>
+    <button onclick="clearStrokes()" title="全消去">🗑️</button>
+    <button onclick="toggleBoard()" id="boardBtn" title="板書スペース (B)">📋</button>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div class="main" id="slideWrapper">
+  <div class="slide-area" id="slideArea">
+    <div class="slide-content" id="slideInner">
+      <div class="section-badge" id="sectionBadge"></div>
+      <div class="frame-title" id="slideTitle"></div>
+      <div id="slideContent"></div>
+    </div>
+    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+  </div>
+  <div class="notes-panel collapsed" id="notesPanel">
+    <div class="notes-header">
+      <h3>📝 メモ（スライド <span id="noteSlideNum">1</span>）</h3>
+      <button class="nav-btn" onclick="clearNote()" style="font-size:11px;padding:2px 6px;background:rgba(0,0,0,0.1);color:#92400e;border-color:rgba(0,0,0,0.1);">クリア</button>
+    </div>
+    <textarea class="notes-textarea" id="noteArea" placeholder="ここにメモを書き込めます...&#10;&#10;※ メモ・手書きはブラウザに自動保存されますが、&#10;ブラウザデータの消去等で失われることがあります。&#10;残したい内容は印刷用表示からPDF保存してください。"></textarea>
+  </div>
+</div>
+
+<div class="hints" id="hints">
+  <kbd>←</kbd><kbd>→</kbd> スライド移動 &nbsp;
+  <kbd>D</kbd> 書き込みモード &nbsp;
+  <kbd>P</kbd> ペン &nbsp;
+  <kbd>H</kbd> ハイライト &nbsp;
+  <kbd>E</kbd> 消しゴム &nbsp;
+  <kbd>B</kbd> 板書スペース &nbsp;
+  <kbd>N</kbd> メモ欄 &nbsp;
+  <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>Ctrl+Z</kbd> 取り消し
+</div>
+
+<button class="fab-pen" id="fabPen" onclick="toggleDraw()" title="ペン ON/OFF">✏️</button>
+<button class="mode-toggle" id="modeToggle" onclick="togglePrintMode()">📄 印刷用表示</button>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-inner" id="lightboxContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- Video modal -->
+<div class="video-overlay" id="videoModal" onclick="closeVideo()">
+  <div class="video-container" onclick="event.stopPropagation()">
+    <iframe id="videoFrame" allow="autoplay"></iframe>
+  </div>
+</div>
+
+<div class="board-popup" id="boardPopup" onclick="if(event.target===this)toggleBoard()">
+  <div class="board-popup-inner">
+    <div class="board-popup-header">
+      <span>📋 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="color-dot" style="background:#e63946;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#e63946',this)"></div>
+        <div class="color-dot" style="background:#2563eb;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#2563eb',this)"></div>
+        <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
+        <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
+        <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
+        <button id="boardEraserBtn" onclick="toggleBoardEraser()" title="消しゴム">🧹</button>
+        <button onclick="undoBoardStroke()">↩️</button>
+        <button onclick="clearBoardStrokes()">🗑️</button>
+        <button onclick="toggleBoard()">✕</button>
+      </div>
+    </div>
+    <div class="board-popup-canvas-wrap">
+      <canvas id="boardCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Data =====
+let SLIDES = [];
+let current = 0;
+let mode = 'slide'; // 'slide' or 'print'
+let drawMode = false;
+let boardMode = false;
+let currentTool = 'pen';
+let drawColor = '#e94560';
+let drawingNow = false;
+let currentStroke = null;
+let strokes = {};
+let notes = {};
+let understanding = {};  // slideIndex -> 'ok' | 'unsure' | 'ng'
+let bookmarks = {};      // slideIndex -> true
+let activeFilter = 'all';
+let filteredIndices = null;
+let pointerPos = null;
+// ═══ APPLE PENCIL AUTO-DETECTION ═══
+let pencilDetected = false;
+let pencilDrawing = false;
+let pencilStroke = null;
+let touchIsSingle = false, touchIsStylus = false;
+let touchStartX = 0, touchStartY = 0;
+let saveTimer = null;
+const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
+
+// ===== Canvas getters =====
+function getCanvas() { return document.getElementById('drawCanvas'); }
+function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
+
+// URL-based page navigation: ?page=N or #N (1-based)
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const qp = parseInt(params.get('page'));
+  if (qp >= 1) return qp - 1;
+  const hash = window.location.hash.replace('#', '');
+  const hp = parseInt(hash);
+  if (hp >= 1) return hp - 1;
+  return null;
+}
+window.addEventListener('hashchange', () => {
+  const hp = parseInt(window.location.hash.replace('#', ''));
+  if (hp >= 1 && hp - 1 < SLIDES.length) showSlide(hp - 1);
+});
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+  SLIDES = Array.from(document.querySelectorAll('template.slide-data')).map(t => ({
+    title: t.dataset.title || '',
+    section: t.dataset.section || '',
+    html: t.innerHTML,
+    is_note: t.dataset.note === 'true',
+    printMargin: parseInt(t.dataset.printMargin) || 80,
+  }));
+  
+  // Build section select
+  const sel = document.getElementById('sectionSelect');
+  const seenSections = [];
+  SLIDES.forEach((s, i) => {
+    if (!s.section || s.is_note) return;
+    if (seenSections.length === 0 || seenSections[seenSections.length-1].section !== s.section) {
+      seenSections.push({ section: s.section, slide: i });
+    }
+  });
+  seenSections.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.slide;
+    opt.textContent = s.section;
+    sel.appendChild(opt);
+  });
+  
+  // Auto-fill last updated date
+  const luEl = document.getElementById('lastUpdated');
+  if (luEl) {
+    const d = new Date(document.lastModified);
+    luEl.textContent = 'Last updated: ' + d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  loadLocal();
+  if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
+  // URL page specification: ?page=N or #N (1-based)
+  const urlPage = getPageFromURL();
+  if (urlPage !== null) current = urlPage;
+  showSlide(current);
+  bindCanvasEvents();
+  bindBoardCanvasEvents();
+  initPencilDetection();
+  // Show floating pen button on touch-capable devices
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.getElementById('fabPen').classList.add('show');
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', repositionFab);
+    window.visualViewport.addEventListener('scroll', repositionFab);
+  }
+  window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
+  initQRCodes();
+
+  // Touch navigation
+  document.addEventListener('touchstart', e => {
+    touchIsSingle = (e.touches.length === 1);
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchIsStylus = (e.touches[0].touchType === 'stylus');
+  });
+  document.addEventListener('touchmove', e => {
+    if (e.touches.length > 1) touchIsSingle = false;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (mode !== 'slide' || !touchIsSingle || touchIsStylus) return;
+    if (!pencilDetected && drawMode) return;
+    if (window.visualViewport && window.visualViewport.scale > 1.05) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.5) {
+      if (dx < 0) nextSlide(); else prevSlide();
+    }
+  });
+});
+
+// ===== Navigation =====
+function showSlide(idx) {
+  if (idx < 0 || idx >= SLIDES.length) return;
+  // Save current note
+  const na = document.getElementById('noteArea');
+  if (na && notes[current] !== undefined) {
+    notes[current] = na.value;
+  }
+
+  current = idx;
+  // Update URL hash without triggering hashchange
+  history.replaceState(null, '', '#' + (idx + 1));
+  const s = SLIDES[idx];
+
+  // Section badge
+  const badge = document.getElementById('sectionBadge');
+  if (badge) {
+    badge.textContent = s.section || '';
+    badge.style.display = s.section ? '' : 'none';
+  }
+
+  document.getElementById('slideTitle').textContent = s.title;
+  document.getElementById('slideTitle').style.display = s.title ? '' : 'none';
+  // section name shown in badge
+  let pageText = `${idx+1} / ${SLIDES.length}`;
+  if (filteredIndices && filteredIndices.length > 0) {
+    const pos = filteredIndices.indexOf(idx);
+    if (pos >= 0) pageText = `${pos+1}/${filteredIndices.length} [${idx+1}]`;
+  }
+  document.getElementById('slideNum').textContent = pageText;
+  const noteNum = document.getElementById('noteSlideNum');
+  if (noteNum) noteNum.textContent = idx + 1;
+
+  const content = document.getElementById('slideContent');
+  if (MathJax.typesetClear) MathJax.typesetClear([content]);
+
+  // Check if section title slide
+  if (s.title === s.section && !s.html.trim()) {
+    content.innerHTML = `<div class="section-title-big">${s.title}</div>`;
+    if (badge) badge.style.display = 'none';
+    document.getElementById('slideTitle').style.display = 'none';
+  } else {
+    content.innerHTML = s.html;
+  }
+
+  // Bookmark button
+  const isBM = bookmarks[idx];
+  const bmBtn = document.createElement('button');
+  bmBtn.className = 'bookmark-btn' + (isBM ? ' active' : '');
+  bmBtn.textContent = '⭐';
+  bmBtn.title = 'ブックマーク';
+  bmBtn.onclick = () => { toggleBookmark(idx); };
+  content.style.position = 'relative';
+  content.prepend(bmBtn);
+
+  // Understanding bar
+  const u = understanding[idx] || '';
+  const ubar = document.createElement('div');
+  ubar.className = 'understanding-bar';
+  ubar.innerHTML =
+    `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>` +
+    `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>` +
+    `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
+  content.appendChild(ubar);
+  updateStatusDot(idx);
+
+  // Setup phantoms
+  content.querySelectorAll('.phantom').forEach(p => {
+    p.title = 'クリックで表示';
+  });
+
+  // Add copy buttons to code blocks
+  content.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.onclick = () => {
+      const code = pre.querySelector('code') || pre;
+      navigator.clipboard.writeText(code.textContent.trim()).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+      });
+    };
+    pre.appendChild(btn);
+  });
+
+  if (typeof MathJax.typesetPromise === 'function') {
+    MathJax.typesetPromise([content]).then(() => {
+      initQRCodes();
+      initSageCells();
+      resizeDrawCanvas();
+      redrawStrokes();
+    });
+  }
+
+  // Update section select
+  const secSel = document.getElementById('sectionSelect');
+  let secVal = '';
+  for (let i = secSel.options.length - 1; i >= 0; i--) {
+    if (idx >= parseInt(secSel.options[i].value)) { secVal = secSel.options[i].value; break; }
+  }
+  secSel.value = secVal;
+
+  // Notes
+  if (na) na.value = notes[idx] || '';
+
+  // Scroll to top
+  document.getElementById('slideArea').scrollTop = 0;
+
+  // Redraw strokes
+  setTimeout(() => {
+    resizeDrawCanvas();
+    redrawStrokes();
+  }, 50);
+
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = idx+1;
+    redrawBoardStrokes();
+  }
+
+  scheduleSave();
+}
+
+function nextSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { nextFiltered(); return; }
+  let next = current + 1;
+  while (next < SLIDES.length && SLIDES[next].is_note) next++;
+  if (next < SLIDES.length) showSlide(next);
+}
+function prevSlide() {
+  if (filteredIndices && filteredIndices.length > 0) { prevFiltered(); return; }
+  let prev = current - 1;
+  while (prev >= 0 && SLIDES[prev].is_note) prev--;
+  if (prev >= 0) showSlide(prev);
+}
+function goToSlide(idx) { showSlide(idx); }
+function goToSection(v) { if (v !== '') showSlide(parseInt(v)); }
+
+// ===== Drawing =====
+function toggleDraw() {
+  drawMode = !drawMode;
+  const c = getCanvas();
+  if (c) {
+    c.classList.toggle('active', drawMode);
+    c.classList.remove('pointer');
+  }
+  document.getElementById('drawToolbar').classList.toggle('show', drawMode);
+  document.getElementById('drawBtn').style.background = drawMode ? 'var(--accent)' : '';
+  updateFabPen();
+  if (!drawMode) {
+    pointerPos = null;
+  }
+  if (drawMode) currentTool = 'pen';
+  setTimeout(resizeDrawCanvas, 50);
+  updateToolButtons();
+}
+
+function enableDrawMode() {
+  if (drawMode) return;
+  drawMode = true;
+  const c = getCanvas();
+  if (c) {
+    c.classList.add('active');
+    c.classList.remove('pointer');
+  }
+  document.getElementById('drawToolbar').classList.add('show');
+  document.getElementById('drawBtn').style.background = 'var(--accent)';
+  updateFabPen();
+  currentTool = 'pen';
+  resizeDrawCanvas();
+  updateToolButtons();
+}
+
+function updateFabPen() {
+  const fab = document.getElementById('fabPen');
+  if (fab) fab.classList.toggle('active', drawMode);
+}
+
+function setTool(tool) {
+  currentTool = tool;
+  updateToolButtons();
+  const c = getCanvas();
+  if (c) {
+    c.classList.toggle('pointer', tool === 'pointer');
+    c.style.cursor = tool === 'pointer' ? 'none' : (tool === 'eraser' ? 'cell' : 'crosshair');
+  }
+}
+
+function updateToolButtons() {
+  ['pen','highlighter','eraser','pointer'].forEach(t => {
+    const btn = document.getElementById('tool' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.classList.toggle('active', currentTool === t);
+  });
+}
+
+let boardStrokes = {};
+let boardColor = '#333';
+let boardDrawing = false;
+let boardCurrentStroke = null;
+let boardEraser = false;
+
+function toggleBoard() {
+  boardMode = !boardMode;
+  const popup = document.getElementById('boardPopup');
+  popup.classList.toggle('show', boardMode);
+  const btn = document.getElementById('boardBtn');
+  if (btn) btn.classList.toggle('active', boardMode);
+  if (boardMode) {
+    document.getElementById('boardSlideNum').textContent = current + 1;
+    setTimeout(() => { resizeBoardCanvas(); redrawBoardStrokes(); }, 50);
+  } else if (boardEraser) {
+    toggleBoardEraser();
+  }
+}
+
+function resizeBoardCanvas() {
+  const c = document.getElementById('boardCanvas');
+  const wrap = c.parentElement;
+  if (!c || !wrap) return;
+  c.width = wrap.clientWidth;
+  c.height = wrap.clientHeight;
+  redrawBoardStrokes();
+}
+
+function setBoardColor(col, el) {
+  boardColor = col;
+  document.querySelectorAll('#boardPopup .color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function getBoardPos(e) {
+  const c = document.getElementById('boardCanvas');
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+  return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
+}
+
+function toggleBoardEraser() {
+  boardEraser = !boardEraser;
+  const btn = document.getElementById('boardEraserBtn');
+  if (btn) btn.style.background = boardEraser ? 'var(--accent)' : '';
+  const c = document.getElementById('boardCanvas');
+  if (c) c.style.cursor = boardEraser ? 'cell' : 'crosshair';
+}
+
+function eraseBoardAt(pos) {
+  const sl = boardStrokes[current] || [];
+  const r = parseInt(document.getElementById('boardSizeSlider').value) * 4;
+  boardStrokes[current] = sl.filter(s =>
+    !s.points.some(p => Math.abs(p.x - pos.x) < r && Math.abs(p.y - pos.y) < r)
+  );
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function startBoardDraw(e) {
+  e.preventDefault();
+  const p = getBoardPos(e);
+  if (boardEraser) { eraseBoardAt(p); boardDrawing = true; return; }
+  boardDrawing = true;
+  const size = parseInt(document.getElementById('boardSizeSlider').value);
+  boardCurrentStroke = { color: boardColor, size, points: [p] };
+}
+
+function moveBoardDraw(e) {
+  if (!boardDrawing) return;
+  e.preventDefault();
+  if (boardEraser) { eraseBoardAt(getBoardPos(e)); return; }
+  if (!boardCurrentStroke) return;
+  boardCurrentStroke.points.push(getBoardPos(e));
+  redrawBoardStrokes(boardCurrentStroke);
+}
+
+function endBoardDraw() {
+  if (!boardDrawing || !boardCurrentStroke) return;
+  boardDrawing = false;
+  if (!boardStrokes[current]) boardStrokes[current] = [];
+  boardStrokes[current].push(boardCurrentStroke);
+  boardCurrentStroke = null;
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function redrawBoardStrokes(tempStroke) {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const all = (boardStrokes[current] || []).concat(tempStroke ? [tempStroke] : []);
+  all.forEach(s => {
+    if (s.points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    ctx.stroke();
+  });
+}
+
+function undoBoardStroke() {
+  if (boardStrokes[current] && boardStrokes[current].length) {
+    boardStrokes[current].pop();
+    redrawBoardStrokes();
+    scheduleSave();
+  }
+}
+
+function clearBoardStrokes() {
+  boardStrokes[current] = [];
+  redrawBoardStrokes();
+  scheduleSave();
+}
+
+function bindBoardCanvasEvents() {
+  const c = document.getElementById('boardCanvas');
+  if (!c) return;
+  c.addEventListener('mousedown', startBoardDraw);
+  c.addEventListener('mousemove', moveBoardDraw);
+  c.addEventListener('mouseup', endBoardDraw);
+  c.addEventListener('mouseleave', endBoardDraw);
+  c.addEventListener('touchstart', startBoardDraw, {passive:false});
+  c.addEventListener('touchmove', moveBoardDraw, {passive:false});
+  c.addEventListener('touchend', endBoardDraw);
+}
+
+function resizeDrawCanvas() {
+  const area = document.getElementById('slideArea');
+  const c = getCanvas();
+  if (!c || !area) return;
+  c.width = area.scrollWidth;
+  c.height = area.scrollHeight;
+  redrawStrokes();
+}
+
+function setDrawColor(c, el) {
+  drawColor = c;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function toggleHints() {
+  document.getElementById('hints').classList.toggle('show');
+}
+
+function startDraw(e) {
+  if (!drawMode) return;
+  // When Apple Pencil detected, ignore finger touches
+  if (pencilDetected && e._fromTouch && !e._isStylus) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  if (currentTool === 'eraser') {
+    eraseAt(pos);
+    return;
+  }
+  if (currentTool === 'pointer') return;
+  drawingNow = true;
+  const sz = parseInt(document.getElementById('sizeSlider').value);
+  const alpha = currentTool === 'highlighter' ? 0.3 : 1;
+  const size = currentTool === 'highlighter' ? sz * 3 : sz;
+  const color = drawColor;
+  currentStroke = { color, size, alpha, points:[pos] };
+}
+
+function moveDraw(e) {
+  if (!drawMode) return;
+  if (pencilDetected && e._fromTouch && !e._isStylus) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  
+  if (currentTool === 'pointer') {
+    pointerPos = pos;
+    redrawStrokes();
+    return;
+  }
+  if (currentTool === 'eraser' && e.buttons) {
+    eraseAt(pos);
+    return;
+  }
+  if (!drawingNow || !currentStroke) return;
+  currentStroke.points.push(pos);
+  redrawStrokes();
+  // Draw current stroke preview
+  const ctx = getCtx();
+  if (ctx) drawStroke(ctx, currentStroke);
+}
+
+function endDraw(e) {
+  if (currentTool === 'pointer') {
+    pointerPos = null;
+    redrawStrokes();
+  }
+  if (!drawingNow || !currentStroke) { drawingNow = false; return; }
+  if (!strokes[current]) strokes[current] = [];
+  strokes[current].push(currentStroke);
+  currentStroke = null;
+  drawingNow = false;
+  redrawStrokes();
+  scheduleSave();
+}
+
+function getPos(e) {
+  const c = getCanvas();
+  const rect = c.getBoundingClientRect();
+  const x = (e.clientX || (e.touches && e.touches[0].clientX) || 0) - rect.left;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY) || 0) - rect.top;
+  return {x: x * (c.width / rect.width), y: y * (c.height / rect.height)};
+}
+
+function drawStroke(ctx, s) {
+  if (s.points.length < 2) return;
+  ctx.save();
+  ctx.globalAlpha = s.alpha;
+  ctx.strokeStyle = s.color;
+  ctx.lineWidth = s.size;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(s.points[0].x, s.points[0].y);
+  for (let i=1; i<s.points.length; i++) {
+    ctx.lineTo(s.points[i].x, s.points[i].y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function redrawStrokes() {
+  const ctx = getCtx();
+  const c = getCanvas();
+  if (!ctx || !c) return;
+  ctx.clearRect(0, 0, c.width, c.height);
+  const sl = strokes[current] || [];
+  sl.forEach(s => drawStroke(ctx, s));
+  if (currentStroke) drawStroke(ctx, currentStroke);
+  if (pencilStroke) drawStroke(ctx, pencilStroke);
+  // Pointer
+  if (pointerPos && currentTool === 'pointer') {
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 14, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(pointerPos.x, pointerPos.y, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function eraseAt(pos) {
+  const sl = strokes[current] || [];
+  const r = parseInt(document.getElementById('sizeSlider').value) * 4;
+  strokes[current] = sl.filter(s => {
+    return !s.points.some(p => Math.abs(p.x - pos.x) < r && Math.abs(p.y - pos.y) < r);
+  });
+  redrawStrokes();
+  scheduleSave();
+}
+
+function undoStroke() {
+  const sl = strokes[current] || [];
+  if (sl.length > 0) {
+    sl.pop();
+    redrawStrokes();
+    scheduleSave();
+  }
+}
+
+function clearStrokes() {
+  strokes[current] = [];
+  redrawStrokes();
+  scheduleSave();
+}
+
+function bindCanvasEvents() {
+  const c = getCanvas();
+  if (!c) return;
+  c.addEventListener('mousedown', startDraw);
+  c.addEventListener('mousemove', moveDraw);
+  c.addEventListener('mouseup', endDraw);
+  c.addEventListener('mouseleave', endDraw);
+  c.addEventListener('touchstart', e => {
+    if (!drawMode) return;
+    const isStylus = e.touches[0] && e.touches[0].touchType === 'stylus';
+    if (pencilDetected && !isStylus) return;
+    e.preventDefault();
+    startDraw({clientX:e.touches[0].clientX,clientY:e.touches[0].clientY,_fromTouch:true,_isStylus:isStylus,preventDefault:()=>{}});
+  }, {passive:false});
+  c.addEventListener('touchmove', e => {
+    if (!drawMode) return;
+    const isStylus = e.touches[0] && e.touches[0].touchType === 'stylus';
+    if (pencilDetected && !isStylus) return;
+    e.preventDefault();
+    moveDraw({clientX:e.touches[0].clientX,clientY:e.touches[0].clientY,buttons:1,_fromTouch:true,_isStylus:isStylus,preventDefault:()=>{}});
+  }, {passive:false});
+  c.addEventListener('touchend', e => { if (drawMode) endDraw(e); }, {passive:false});
+}
+
+// ═══ APPLE PENCIL: Pointer-event based detection on slideArea ═══
+function getDrawPosFromPointer(e) {
+  const c = getCanvas();
+  if (!c) return {x:0, y:0};
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (c.width / r.width);
+  const y = (e.clientY - r.top) * (c.height / r.height);
+  return { x, y };
+}
+
+function initPencilDetection() {
+  const area = document.getElementById('slideArea');
+  if (!area) return;
+
+  area.addEventListener('pointerdown', function(e) {
+    if (e.pointerType !== 'pen' || mode !== 'slide') return;
+    e.preventDefault();
+    pencilDetected = true;
+    enableDrawMode();
+    pencilDrawing = true;
+    const pos = getDrawPosFromPointer(e);
+
+    if (currentTool === 'pointer') {
+      pointerPos = pos; redrawStrokes();
+      this.setPointerCapture(e.pointerId);
+      return;
+    }
+    if (currentTool === 'eraser') {
+      eraseAt(pos);
+      this.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    const sz = parseInt(document.getElementById('sizeSlider').value);
+    pencilStroke = {
+      color: drawColor,
+      size: currentTool === 'highlighter' ? sz * 3 : sz,
+      alpha: currentTool === 'highlighter' ? 0.3 : 1,
+      points: [pos]
+    };
+    this.setPointerCapture(e.pointerId);
+  });
+
+  area.addEventListener('pointermove', function(e) {
+    if (e.pointerType !== 'pen' || !pencilDrawing) return;
+    e.preventDefault();
+    const pos = getDrawPosFromPointer(e);
+
+    if (currentTool === 'pointer') { pointerPos = pos; redrawStrokes(); return; }
+    if (currentTool === 'eraser') { eraseAt(pos); return; }
+
+    if (pencilStroke) {
+      pencilStroke.points.push(pos);
+      redrawStrokes();
+    }
+  });
+
+  area.addEventListener('pointerup', function(e) {
+    if (e.pointerType !== 'pen') return;
+    if (currentTool === 'pointer') { pointerPos = null; redrawStrokes(); }
+    if (pencilStroke && pencilStroke.points.length > 0) {
+      if (!strokes[current]) strokes[current] = [];
+      strokes[current].push(pencilStroke);
+    }
+    if (pencilDrawing) scheduleSave();
+    pencilDrawing = false;
+    pencilStroke = null;
+    redrawStrokes();
+  });
+
+  area.addEventListener('pointercancel', function(e) {
+    if (e.pointerType !== 'pen') return;
+    pencilDrawing = false;
+    pencilStroke = null;
+  });
+}
+
+function repositionFab() {
+  const fab = document.getElementById('fabPen');
+  if (!fab || !window.visualViewport) return;
+  const vv = window.visualViewport;
+  if (vv.scale <= 1.05) {
+    fab.classList.remove('zoomed');
+    fab.style.transform = '';
+    return;
+  }
+  fab.classList.add('zoomed');
+  const S = vv.scale;
+  const defLeft = window.innerWidth - 12 - 48;
+  const defTop  = window.innerHeight - 60 - 48;
+  const tgtLeft = vv.offsetLeft + vv.width  - (12 + 48) / S;
+  const tgtTop  = vv.offsetTop  + vv.height - (60 + 48) / S;
+  const dx = tgtLeft - defLeft;
+  const dy = tgtTop  - defTop;
+  fab.style.transformOrigin = 'top left';
+  fab.style.transform = `translate(${dx}px, ${dy}px) scale(${1/S})`;
+}
+
+// ===== Notes =====
+function toggleNotes() {
+  document.getElementById('notesPanel').classList.toggle('collapsed');
+}
+function clearNote() {
+  document.getElementById('noteArea').value = '';
+  notes[current] = '';
+  scheduleSave();
+}
+// ═══ UNDERSTANDING ═══
+function setUnderstanding(idx, level) {
+  if (understanding[idx] === level) {
+    delete understanding[idx];
+  } else {
+    understanding[idx] = level;
+  }
+  showSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+function updateStatusDot(idx) {
+  let dot = document.getElementById('statusDot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.id = 'statusDot';
+    dot.className = 'status-dot';
+    document.getElementById('slideNum').after(dot);
+  }
+  const u = understanding[idx];
+  dot.className = 'status-dot' + (u ? ' ' + u : '');
+}
+
+// ═══ BOOKMARKS ═══
+function toggleBookmark(idx) {
+  if (bookmarks[idx]) {
+    delete bookmarks[idx];
+  } else {
+    bookmarks[idx] = true;
+  }
+  showSlide(idx);
+  scheduleSave();
+  updateFilterCount();
+}
+
+// ═══ FILTER ═══
+function toggleFilter() {
+  document.getElementById('filterBar').classList.toggle('show');
+}
+
+function toggleUnderstanding() {
+  const hidden = document.body.classList.toggle('hide-understanding');
+  localStorage.setItem('hideUnderstanding', hidden ? '1' : '');
+  document.getElementById('ubToggleBtn').style.opacity = hidden ? '0.4' : '';
+}
+
+function setFilter(type, el) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (type === 'all') {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < SLIDES.length; i++) {
+      if (SLIDES[i].is_note) continue;
+      if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
+      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
+      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
+      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
+      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
+    }
+  }
+  updateFilterCount();
+  if (filteredIndices && filteredIndices.length > 0 && !filteredIndices.includes(current)) {
+    showSlide(filteredIndices[0]);
+  }
+}
+
+function updateFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  if (!filteredIndices) { el.textContent = ''; return; }
+  el.textContent = filteredIndices.length + ' / ' + SLIDES.length + ' スライド';
+}
+
+function nextFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { nextSlide(); return; }
+  const next = filteredIndices.find(i => i > current);
+  if (next !== undefined) showSlide(next);
+  else showSlide(filteredIndices[0]);
+}
+
+function prevFiltered() {
+  if (!filteredIndices || filteredIndices.length === 0) { prevSlide(); return; }
+  const prev = [...filteredIndices].reverse().find(i => i < current);
+  if (prev !== undefined) showSlide(prev);
+  else showSlide(filteredIndices[filteredIndices.length - 1]);
+}
+
+// ═══ EXPORT / IMPORT ═══
+function exportData() {
+  const na = document.getElementById('noteArea');
+  if (na) notes[current] = na.value;
+
+  const canvas = getCanvas();
+  const cw = canvas ? canvas.width : 1;
+  const ch = canvas ? canvas.height : 1;
+
+  const normalizeStrokes = (src) => {
+    const out = {};
+    for (const [k, arr] of Object.entries(src || {})) {
+      out[k] = arr.map(s => ({
+        ...s,
+        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
+      }));
+    }
+    return out;
+  };
+
+  const data = {
+    version: 1,
+    title: document.querySelector('.topbar-title')?.textContent || '',
+    exportDate: new Date().toISOString(),
+    slideCount: SLIDES.length,
+    canvasSize: { w: cw, h: ch },
+    notes,
+    understanding,
+    bookmarks,
+    strokes: normalizeStrokes(strokes),
+    boardStrokes: normalizeStrokes(boardStrokes),
+    lastSlide: current,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.download = `basicmath_study_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) { alert('形式が不正です'); return; }
+
+      const merge = confirm(
+        '読み込みモードを選んでください:\n\n' +
+        '「OK」→ 既存データに上書き（マージ）\n' +
+        '「キャンセル」→ 読み込み中止'
+      );
+      if (!merge) return;
+
+      const canvas = getCanvas();
+      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
+      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
+
+      const denormalizeStrokes = (src) => {
+        const out = {};
+        for (const [k, arr] of Object.entries(src || {})) {
+          out[k] = arr.map(s => ({
+            ...s,
+            points: s.points.map(p => ({
+              x: p.x <= 1.5 ? p.x * cw : p.x,
+              y: p.y <= 1.5 ? p.y * ch : p.y,
+            }))
+          }));
+        }
+        return out;
+      };
+
+      if (data.notes) Object.assign(notes, data.notes);
+      if (data.understanding) Object.assign(understanding, data.understanding);
+      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+      if (data.strokes) Object.assign(strokes, denormalizeStrokes(data.strokes));
+      if (data.boardStrokes) Object.assign(boardStrokes, denormalizeStrokes(data.boardStrokes));
+
+      saveLocal();
+      showSlide(current);
+      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportNotes() {
+  let md = '# Lecture Notes\n\n';
+  SLIDES.forEach((s, i) => {
+    if (notes[i]) {
+      md += `## Slide ${i+1}: ${s.title || '(無題)'}\n${notes[i]}\n\n`;
+    }
+  });
+  const blob = new Blob([md], {type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lecture_notes.md';
+  a.click();
+}
+document.getElementById('noteArea').addEventListener('input', () => {
+  notes[current] = document.getElementById('noteArea').value;
+  scheduleSave();
+});
+
+// ===== QR Codes =====
+function initSageCells() {
+  const cells = document.querySelectorAll('#slideContent .sage-cell');
+  if (cells.length === 0 || typeof sagecell === 'undefined') return;
+  cells.forEach(cell => {
+    // Skip if already initialized
+    if (cell.querySelector('.sagecell_editor')) return;
+    sagecell.makeSagecell({
+      inputLocation: cell,
+      evalButtonText: '▶ 実行',
+      languages: ['python'],
+      hide: ['permalink'],
+    });
+  });
+}
+
+function initQRCodes() {
+  document.querySelectorAll('.qr-link:not(.qr-init)').forEach(el => {
+    el.classList.add('qr-init');
+    const url = el.href;
+    if (!url) return;
+    // Check if already has QR img
+    if (el.querySelector('.qr-img')) return;
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      const img = document.createElement('div');
+      img.className = 'qr-img';
+      img.innerHTML = qr.createSvgTag(4);
+      el.appendChild(img);
+    } catch(e) {}
+    el.addEventListener('click', function(e) {
+      // Check for Vimeo
+      const vm = url.match(/vimeo\.com\/(\d+)(?:\/(\w+))?/);
+      if (vm) {
+        e.preventDefault();
+        openVideo(vm[1], vm[2] || '');
+        return;
+      }
+      // Toggle QR
+      const qrImg = this.querySelector('.qr-img');
+      if (qrImg) {
+        e.preventDefault();
+        qrImg.style.display = qrImg.style.display === 'block' ? 'none' : 'block';
+      }
+    });
+  });
+}
+
+// ===== Lightbox =====
+document.addEventListener('click', e => {
+  const fig = e.target.closest('.tikz-figure');
+  if (fig) {
+    const svg = fig.querySelector('svg');
+    if (svg) {
+      const clone = svg.cloneNode(true);
+      clone.style.maxHeight = 'none';
+      document.getElementById('lightboxContent').innerHTML = '';
+      document.getElementById('lightboxContent').appendChild(clone);
+      document.getElementById('lightbox').classList.add('open');
+    }
+  }
+});
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// ===== Video =====
+function openVideo(id, hash) {
+  const src = `https://player.vimeo.com/video/${id}?autoplay=1${hash ? '&h='+hash : ''}`;
+  document.getElementById('videoFrame').src = src;
+  document.getElementById('videoModal').classList.add('open');
+}
+function closeVideo() {
+  document.getElementById('videoFrame').src = '';
+  document.getElementById('videoModal').classList.remove('open');
+}
+
+// ===== Phantom ====
+function togglePhantoms() {
+  document.querySelectorAll('.phantom').forEach(el => el.classList.toggle('revealed'));
+}
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('phantom')) e.target.classList.toggle('revealed');
+});
+
+// ===== Print mode =====
+function togglePageBreak() {
+  document.body.classList.toggle('page-break-on');
+  const on = document.body.classList.contains('page-break-on');
+  const btn = document.querySelector('.page-break-toggle');
+  if (btn) btn.textContent = '改ページ区切り: ' + (on ? 'ON' : 'OFF');
+}
+
+function togglePrintMode() {
+  if (mode === 'slide') enterPrintMode();
+  else enterSlideMode();
+}
+
+function enterPrintMode() {
+  mode = 'print';
+  if (drawMode) toggleDraw();
+  const na = document.getElementById('noteArea');
+  if (na) notes[current] = na.value;
+  document.body.className = 'print-mode';
+  document.getElementById('modeToggle').textContent = '🖥 スライド表示';
+  const area = document.getElementById('slideArea');
+
+  let html = '<div class="print-header"><h1>金融公共分析手法入門1</h1><p>配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
+  SLIDES.forEach((s, idx) => {
+    if (s.is_note) return;
+    if (idx === 0) return;
+    const isSectionTitle = s.html.includes('section-title-big');
+    const margin = s.printMargin;
+    html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}" data-idx="${idx}">`;
+    html += `<span class="slide-number" style="position:absolute;top:8px;right:12px;font-size:11px;color:#999;">${idx+1} / ${SLIDES.length}</span>`;
+    if (s.section) html += `<div class="section-badge">${s.section}</div>`;
+    if (s.title) html += `<div class="frame-title">${s.title}</div>`;
+    html += s.html;
+    if (margin > 0 && !isSectionTitle) {
+      html += `<div class="print-note-area" style="min-height:${margin}px"></div>`;
+    }
+    html += `</div>`;
+  });
+  
+  area.innerHTML = html;
+  
+  // SVG ID dedup
+  area.querySelectorAll('.print-slide').forEach((slide, idx) => {
+    slide.querySelectorAll('svg').forEach(svg => {
+      const prefix = 's' + idx + '-';
+      svg.querySelectorAll('[id]').forEach(el => { el.id = prefix + el.id; });
+      svg.querySelectorAll('use').forEach(el => {
+        const ref = el.getAttributeNS('http://www.w3.org/1999/xlink','href') || el.getAttribute('href');
+        if (ref && ref.startsWith('#')) {
+          const nr = '#' + prefix + ref.slice(1);
+          el.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href', nr);
+          el.setAttribute('href', nr);
+        }
+      });
+      svg.querySelectorAll('[clip-path]').forEach(el => {
+        const cp = el.getAttribute('clip-path');
+        const m = cp && cp.match(/url\(#(.+?)\)/);
+        if (m) el.setAttribute('clip-path', 'url(#' + prefix + m[1] + ')');
+      });
+    });
+  });
+  
+  if (typeof MathJax.typesetPromise === 'function') {
+    MathJax.typesetPromise([area]).then(initQRCodes);
+  }
+}
+
+function enterSlideMode() {
+  mode = 'slide';
+  document.body.className = 'slide-mode';
+  document.getElementById('modeToggle').textContent = '📄 印刷用表示';
+  const area = document.getElementById('slideArea');
+  area.innerHTML = `
+    <div class="slide-content" id="slideInner">
+      <div class="section-badge" id="sectionBadge"></div>
+      <div class="frame-title" id="slideTitle"></div>
+      <div id="slideContent"></div>
+    </div>
+    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+  `;
+  bindCanvasEvents();
+  showSlide(current);
+}
+
+// ===== Local storage =====
+function saveLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }));
+  } catch(e) {}
+}
+function loadLocal() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!data) return;
+    if (data.notes) notes = data.notes;
+    if (data.strokes) strokes = data.strokes;
+    if (data.boardStrokes) boardStrokes = data.boardStrokes;
+    if (data.understanding) understanding = data.understanding;
+    if (data.bookmarks) bookmarks = data.bookmarks;
+    if (typeof data.lastSlide === 'number') current = data.lastSlide;
+  } catch(e) {}
+}
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveLocal, 1000);
+}
+function clearStorage() {
+  if (confirm('保存されたデータをすべて削除しますか？\n\n※ 残したい内容があれば先に「💾」で書き出してください。')) {
+    localStorage.removeItem(STORAGE_KEY);
+    notes = {};
+    strokes = {};
+    boardStrokes = {};
+    understanding = {};
+    bookmarks = {};
+    document.getElementById('noteArea').value = '';
+    redrawStrokes();
+    showSlide(current);
+  }
+}
+window.addEventListener('beforeunload', saveLocal);
+
+// ===== Keyboard shortcuts =====
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  switch(e.key) {
+    case 'ArrowLeft': prevSlide(); break;
+    case 'ArrowRight': nextSlide(); break;
+    case 'd': case 'D': toggleDraw(); break;
+    case 'n': case 'N': toggleNotes(); break;
+    case 'r': case 'R': togglePhantoms(); break;
+    case 'p': case 'P': if (drawMode) setTool('pen'); break;
+    case 'h': case 'H': if (drawMode) setTool('highlighter'); break;
+    case 'e': case 'E': if (drawMode) setTool('eraser'); break;
+    case 'l': case 'L': if (drawMode) setTool('pointer'); break;
+    case 'b': case 'B': if (drawMode || boardMode) toggleBoard(); break;
+    case 'z': if (e.ctrlKey || e.metaKey) { undoStroke(); e.preventDefault(); } break;
+    case 'Escape': if (boardMode) { toggleBoard(); return; } closeLightbox(); closeVideo(); break;
+  }
+});
+</script>
+
+<!-- ===== Slide data ===== -->
+<!-- ===== Slide 1:  /  ===== -->
+<template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
+<div style="text-align:center;">
+<h1 style="font-size:2em;margin-bottom:0.3em;">金融公共分析手法入門1</h1>
+<p style="font-size:0.9em;color:#666;">2027年度版</p>
+<p style="margin-top:1.5em;">多鹿 智哉</p>
+<p style="font-size:0.8em;color:#888;margin-top:1em;"><code id="lastUpdated"></code></p>
+</div>
+</template>
+
+<!-- ===== Slide 2: はじめに / はじめに ===== -->
+<template class="slide-data" data-title="はじめに" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 講義するひと
+<li class="sub-item"><span class="icon-arrow">→</span> 多鹿 智哉
+<ol>
+<li> 学位：博士（経済学）
+<li> 研究分野：ミクロ経済学・ゲーム理論
+</ol>
+
+<li class="sub-item">»  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item"><span class="icon-arrow">→</span> 研究室<br>2号館 807号室
+<li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
+<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
+</ol>
+</ul> 
+</div>
+<div class="column">
+<ul>
+<li> この講義の目的
+<li class="sub-item"><span class="icon-arrow">→</span> 経済学でよく使われる基本的な数学を身につける．
+<li class="sub-item"><span class="icon-arrow">→</span> 数式を用いた表現ができるようになる．
+<li class="sub-item"><span class="icon-arrow">→</span> 計算ができるようになる．
+
+<li> 参考書
+
+<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://tomoyatajika.notion.site/tomoyatajika/6c8d6a0e333c4d68b657158f51e3cd83" target="_blank">経済数学の教科書のリスト</a>
+
+<a class="qr-link" href="https://tomoyatajika.notion.site/tomoyatajika/6c8d6a0e333c4d68b657158f51e3cd83" target="_blank">🔗 QRリンク</a>
+</ul> 
+</div>	
+</div>
+</template>
+
+
+
+<!-- ===== Slide 4: はじめに / 計算のためのソフトウェア ===== -->
+<template class="slide-data" data-title="計算のためのソフトウェア" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class = "columns">
+<div class = "column"> 
+<ul>
+<li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
+<li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）<a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
+<li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
+</li>
+</ul>
+</div>  
+<div class = "column">
+<ul>
+<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
+<li class="spacer"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
+</li>
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 3: はじめに / 諸注意 ===== -->
+<template class="slide-data" data-title="諸注意" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+<li> 授業について：
+<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">大学の講義は「授業90分+予復習180分」で二単位です．</span>
+<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">すべての授業は授業に出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</span>
+
+<li class="sub-item"><span class="icon-arrow">→</span> この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．
+<ol>
+<li> 予習：講義資料を先に見て，わからなそうなところをメモしておく
+<li> 復習：練習問題を解く・わからないところを質問する・スタディグループを作って協力する
+</ol>
+<li> 「わかった」の基準は「授業内容を自分の言葉で説明できる（パラフレーズ）」ことです．
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+
+  <li> 持ち物：筆記具，計算用紙，講義スライド 
+<li class="sub-item"><span class="icon-arrow">→</span> 基本はスライドを印刷（あるいはタブレットなどにダウンロード）して，そこに板書や理解したことなどを書き込むことを推奨する．
+<li class="sub-item"><span class="icon-arrow">→</span> 板書だけを書き込んでいても足りない．必ず理解したことも書く．
+<li class="sub-item"><span class="icon-arrow">→</span> 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．
+
+ </ul> 
+ 
+  </div> 
+ </div>
+</template>
+
+
+<!-- ===== Slide 5: はじめに / 成績評価方法 ===== -->
+<template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
+<ul>
+<li> 成績評価は以下の通り．
+
+<div class="math-display">\[\begin{aligned}\left[\overbrace{\text{小テストの合計点}}^{\text{最大55点}}+\overbrace{\text{質問点}}^{\text{最大14点}}+\overbrace{\text{最終試験}}^{\text{最大50点}} \right]\times \text{出席率}\end{aligned}\]</div>
+
+<li class="sub-item"><span class="icon-arrow">→</span> 小テストはCanvas LMSで出題（何回でもチャレンジ可）
+<li class="sub-item"><span class="icon-arrow">→</span> 小テストにはWolfram Alpha を用いる．
+<li class="sub-item"><span class="icon-arrow">→</span> 質問点は授業１回あたり最大1点を加算する．
+<li> 点数と成績
+<div style="text-align:center">
+<table class="slide-table"><tr><td>点数</td><td>$ \le 59 $</td><td>$  60 \text{ ～ } 69 $</td><td>$ 70 \text{ ～ } 79 $</td><td>$ 80 \text{ ～ } 89 $</td><td>$ 90\le $</td></tr><tr><td>評価</td><td>D</td><td>C</td><td>B</td><td>A</td><td>S</td></tr></table>
+</div>
+<li> 上記以外の事項での評価は行わない．
+<li> 欠席はいかなる理由でも欠席として扱うが，録画を見た上で四百字程度のまとめを提出すれば「出席」として扱う。
+</ul>
+</template>
+
+<!-- ===== Slide 6: はじめに / 講義計画 ===== -->
+<template class="slide-data" data-title="講義計画" data-section="はじめに" data-note="false" data-print-margin="0">
+<div class="multicols"> 
+ <ol>
+ <li> オリエンテーション 
+ <li> 妥当な論証
+ <li> 等式・分数の変形  
+ <li> 一次関数と市場メカニズム 
+<ol>
+<li> 関数と変数 
+
+<li> 連立方程式と市場均衡 
+<li> グラフと余剰分析 
+
+</ol>
+<li> 一変数関数の微分
+<ol>
+<li> 微分と定義, 計算公式  
+<li> 関数の増減と最大最小  
+</ol>
+<li> 多変数関数の微分
+<ol>
+<li> 偏微分の定義と計算
+<li> 多変数関数の最適化（無制約）
+<ul>
+<li class="sub-item"><span class="icon-arrow">→</span> PCを使います
+</ul>
+</ol>
+<li> 数列とその和 
+<ol> 
+<li> 累乗と等比数列 
+<li> 等比級数 
+</ol>
+<li> 確率
+<ol>
+<li> 確率と期待値
+<li> 条件付き確率
+</ol>
+<li> まとめテスト 
+</ol> 
+ 
+ </div> 
+<ul>
+<li> 前提知識
+<li class="sub-item"><span class="icon-arrow">→</span> 文字の四則演算ができる
+
+</ul>
+</template>
+
+<!-- ===== Slide 7: 妥当な論証 / 妥当な論証 ===== -->
+<template class="slide-data" data-title="妥当な論証" data-section="妥当な論証" data-note="false" data-print-margin="0">
+<div class="section-title-big">妥当な論証</div>
+</template>
+
+<!-- ===== Slide 8: 妥当な論証 / 前提・仮定と結論1 ===== -->
+<template class="slide-data" data-title="前提・仮定と結論1" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+  <li> 経済学（に限らず多くの学問）では論理的な論証がなされる．
+ <li class="sub-item"><span class="icon-arrow">→</span> 多くの論理的な論証は「前提・仮定から結論を導く」という形をしている．
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+
+ <li> 例：
+ <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <ol>
+ <li> 人は自分の利益を最大化する選択肢を取る
+ <li> 選択肢は「授業中に居眠りする・しない」の二つである．
+ <li> 「授業中に居眠りする」から得られる利益は $ -100  $ 
+ <li> 「授業中に居眠りしない」から得られる利益は $  0 $ 
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 結論：授業中に居眠りしない
+
+ 
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 9: 妥当な論証 / 前提・仮定と結論2 ===== -->
+<template class="slide-data" data-title="前提・仮定と結論2" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 前提・仮定が変わると結論が変わることもある．
+ <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <ol>
+ <li> 人は自分の利益を最大化する選択肢を取る.
+ <li> 人々の利益は大きければ大きいほど良い
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> A1〜A2より，人々の選択肢はどんなものでも禁止しない方が良い.
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 前提が変わると...
+ <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <ol>
+ 
+  <li> <span style="color:#2563eb">人の利益には今日の利益と明日の利益がある</span>．
+ <li> 人は自分の<span style="color:#2563eb">今日の</span>利益を最大化する選択肢を取る.
+ <li> 人々の<span style="color:#2563eb">今日と明日の</span>利益<span style="color:#2563eb">の合計</span>が大きければ大きいほど良い
+ <li>   <span style="color:#2563eb">「授業中に居眠りする」から得られる今日の利益は $  50 $ ，明日の利益は $  -100 $ </span>
+ <li> <span style="color:#2563eb">「授業中に居眠りしない」から得られる今日の利益は $  0 $ ，明日の利益は $  0 $ </span>
+ </ol>
+<li class="sub-item"><span class="icon-arrow">→</span> 結論はどう変わる？
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 10: 妥当な論証 / 論証の注意点 ===== -->
+<template class="slide-data" data-title="論証の注意点" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<ul> 
+<li> 妥当な論証：前提がすべて正しいときには結論が正しいということ
+<li>  前提が正しくないときには何も言えない．
+<li class="sub-item"><span class="icon-arrow">→</span> 『「雨が降る」ならば「Aさんは傘をさす」』が正しくても，雨が降っていないときにAさんが傘をさすかどうか，それだけからはわからない．
+
+<li class="sub-item"><span class="icon-arrow">→</span>  正しくない前提のもとでの議論にはあまり意味がない．
+<li class="sub-item"><span class="icon-arrow">→</span>  前提が正しいかどうかをよく調べる必要がある．
+
+<li> 前提の正しさ，「前提ならば結論」という論証自体の正しさ，そして結論の正しさはそれぞれ別．
+<li class="sub-item"><span class="icon-arrow">→</span> まずは「前提ならば結論」という論証を正しくすること ← この講義の目的の一つ
+  </ul>
+</template>
+
+<!-- ===== Slide 11: 妥当な論証 / モーダス・ポネンス ===== -->
+<template class="slide-data" data-title="モーダス・ポネンス" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ 以下では妥当な論証方法の例を挙げる
+ 
+ <ul> 
+<li class="spacer">
+<li> 次の論証方法を<span class="keyword">モーダス・ポネンス</span>（前件肯定）と呼ぶ．
+<ol>
+<li> PならばQである．
+<li> Pである.
+<li> よってQである．
+
+</ol>
+<li class="sub-item"><span class="icon-arrow">→</span> Pを前件，Qを後件と呼ぶ．
+
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul>
+<li> 例：
+ <ol>
+ <li> 「雨が降る」ならば「Aさんは傘をさす」
+ <li> 「雨が降っている」
+ <li> よって「Aさんは傘をさす」
+ </ol>  
+</ul>
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 12: 妥当な論証 / モーダス・トレンス ===== -->
+<template class="slide-data" data-title="モーダス・トレンス" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 次の論証方法をモーダス・トレンス（後件否定）と呼ぶ．
+ <ol>
+ <li> PならばQである．
+<li> Qでない.
+<li> よってPでない． 
+ 
+ </ol>
+
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul>
+<li>  例：
+<ol>
+ <li> 「雨が降る」ならば「Aさんは傘をさす」
+ <li> 「Aさんは傘をさしていない」
+ <li> よって「雨は降っていない」
+ </ol> 
+
+</ul>
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 13: 妥当な論証 / 三段論法 ===== -->
+<template class="slide-data" data-title="三段論法" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> <span class="keyword">三段論法</span>とは次のような論証方法のことである．
+ <ol>
+ <li> PならばQである．
+ <li> QならばRである．
+ <li> よってPならばRである
+ 
+ </ol>
+ <li> Pを前提にしてRを演繹するとも言う．
+  <li> 例：　
+  <ol>
+  <li> 人々が合理的ならば選ばれた選択肢はその人にとって最も良いものである．
+  <li> その人にとって最も良いものが選ばれているならば外野は何もしない方が良い．
+  <li> よって「人々が合理的ならば外野は何もしない方が良い」
+  </ol>
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 注意点：「三」段で済まない場合も多い．
+  <li> 例：　
+  <ol>
+  <li> 人々が合理的ならば選ばれた選択肢はその人にとって最も良いものである．
+  <li> その人にとって最も良いものが選ばれているならば外野は何もしない方が良い．
+  <li> 外野は何もしない方がよいならば税金をかけない方が良い．
+  <li> 税金をかけないならば政府も必要がない．
+  <li> 政府が必要ないならば国はいらない.
+  <li> よって「人々が合理的ならば国はいらない」
+    </ol>
+<li> 「風が吹けば桶屋が儲かる」方式である
+<li class="sub-item"><span class="icon-arrow">→</span> 一つ一つの「ならば」文の検証が大事
+<li class="sub-item"><span class="icon-arrow">→</span> 間違いが一つでもあれば論証自体が正しくない．
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 14: 妥当な論証 / 全称命題と存在命題 ===== -->
+<template class="slide-data" data-title="全称命題と存在命題" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 「すべての〜について〜である」と言う形の文を<span class="keyword">全称命題</span>と呼ぶ.
+ <li> 以下の論証は妥当である
+ <ol>
+ <li> すべてのXについてAである．
+ <li> YはXである．
+ <li> よってYはAである．
+ </ol>
+ <li> 全称命題を否定するには<span class="keyword">反例</span>を示すこと
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：「すべてのカラスは黒い」を否定するには「黒くないカラス」を見つけること
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 「〜であるような〜が存在する/見つけられる」と言う形の文を<span class="keyword">存在命題</span>と呼ぶ.
+
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 15: 妥当な論証 / 妥当でない論証の例1 ===== -->
+<template class="slide-data" data-title="妥当でない論証の例1" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 後件肯定
+ <ol>
+ <li> PならばQである．
+ <li> Qである
+ <li> よってPである
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <ol>
+ <li> 妖精が天井裏でダンスしていれば物音がする
+ <li> 今，物音がしている
+ <li> よって今，妖精が天井裏でダンスしている．
+ 
+ </ol>
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 前件否定
+ <ol>
+ <li> PならばQである
+ <li> Pでない
+ <li> よってQでない．
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <ol>
+ <li> 妖精が天井裏でダンスしていれば物音がする
+ <li> 妖精が天井裏でダンスしているなんていうことはない
+ <li> よって物音はしない
+ 
+ </ol>
+ </ul> 
+  </div> 
+ </div> 
+<ul>
+<li class="spacer">
+<li> 注意点：「よって以降の結論」が正しくても論証として妥当でなければその議論は間違いである．
+<li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <ol>
+
+ <li> 屋根裏にネズミがいれば物音がする
+ <li> 今，物音がしている
+ <li> よって今，屋根裏にネズミがいる．
+ </ol>
+
+</ul>
+</template>
+
+<!-- ===== Slide 16: 妥当な論証 / 妥当でない論証の例2 ===== -->
+<template class="slide-data" data-title="妥当でない論証の例2" data-section="妥当な論証" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 過度な一般化
+ <ol>
+ <li> AであるようなYがある
+ <li> よってどんなXについてもAである
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 例1: （結論は正しいが論証が正しくない）
+ <ol>
+ <li> 1は奇数で３も奇数である．この二つを足したら4であるので偶数である.
+ <li> よって奇数と奇数を足したら偶数である．
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 例2: （結論も論証も正しくない）
+  <ol>
+ <li> 1は奇数で３も奇数である．この二つを足したら4である.
+ <li> よって奇数と奇数を足したら4である．
+ </ol>
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 論点先取
+ <li class="sub-item"><span class="icon-arrow">→</span> 結論を仮定している
+ <ol>
+ <li> Qである
+ <li> よってQである
+ 
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 論理的には間違いではないが，何も論証はできていない．
+ <li class="sub-item"><span class="icon-arrow">→</span> 解答を書かせるとこれが一番多い間違いのパターン
+ 
+ <li> 矛盾
+ <ol>
+ <li> Pである
+ <li> よってPでない
+ </ol>
+ <li class="sub-item"><span class="icon-arrow">→</span> 落ち着け
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+
+
+<!-- ===== Slide 18: 四則演算 / 四則演算 ===== -->
+<template class="slide-data" data-title="四則演算" data-section="四則演算" data-note="false" data-print-margin="0">
+<div class="section-title-big">四則演算</div>
+</template>
+
+<!-- ===== Slide 19: 四則演算 / 基礎の計算 ===== -->
+<template class="slide-data" data-title="基礎の計算" data-section="四則演算" data-note="false" data-print-margin="80">
+  <ul> 
+  <li> 数学の計算には文字を使う
+  <li class="sub-item"><span class="icon-arrow">→</span> $  x,y,z,a,b,c $ 等のアルファベットがメイン
+  <li class="sub-item"><span class="icon-arrow">→</span> ギリシャ文字なども使われる
+
+  <li> ギリシャ文字の一覧
+  
+    <div style="display:flex;gap:12px;">
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \alpha $</td><td>$  A $</td><td>アルファ</td></tr><tr><td>$  \beta $</td><td>$  B $</td><td>ベータ</td></tr><tr><td>$  \gamma $</td><td>$  \Gamma $</td><td>ガンマ</td></tr><tr><td>$  \delta $</td><td>$  \Delta $</td><td>デルタ</td></tr><tr><td>$  \epsilon $</td><td>$  E $</td><td>エプシロン</td></tr><tr><td>$  \zeta $</td><td>$  Z $</td><td>ゼータ</td></tr><tr><td>$  \eta $</td><td>$  H $</td><td>エータ</td></tr><tr><td>$  \theta $</td><td>$  \Theta $</td><td>シータ</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \iota $</td><td>$  I $</td><td>イオタ</td></tr><tr><td>$  \kappa $</td><td>$  K $</td><td>カッパ</td></tr><tr><td>$  \lambda $</td><td>$  \Lambda $</td><td>ラムダ</td></tr><tr><td>$  \mu $</td><td>$  M $</td><td>ミュー</td></tr><tr><td>$  \nu $</td><td>$  N $</td><td>ニュー</td></tr><tr><td>$  \xi $</td><td>$  \Xi $</td><td>クシー</td></tr><tr><td>$  o $</td><td>$  O $</td><td>オミクロン</td></tr><tr><td>$  \pi $</td><td>$  \Pi $</td><td>パイ</td></tr></table>
+    <table class="slide-table"><tr><td>小文字</td><td>大文字</td><td>読み</td></tr><tr><td>$  \rho $</td><td>$  P $</td><td>ロー</td></tr><tr><td>$  \sigma $</td><td>$  \Sigma $</td><td>シグマ</td></tr><tr><td>$  \tau $</td><td>$  T $</td><td>タウ</td></tr><tr><td>$  \upsilon $</td><td>$  Y $</td><td>イプシロン</td></tr><tr><td>$  \phi $</td><td>$  \Phi $</td><td>ファイ</td></tr><tr><td>$  \chi $</td><td>$  X $</td><td>カイ</td></tr><tr><td>$  \psi $</td><td>$  \Psi $</td><td>プサイ</td></tr><tr><td>$  \omega $</td><td>$  \Omega $</td><td>オメガ</td></tr></table>
+    </div>
+    </ul> 
+
+   </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 20: 四則演算 / 計算のルール① ===== -->
+<template class="slide-data" data-title="計算のルール①" data-section="四則演算" data-note="false" data-print-margin="80">
+<div class="columns">
+ <div class="column">
+ <ul>
+ <li> 最も基本となる計算は和と積
+ 
+ 
+ <li ><span class="keyword">結合法則（加法）</span>  全ての数 $  a,b,c $ について
+<div class="math-display">\[\begin{aligned}a+(b+c)=(a+b)+c\end{aligned}\]</div>
+ <li "><span class="keyword">結合法則（乗法）</span>  全ての数 $  a,b,c $ について
+<div class="math-display">\[\begin{aligned}a\cdot(b\cdot c)=(a\cdot b)\cdot c\end{aligned}\]</div>
+
+ </ul>   
+ </div>
+ <div class="column">
+<dl>
+ <li ><span class="keyword">交換法則（加法）</span>  全ての数 $  a,b $ について
+<div class="math-display">\[\begin{aligned}a+b=b+a\end{aligned}\]</div>
+ <li ><span class="keyword">交換法則（乗法）</span>  全ての数 $  a,b $ について
+<div class="math-display">\[\begin{aligned}a\cdot b=b\cdot a\end{aligned}\]</div> 
+<li ><span class="keyword">分配法則</span>  全ての数 $  a,b,c $ について
+<div class="math-display">\[\begin{aligned}a\cdot (b+c)=ab+ac\end{aligned}\]</div>
+
+</dl>
+  </div>
+ </div>
+</template>
+
+<!-- ===== Slide 21: 四則演算 / 計算のルール② ===== -->
+<template class="slide-data" data-title="計算のルール②" data-section="四則演算" data-note="false" data-print-margin="80">
+<div class="columns"> 
+  <div class="column"> 
+<ul>
+<li class="custom-marker"><span class="keyword">単位元（加法）</span> 全ての数 $  a $ について
+<div class="math-display">\[\begin{aligned}a+0=0+a=a\end{aligned}\]</div>
+<li class="custom-marker"><span class="keyword">単位元（乗法）</span> 全ての数 $  a $ について
+<div class="math-display">\[\begin{aligned}a\cdot 1=1\cdot a=a\end{aligned}\]</div>
+
+</ul>
+  </div> 
+  <div class="column"> 
+ <ul> 
+  <dl>
+    <li class="custom-marker"><span class="keyword">逆元（加法）</span> 全ての数 $  a $ について
+<div class="math-display">\[\begin{aligned}a+(-a)=0\end{aligned}\]</div>
+<li class="custom-marker"><span class="keyword">逆元（乗法）</span> 全ての数 $  a\ne 0 $ について
+<div class="math-display">\[\begin{aligned}a\cdot \frac{1}{a}=1\end{aligned}\]</div>
+</li>
+</dl>
+  <li>  以上で計算のルールを定める．
+
+  </ul> 
+   </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 22: 四則演算 / 等式と変形 ===== -->
+<template class="slide-data" data-title="等式と変形" data-section="四則演算" data-note="false" data-print-margin="80">
+<div class="columns"> 
+  <div class="column"> 
+  <ul> 
+  <li> 等式の意味
+  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ は $  a $ と $  b $ が等しいという意味
+  
+  <li class="sub-item"><span class="icon-arrow">→</span> 他に意味はない
+  <li> 等式の性質
+  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ ならば $  a+c=b+c $ 
+  
+  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ ならば $  a\cdot c=b\cdot c $ 
+  
+  <li class="spacer">注意： $  ac=bc $ ならば $  a=b $ とは限らない
+  
+    <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ かつ $  b=c $ ならば $  a=c $ 
+
+  </ul> 
+  </div> 
+  <div class="column"> 
+<ul>
+<li> 因数分解
+<li class="sub-item"><span class="icon-arrow">→</span> $  a $ で「くくる」とは次のような作業
+<div class="math-display">\[\begin{aligned}a+ab=a(1+b)\end{aligned}\]</div>
+<li class="sub-item"><span class="icon-arrow">→</span> よく使う因数分解
+<div class="math-display">\[\begin{aligned}a^2-b^2=(a+b)(a-b)\\
+a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
+
+</ul>
+   </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 23: 四則演算 / 分数式の変形 ===== -->
+<template class="slide-data" data-title="分数式の変形" data-section="四則演算" data-note="false" data-print-margin="80">
+<div class="columns"> 
+  <div class="column"> 
+  <ul> 
+<li> 分数の分母と分子には同じものをかけても不変
+<div class="math-display">\[\begin{aligned}\frac{a}{b}=\frac{ac}{bc}\end{aligned}\]</div>
+<li class="sub-item"><span class="icon-arrow">→</span> ただし $ c\ne 0 $ 
+  </ul> 
+  </div> 
+  <div class="column"> 
+ <ul> 
+   <li> 分数式の和
+  <br><br>$\dfrac{a}{b}+\dfrac{c}{d}=$
+  <div style="margin-top:80px;"></div>
+  <li> 分数を分数で割る
+     <br><br>$\dfrac{1+\dfrac{a}{b}}{1+\dfrac{c}{d}}=$
+  </ul> 
+
+   </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 24: 四則演算 / 式変形による証明 ===== -->
+<template class="slide-data" data-title="式変形による証明" data-section="四則演算" data-note="false" data-print-margin="580">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> すべての $  a $ について $  a\times 0=0 $ の証明
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li>  「ゼロで割る」ことができない理由
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+
+
+<!-- ===== Slide 26: 一次関数と市場メカニズム / 一次関数と市場メカニズム ===== -->
+<template class="slide-data" data-title="一次関数と市場メカニズム" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="0">
+<div class="section-title-big">一次関数と市場メカニズム</div>
+</template>
+
+<!-- ===== Slide 27: 一次関数と市場メカニズム / 定義式 ===== -->
+<template class="slide-data" data-title="定義式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 数学で大事なものは<span class="keyword">定義</span>.
+ <li class="sub-item"><span class="icon-arrow">→</span> 日常言語とどれだけかけ離れていても定義されたものが全て.
+ 
+ <li>  $  f(x) \coloneq x^2+3x+2 $  などと書くとき, 左辺を右辺で<span class="keyword">定義</span>するという.
+<li class="sub-item"><span class="icon-arrow">→</span> 定義の記号は $  =,\equiv, \coloneq $  などがある.
+<li class="sub-item"><span class="icon-arrow">→</span> どの記号を使うかは基本は趣味
+	
+<li class="sub-item"><span class="icon-arrow">→</span> 別の数や記号を入れても等式が成立<br> 例：
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 28: 一次関数と市場メカニズム / 関数 ===== -->
+<template class="slide-data" data-title="関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> <span class="keyword">関数</span>とはある要素を別の何かの要素に対応付ける関係（c.f. 写像, 対応, 作用素）
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 関数 $  f $ は入力 $  x $ を出力 $  f(x) $ に割り当てる.
+ <li class="sub-item"><span class="icon-arrow">→</span> $  x $ に対して $  f(x) $ はただひとつ
+ 
+ <li> 自販機を例にすると， $  f $ は自販機， $  x $ はボタン， $  f(x) $ はボタンを押して出てくる飲み物
+ </ul> 
+ </div> 
+ <div class="column"> 
+
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 29: 一次関数と市場メカニズム / 関数とグラフ ===== -->
+<template class="slide-data" data-title="関数とグラフ" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 関数の<span class="keyword">グラフ</span>とは入力と出力をペアにしたもの:  $  (x,f(x)) $ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 平面上に点を打てばよく見るグラフになる．
+ <li class="sub-item"><span class="icon-arrow">→</span> 点を打つ作業を<span class="keyword">プロット</span>するという.
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 例:  $  f(x)= \left\{\begin{array}{lll}
+ -1 & \text{if} & x=1\\
+ 2 & \text{if} & x=2\\
+0 & \text{if} & x=3\\ 
+ \end{array}\right. $ のとき
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 30: 一次関数と市場メカニズム / 経済学で出る関数:需要関数1 ===== -->
+<template class="slide-data" data-title="経済学で出る関数:需要関数1" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 需要関数とは?
+<li class="sub-item"><span class="icon-arrow">→</span> ある価格において，市場で買いたいと思われる財の総量
+<li> 例：各旅人は馬一頭が欲しいが支払ってもいいと思っている価格（<span class="keyword">支払許容額</span>，<span class="keyword">支払意思額</span>）が右のようになっている.
+<li> 需要関数を描くと？
+</ul>
+</div>
+<div class="column">
+<table class="slide-table"><tr><td>名前</td><td>ﾙｲｽ</td><td>ｴﾃﾞｨﾅ</td><td>ﾍﾝﾘｴｯﾃ</td><td>ｽﾃｨｰﾌﾞ</td><td>ﾚｽﾘｰ</td></tr><tr><td>支払意思額</td><td>18</td><td>21</td><td>25</td><td>38</td><td>44</td></tr></table>
+</div>
+
+</div>
+</template>
+
+<!-- ===== Slide 31: 一次関数と市場メカニズム / 経済学で出る関数:なめらかな需要関数と逆需要関数 ===== -->
+<template class="slide-data" data-title="経済学で出る関数:なめらかな需要関数と逆需要関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 需要関数が以下のような形とする．
+<div class="math-display">\[\begin{aligned}D(p)=20000-10p\end{aligned}\]</div>
+<li class="sub-item"><span class="icon-arrow">→</span> 読み方
+<li class="spacer">
+<li> 逆に考えて，適当な量が与えられたとき，その量が需要量となるような価格を考えたい．
+<li class="sub-item"><span class="icon-arrow">→</span> 逆需要関数： $ P(q) $ とは需要量が $ q $ となるような価格を出力する関数
+</ul>
+</div>
+<div class="column">
+<ul>
+<li> 逆需要関数 $ P(q) $ の求め方
+</ul>
+</div>
+
+</div>
+</template>
+
+<!-- ===== Slide 32: 一次関数と市場メカニズム / 合成関数 ===== -->
+<template class="slide-data" data-title="合成関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 二つの関数を合成する関数のことを合成関数という
+ <li class="sub-item"><span class="icon-arrow">→</span> 例:  $  f(x)=2x^2+1 $ と $  g(y)=3y+4 $ を合成する．
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 例：需要量が $q$ のとき，売上高は以下のように書ける．<div class="math-display">\[\text{Sales}(p,q)=p\cdot q\]</div>
+ <li class="sub-item"><span class="icon-arrow">→</span> 需要関数が $  D(p)=10-3p $ とする．
+<li class="sub-item"><span class="icon-arrow">→</span> 価格が $  p $ のときの売上高を $  p $ の関数として書いてみよう．
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+
+
+<!-- ===== Slide 34: 一次関数と市場メカニズム / 方程式 ===== -->
+<template class="slide-data" data-title="方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 「<span class="keyword">方程式を解く</span>」とは変数を含む等式が与えられたときにそれを満たす変数を<strong>すべて</strong >リストアップすること．
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="spacer">
+ <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 方程式を満たす変数を<span class="keyword">解</span>あるいは<span class="keyword">根</span>という．
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 方程式を満たす変数が存在しないとき，<span class="keyword">解なし</span>という．
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 35: 一次関数と市場メカニズム / 場合分け ===== -->
+<template class="slide-data" data-title="場合分け" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+$  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
+</template>
+
+<!-- ===== Slide 36: 一次関数と市場メカニズム / 応用：市場均衡 ===== -->
+<template class="slide-data" data-title="応用：市場均衡" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 方程式の応用として市場均衡を考える. 
+<li> 価格理論における基本仮説
+
+「市場価格は需要量と供給量が一致するように決定される．」
+<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">需要量</span>とは？
+<div style="text-align:center">
+所与の価格について買いたい財の量
+</div>
+<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">供給量</span>とは？
+<div style="text-align:center">
+所与の価格について売りたい財の量
+
+</div> </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 価格が $  p $ のときの需要量を記号で $  D(p) $ と書く
+ <li class="spacer">
+ <li> 価格が $  p $ のときの供給量を記号で $  S(p) $ と書く
+  <li class="spacer">
+  <li> <span class="keyword">市場均衡</span>とは以下が成立すること
+  <div class="math-display">\[\begin{aligned}D(p)=S(p)\end{aligned}\]</div>
+  <li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">市場均衡価格</span>: 市場均衡を成立させる価格
+    <li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">市場均衡取引量</span>: 市場均衡のときに取引される量（ $  = \text{需要量} =\text{供給量} $ ）
+
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 37: 一次関数と市場メカニズム / 市場均衡の図解 ===== -->
+<template class="slide-data" data-title="市場均衡の図解" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+
+</template>
+
+<!-- ===== Slide 38: 一次関数と市場メカニズム / 連立方程式 ===== -->
+<template class="slide-data" data-title="連立方程式" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 「<span class="keyword">連立方程式を解く</span>」とは変数を含む<span class="keyword">複数の</span>等式が与えられたときにそれら全てを満たす変数を<strong>すべて</strong>リストアップすること．
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="spacer">
+ 
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+    <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+
+ <li> 「解なし」のケース
+ 
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+     <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+ <li> 無限に解があるケース
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+      <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 39: 一次関数と市場メカニズム / 応用例：一般均衡 ===== -->
+<template class="slide-data" data-title="応用例：一般均衡" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 複数の財があるケースを考える．
+ <li class="sub-item"><span class="icon-arrow">→</span> その財自身の価格だけでなく，他の財価格の影響もある．
+ <li class="spacer">
+ <li> 複数の財についての市場均衡
+ <li class="spacer"><span class="icon-arrow">→</span>  全ての財について需要と供給が一致すること
+ <li class="sub-item"><span class="icon-arrow">→</span> 例（２財のケース）
+ <div class="math-display">\[\begin{aligned}D_1(p_1,p_2)=S_1(p_1,p_2)\\
+  D_2(p_1,p_2)=S_2(p_1,p_2)\end{aligned}\]</div>
+ </ul> 
+ </div> 
+ <div class="column"> 
+
+  </div> 
+ </div>
+</template>
+
+
+<!-- ===== Slide 41: 一次関数と市場メカニズム / 需要関数 ===== -->
+<template class="slide-data" data-title="需要関数（復習）" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li>  <span class="keyword">需要関数</span>とは与えられた価格について, 市場で買いたいと思われる総量を出力する関数.
+
+<li class="sub-item"><span class="icon-arrow">→</span> 例：各旅人は馬一頭が欲しいが, 支払ってもいいと思っている価格, <span class="keyword">支払意思額</span>は右のようになっている.
+
+<li class="sub-item"><span class="icon-arrow">→</span> 縦軸を価格, 横軸を支払意思額にしてみる➔需要曲線
+</ul>
+</div>
+<div class="column">
+<table class="slide-table"><tr><td>名前</td><td>ﾙｲｽ</td><td>ｴﾃﾞｨﾅ</td><td>ﾍﾝﾘｴｯﾃ</td><td>ｽﾃｨｰﾌﾞ</td><td>ﾚｽﾘｰ</td></tr><tr><td>支払意思額</td><td>18</td><td>21</td><td>25</td><td>38</td><td>44</td></tr></table>
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 42: 一次関数と市場メカニズム / 供給関数 ===== -->
+<template class="slide-data" data-title="供給関数" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li>  <span class="keyword">供給関数</span>とは与えられた価格について, 市場で売りたいと思われる総量を出力する関数.
+
+<li class="sub-item"><span class="icon-arrow">→</span> 例：各商人は馬一頭を仕入れることができるが, 仕入れにかかる金額, <span class="keyword">費用</span>は右のようになっている.
+
+<li class="sub-item"><span class="icon-arrow">→</span> 縦軸を価格, 横軸を費用にしてみる➔供給曲線
+
+</ul>
+</div>
+<div class="column">
+<table class="slide-table"><tr><td>名前</td><td>森</td><td>中</td><td>青木</td><td>村上</td><td>亀井</td></tr><tr><td>費用</td><td>11</td><td>18</td><td>21</td><td>33</td><td>49</td></tr></table>
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 43: 一次関数と市場メカニズム / 市場均衡と余剰 ===== -->
+<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 需要曲線と供給曲線を同じ図に書いてみる.
+
+<li> <span class="keyword">取引余剰</span>とは
+<li class="sub-item"><span class="icon-arrow">→</span> 取引によって得られる価値の総合計
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 44: 一次関数と市場メカニズム / 市場均衡と余剰 ===== -->
+<template class="slide-data" data-title="市場均衡と余剰" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> なめらかな需要関数・供給関数でも同じこと
+  <img src="img/discrete_to_continuous_anime.svg">
+
+
+<li> 注意：<strong>グラフは<span class="keyword">逆</span>需要関数と<span class="keyword">逆</span>供給関数を書くこと</strong>
+  <li class="spacer"> </li>
+    <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 45: 一次関数と市場メカニズム / 応用例: 価格規制 ===== -->
+<template class="slide-data" data-title="応用例: 価格規制" data-section="一次関数と市場メカニズム" data-note="false" data-print-margin="280">
+<ul>
+<li> キャベツの価格が高すぎると不満が出た．
+  
+  <li>政府は価格を一玉120円までにするよう規制した．
+    
+    <li class="sub-item"> これによって市場均衡と余剰はどうなるか？ </li>
+    
+     <li class="sub-item"> 消費者余剰は常に増加するか？ </li>
+
+</ul>
+</template>
+
+<!-- ===== Slide 47: 一変数関数の微分 / 一変数関数の微分 ===== -->
+<template class="slide-data" data-title="一変数関数の微分" data-section="一変数関数の微分" data-note="false" data-print-margin="0">
+<div class="section-title-big">一変数関数の微分</div>
+</template>
+
+<!-- ===== Slide 48: 一変数関数の微分 / 3.a. 微分の意味と計算公式: 微分の意味 ===== -->
+<template class="slide-data" data-title="3.a. 微分の意味と計算公式: 微分の意味" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+  <ul> 
+  <li> 「微分する」とは関数の接線の傾きを求める作業 
+  </ul> 
+  </div> 
+ <div class="column"> 
+ 
+<div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="273.36" height="198.25" viewBox="0 0 173.36 98.25">
+<defs>
+<g>
+<g id="glyph-0-0">
+<path d="M 6.234375 -7.453125 L 6.234375 -1.21875 L 6.34375 -1.21875 C 6.59375 -1.21875 6.859375 -1.375 6.859375 -1.453125 L 6.859375 -7.078125 C 7.09375 -7.09375 7.1875 -7.203125 7.203125 -7.34375 Z M 8.359375 -8.109375 L 8.359375 -0.28125 C 8.359375 -0.125 8.3125 -0.046875 8.109375 -0.046875 C 7.90625 -0.046875 6.8125 -0.140625 6.8125 -0.140625 L 6.8125 0.015625 C 7.296875 0.078125 7.546875 0.15625 7.71875 0.265625 C 7.84375 0.390625 7.90625 0.546875 7.9375 0.75 C 8.875 0.65625 8.984375 0.3125 8.984375 -0.21875 L 8.984375 -7.71875 C 9.234375 -7.75 9.328125 -7.859375 9.359375 -8 Z M 4.8125 -8.28125 C 3.90625 -7.78125 2.09375 -7.15625 0.578125 -6.859375 L 0.609375 -6.703125 C 1.40625 -6.765625 2.21875 -6.890625 2.984375 -7.03125 L 2.984375 -5.234375 L 0.578125 -5.234375 L 0.65625 -4.9375 L 2.734375 -4.9375 C 2.21875 -3.5 1.359375 -2.046875 0.265625 -0.984375 L 0.390625 -0.859375 C 1.46875 -1.65625 2.34375 -2.671875 2.984375 -3.828125 L 2.984375 0.765625 L 3.078125 0.765625 C 3.390625 0.765625 3.625 0.609375 3.625 0.546875 L 3.625 -4.03125 C 4.140625 -3.515625 4.75 -2.765625 4.921875 -2.171875 C 5.625 -1.65625 6.078125 -3.171875 3.625 -4.21875 L 3.625 -4.9375 L 5.640625 -4.9375 C 5.78125 -4.9375 5.890625 -4.984375 5.921875 -5.09375 C 5.59375 -5.40625 5.078125 -5.828125 5.078125 -5.828125 L 4.625 -5.234375 L 3.625 -5.234375 L 3.625 -7.15625 C 4.1875 -7.296875 4.703125 -7.421875 5.109375 -7.5625 C 5.359375 -7.46875 5.546875 -7.46875 5.640625 -7.5625 Z M 4.8125 -8.28125 "/>
+</g>
+<g id="glyph-0-1">
+<path d="M 1.078125 -8.171875 L 0.984375 -8.09375 C 1.390625 -7.796875 1.875 -7.296875 2.03125 -6.84375 C 2.734375 -6.453125 3.140625 -7.8125 1.078125 -8.171875 Z M 0.46875 -6.046875 L 0.390625 -5.96875 C 0.765625 -5.703125 1.203125 -5.234375 1.3125 -4.828125 C 1.984375 -4.40625 2.4375 -5.78125 0.46875 -6.046875 Z M 0.875 -2 C 0.765625 -2 0.4375 -2 0.4375 -2 L 0.4375 -1.796875 C 0.65625 -1.765625 0.796875 -1.734375 0.921875 -1.65625 C 1.125 -1.515625 1.171875 -0.734375 1.03125 0.265625 C 1.046875 0.578125 1.171875 0.765625 1.328125 0.765625 C 1.65625 0.765625 1.828125 0.5 1.84375 0.09375 C 1.875 -0.703125 1.625 -1.1875 1.609375 -1.609375 C 1.609375 -1.859375 1.671875 -2.15625 1.734375 -2.4375 C 1.84375 -2.875 2.46875 -4.9375 2.796875 -6.046875 L 2.59375 -6.109375 C 1.25 -2.546875 1.25 -2.546875 1.09375 -2.21875 C 1.015625 -2 0.984375 -2 0.875 -2 Z M 4.96875 -6.109375 L 4.96875 -5.109375 L 3.546875 -5.109375 L 3.546875 -6.109375 Z M 4.96875 -6.375 L 3.546875 -6.375 L 3.546875 -7.375 L 4.96875 -7.375 Z M 2.953125 -7.65625 L 2.953125 0.765625 L 3.0625 0.765625 C 3.34375 0.765625 3.546875 0.609375 3.546875 0.515625 L 3.546875 -4.828125 L 4.96875 -4.828125 L 4.96875 -4.296875 L 5.046875 -4.296875 C 5.25 -4.296875 5.53125 -4.4375 5.546875 -4.5 L 5.546875 -7.265625 C 5.734375 -7.3125 5.890625 -7.390625 5.953125 -7.453125 L 5.21875 -8.03125 L 4.875 -7.65625 L 3.59375 -7.65625 L 2.953125 -7.984375 Z M 6.90625 -6.109375 L 8.421875 -6.109375 L 8.421875 -5.109375 L 6.90625 -5.109375 Z M 6.90625 -6.375 L 6.90625 -7.375 L 8.421875 -7.375 L 8.421875 -6.375 Z M 6.3125 -7.65625 L 6.3125 -4.34375 L 6.40625 -4.34375 C 6.65625 -4.34375 6.90625 -4.484375 6.90625 -4.546875 L 6.90625 -4.828125 L 8.421875 -4.828125 L 8.421875 -0.21875 C 8.421875 -0.0625 8.375 0.015625 8.171875 0.015625 C 7.96875 0.015625 6.90625 -0.0625 6.90625 -0.0625 L 6.90625 0.09375 C 7.375 0.140625 7.625 0.234375 7.78125 0.328125 C 7.921875 0.421875 7.984375 0.59375 8.015625 0.765625 C 8.9375 0.6875 9.03125 0.34375 9.03125 -0.140625 L 9.03125 -7.25 C 9.234375 -7.296875 9.40625 -7.375 9.46875 -7.453125 L 8.671875 -8.078125 L 8.328125 -7.65625 L 6.953125 -7.65625 L 6.3125 -7.953125 Z M 4.25 -2.4375 L 4.3125 -2.15625 L 5.53125 -2.15625 L 5.53125 -0.953125 L 3.921875 -0.953125 L 4 -0.65625 L 7.859375 -0.65625 C 7.984375 -0.65625 8.078125 -0.703125 8.109375 -0.8125 C 7.828125 -1.09375 7.359375 -1.46875 7.359375 -1.46875 L 6.9375 -0.953125 L 6.140625 -0.953125 L 6.140625 -2.15625 L 7.609375 -2.15625 C 7.734375 -2.15625 7.828125 -2.203125 7.859375 -2.3125 C 7.578125 -2.578125 7.140625 -2.953125 7.140625 -2.953125 L 6.75 -2.4375 L 6.140625 -2.4375 L 6.140625 -3.46875 L 7.671875 -3.46875 C 7.796875 -3.46875 7.890625 -3.515625 7.921875 -3.625 C 7.640625 -3.890625 7.171875 -4.265625 7.171875 -4.265625 L 6.78125 -3.765625 L 4.109375 -3.765625 L 4.1875 -3.46875 L 5.53125 -3.46875 L 5.53125 -2.4375 Z M 4.25 -2.4375 "/>
+</g>
+<g id="glyph-0-2">
+<path d="M 2.546875 -7.9375 C 2.078125 -6.171875 1.21875 -4.46875 0.34375 -3.40625 L 0.484375 -3.3125 C 1.171875 -3.890625 1.8125 -4.671875 2.359375 -5.609375 L 4.578125 -5.609375 L 4.578125 -3.09375 L 1.53125 -3.09375 L 1.609375 -2.8125 L 4.578125 -2.8125 L 4.578125 0.0625 L 0.421875 0.0625 L 0.5 0.34375 L 9.25 0.34375 C 9.390625 0.34375 9.46875 0.296875 9.5 0.203125 C 9.140625 -0.125 8.5625 -0.578125 8.5625 -0.578125 L 8.046875 0.0625 L 5.25 0.0625 L 5.25 -2.8125 L 8.296875 -2.8125 C 8.4375 -2.8125 8.53125 -2.859375 8.5625 -2.96875 C 8.203125 -3.28125 7.640625 -3.734375 7.640625 -3.734375 L 7.125 -3.09375 L 5.25 -3.09375 L 5.25 -5.609375 L 8.65625 -5.609375 C 8.796875 -5.609375 8.890625 -5.640625 8.921875 -5.75 C 8.5625 -6.109375 8 -6.515625 8 -6.515625 L 7.484375 -5.890625 L 5.25 -5.890625 L 5.25 -7.875 C 5.5 -7.921875 5.578125 -8.015625 5.609375 -8.15625 L 4.578125 -8.265625 L 4.578125 -5.890625 L 2.515625 -5.890625 C 2.78125 -6.375 3 -6.890625 3.21875 -7.421875 C 3.4375 -7.40625 3.546875 -7.5 3.59375 -7.609375 Z M 2.546875 -7.9375 "/>
+</g>
+<g id="glyph-0-3">
+<path d="M 3.140625 -6.859375 L 3.03125 -6.8125 C 3.28125 -6.4375 3.546875 -5.859375 3.578125 -5.40625 C 4.171875 -4.875 4.859375 -6.109375 3.140625 -6.859375 Z M 1.015625 -7.15625 L 1.109375 -6.875 L 8.78125 -6.875 C 8.90625 -6.875 9 -6.90625 9.03125 -7.015625 C 8.703125 -7.328125 8.171875 -7.71875 8.171875 -7.71875 L 7.71875 -7.15625 L 5.28125 -7.15625 L 5.28125 -7.9375 C 5.515625 -7.984375 5.59375 -8.078125 5.609375 -8.203125 L 4.640625 -8.28125 L 4.640625 -7.15625 Z M 5.21875 -4.703125 L 5.21875 -3.453125 L 3.65625 -3.453125 C 3.796875 -3.703125 3.921875 -3.953125 4.03125 -4.21875 C 4.25 -4.21875 4.359375 -4.296875 4.390625 -4.40625 L 3.46875 -4.703125 C 3.203125 -3.625 2.703125 -2.609375 2.1875 -1.984375 L 2.328125 -1.875 C 2.75 -2.1875 3.15625 -2.625 3.484375 -3.171875 L 5.21875 -3.171875 L 5.21875 -1.75 L 3.03125 -1.75 L 3.109375 -1.46875 L 5.21875 -1.46875 L 5.21875 0.140625 L 1.875 0.140625 L 1.96875 0.421875 L 9.140625 0.421875 C 9.28125 0.421875 9.375 0.375 9.40625 0.28125 C 9.0625 -0.046875 8.53125 -0.4375 8.53125 -0.4375 L 8.078125 0.140625 L 5.859375 0.140625 L 5.859375 -1.46875 L 8.25 -1.46875 C 8.375 -1.46875 8.46875 -1.515625 8.5 -1.625 C 8.1875 -1.90625 7.6875 -2.296875 7.6875 -2.296875 L 7.25 -1.75 L 5.859375 -1.75 L 5.859375 -3.171875 L 8.4375 -3.171875 C 8.578125 -3.171875 8.671875 -3.21875 8.6875 -3.328125 C 8.359375 -3.640625 7.859375 -4.015625 7.859375 -4.015625 L 7.40625 -3.453125 L 5.859375 -3.453125 L 5.859375 -4.34375 C 6.078125 -4.375 6.15625 -4.453125 6.1875 -4.59375 Z M 1.40625 -5.234375 L 1.40625 -4.046875 C 1.40625 -2.5625 1.296875 -0.828125 0.328125 0.640625 L 0.453125 0.765625 C 1.921875 -0.65625 2.03125 -2.71875 2.03125 -4.046875 L 2.03125 -4.9375 L 9.15625 -4.9375 C 9.296875 -4.9375 9.390625 -4.984375 9.421875 -5.09375 C 9.09375 -5.40625 8.546875 -5.8125 8.546875 -5.8125 L 8.078125 -5.21875 L 6.078125 -5.21875 C 6.4375 -5.59375 6.828125 -6.046875 7.046875 -6.40625 C 7.265625 -6.375 7.375 -6.46875 7.421875 -6.59375 L 6.4375 -6.859375 C 6.296875 -6.375 6.046875 -5.6875 5.828125 -5.21875 L 2.03125 -5.21875 L 2.171875 -5.234375 L 1.40625 -5.5625 Z M 1.40625 -5.234375 "/>
+</g>
+<g id="glyph-0-4">
+<path d="M 0.515625 -4.859375 L 0.609375 -4.5625 L 9.109375 -4.5625 C 9.25 -4.5625 9.34375 -4.625 9.359375 -4.734375 C 9.046875 -5.015625 8.53125 -5.40625 8.53125 -5.40625 L 8.078125 -4.859375 Z M 7.0625 -6.484375 L 7.0625 -5.78125 L 2.765625 -5.78125 L 2.765625 -6.484375 Z M 7.0625 -6.78125 L 2.765625 -6.78125 L 2.765625 -7.453125 L 7.0625 -7.453125 Z M 2.125 -7.75 L 2.125 -5.0625 L 2.21875 -5.0625 C 2.484375 -5.0625 2.765625 -5.21875 2.765625 -5.265625 L 2.765625 -5.5 L 7.0625 -5.5 L 7.0625 -5.125 L 7.15625 -5.125 C 7.375 -5.125 7.6875 -5.265625 7.703125 -5.328125 L 7.703125 -7.34375 C 7.90625 -7.375 8.0625 -7.453125 8.125 -7.53125 L 7.328125 -8.15625 L 6.96875 -7.75 L 2.828125 -7.75 L 2.125 -8.0625 Z M 7.203125 -2.609375 L 7.203125 -1.859375 L 5.234375 -1.859375 L 5.234375 -2.609375 Z M 7.203125 -2.90625 L 5.234375 -2.90625 L 5.234375 -3.625 L 7.203125 -3.625 Z M 2.6875 -2.609375 L 4.59375 -2.609375 L 4.59375 -1.859375 L 2.6875 -1.859375 Z M 2.6875 -2.90625 L 2.6875 -3.625 L 4.59375 -3.625 L 4.59375 -2.90625 Z M 1.25 -0.828125 L 1.328125 -0.546875 L 4.59375 -0.546875 L 4.59375 0.265625 L 0.5 0.265625 L 0.59375 0.546875 L 9.15625 0.546875 C 9.3125 0.546875 9.40625 0.5 9.421875 0.390625 C 9.078125 0.09375 8.546875 -0.34375 8.546875 -0.34375 L 8.078125 0.265625 L 5.234375 0.265625 L 5.234375 -0.546875 L 8.515625 -0.546875 C 8.640625 -0.546875 8.75 -0.59375 8.765625 -0.703125 C 8.46875 -0.984375 7.96875 -1.359375 7.96875 -1.359375 L 7.53125 -0.828125 L 5.234375 -0.828125 L 5.234375 -1.578125 L 7.203125 -1.578125 L 7.203125 -1.28125 L 7.296875 -1.28125 C 7.5 -1.28125 7.828125 -1.4375 7.859375 -1.5 L 7.859375 -3.5 C 8.046875 -3.546875 8.21875 -3.625 8.28125 -3.703125 L 7.453125 -4.328125 L 7.09375 -3.921875 L 2.734375 -3.921875 L 2.03125 -4.25 L 2.03125 -1.109375 L 2.140625 -1.109375 C 2.390625 -1.109375 2.6875 -1.25 2.6875 -1.3125 L 2.6875 -1.578125 L 4.59375 -1.578125 L 4.59375 -0.828125 Z M 1.25 -0.828125 "/>
+</g>
+<g id="glyph-1-0">
+<path d="M 4.46875 -4.265625 C 4.46875 -4.296875 4.4375 -4.359375 4.375 -4.359375 C 4.265625 -4.359375 3.875 -3.96875 3.703125 -3.671875 C 3.484375 -4.21875 3.09375 -4.375 2.78125 -4.375 C 1.609375 -4.375 0.390625 -2.90625 0.390625 -1.46875 C 0.390625 -0.5 0.984375 0.109375 1.703125 0.109375 C 2.125 0.109375 2.515625 -0.125 2.875 -0.484375 C 2.78125 -0.140625 2.453125 1.203125 2.421875 1.28125 C 2.34375 1.5625 2.265625 1.609375 1.71875 1.609375 C 1.578125 1.609375 1.484375 1.609375 1.484375 1.8125 C 1.484375 1.8125 1.484375 1.921875 1.609375 1.921875 C 1.921875 1.921875 2.28125 1.890625 2.59375 1.890625 C 2.9375 1.890625 3.296875 1.921875 3.625 1.921875 C 3.671875 1.921875 3.796875 1.921875 3.796875 1.71875 C 3.796875 1.609375 3.703125 1.609375 3.546875 1.609375 C 3.0625 1.609375 3.0625 1.546875 3.0625 1.453125 C 3.0625 1.390625 3.078125 1.328125 3.109375 1.234375 Z M 1.734375 -0.109375 C 1.140625 -0.109375 1.09375 -0.875 1.09375 -1.03125 C 1.09375 -1.515625 1.390625 -2.59375 1.546875 -3 C 1.859375 -3.734375 2.375 -4.15625 2.78125 -4.15625 C 3.421875 -4.15625 3.5625 -3.359375 3.5625 -3.28125 C 3.5625 -3.21875 3.015625 -1.0625 2.984375 -1.015625 C 2.84375 -0.734375 2.28125 -0.109375 1.734375 -0.109375 Z M 1.734375 -0.109375 "/>
+</g>
+<g id="glyph-2-0">
+<path d="M 2.234375 -1.71875 C 2.796875 -1.96875 3.0625 -2.0625 3.234375 -2.15625 C 3.359375 -2.203125 3.421875 -2.234375 3.421875 -2.375 C 3.421875 -2.484375 3.34375 -2.59375 3.21875 -2.59375 C 3.15625 -2.59375 3.15625 -2.59375 3.0625 -2.53125 L 2.125 -1.890625 L 2.234375 -2.921875 C 2.25 -3.046875 2.234375 -3.21875 2.015625 -3.21875 C 1.9375 -3.21875 1.8125 -3.15625 1.8125 -3.015625 C 1.8125 -2.953125 1.828125 -2.734375 1.84375 -2.671875 C 1.859375 -2.546875 1.90625 -2.0625 1.921875 -1.890625 L 0.984375 -2.53125 C 0.90625 -2.5625 0.890625 -2.59375 0.828125 -2.59375 C 0.703125 -2.59375 0.609375 -2.484375 0.609375 -2.375 C 0.609375 -2.234375 0.703125 -2.1875 0.765625 -2.171875 L 1.8125 -1.734375 C 1.234375 -1.484375 0.984375 -1.390625 0.8125 -1.296875 C 0.671875 -1.25 0.609375 -1.21875 0.609375 -1.09375 C 0.609375 -0.96875 0.703125 -0.859375 0.828125 -0.859375 C 0.875 -0.859375 0.890625 -0.859375 0.96875 -0.921875 L 1.921875 -1.5625 L 1.8125 -0.4375 C 1.8125 -0.296875 1.9375 -0.234375 2.015625 -0.234375 C 2.109375 -0.234375 2.234375 -0.296875 2.234375 -0.4375 C 2.234375 -0.5 2.203125 -0.71875 2.203125 -0.78125 C 2.1875 -0.90625 2.140625 -1.390625 2.125 -1.5625 L 2.953125 -1 C 3.140625 -0.859375 3.15625 -0.859375 3.21875 -0.859375 C 3.34375 -0.859375 3.421875 -0.96875 3.421875 -1.09375 C 3.421875 -1.21875 3.34375 -1.265625 3.28125 -1.28125 Z M 2.234375 -1.71875 "/>
+</g>
+</g>
+</defs>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -0.0000830153 L 0.000117366 56.234531 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
+<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.197334 1.59399 C -1.094997 0.995708 -0.000769466 0.0982844 0.298372 -0.000117366 C -0.000769466 -0.0985191 -1.094997 -0.995943 -1.197334 -1.594225 " transform="matrix(0, -0.992424, -0.992424, 0, 18.464727, 21.233611)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-0" x="8.577205" y="16.514932"/>
+<use xlink:href="#glyph-0-1" x="18.46433" y="16.514932"/>
+</g>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -0.0000830153 L 112.929865 -0.0000830153 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
+<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.19566 1.594025 C -1.097259 0.995742 0.000904504 0.0983187 0.300046 -0.0000830153 C 0.000904504 -0.0984847 -1.097259 -0.995908 -1.19566 -1.594191 " transform="matrix(0.992424, 0, 0, -0.992424, 130.538165, 77.042886)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-2" x="134.486068" y="80.805167"/>
+<use xlink:href="#glyph-0-3" x="144.373194" y="80.805167"/>
+<use xlink:href="#glyph-0-4" x="154.26032" y="80.805167"/>
+</g>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000117366 -9.068785 L 1.88943 -4.6289 L 3.778743 -0.377946 L 5.668056 3.684077 L 7.557369 7.557169 L 9.446682 11.241329 L 11.335995 14.740494 L 13.225308 18.046792 L 15.114621 21.160222 L 17.003934 24.088657 L 18.893247 26.828161 L 20.78256 29.38267 L 22.671873 31.744311 L 24.561186 33.920957 L 26.450499 35.9008 L 28.339812 37.699583 L 30.229125 39.301563 L 32.118438 40.722484 L 34.007751 41.950537 L 35.897064 42.993595 L 37.786377 43.843786 L 39.67569 44.50111 L 41.565003 44.973438 L 43.454316 45.260771 L 45.343629 45.355237 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 45.355437 45.355237 L 48.189406 45.284387 L 51.023376 45.07184 L 53.857345 44.717594 L 56.691315 44.221649 L 59.525284 43.584006 L 62.359254 42.804664 L 65.193223 41.883624 L 68.027193 40.820885 L 70.861162 39.616448 L 73.695132 38.270313 L 76.529101 36.786415 L 79.363071 35.156883 L 82.19704 33.385652 L 85.03101 31.472722 L 87.864979 29.418094 L 90.698948 27.221768 L 93.532918 24.883743 L 96.366887 22.40402 L 99.200857 19.782598 L 102.034826 17.019478 L 104.868796 14.118595 L 107.702765 11.072078 L 110.536735 7.883863 L 113.370704 4.553948 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-dasharray="0.3985 1.99255" stroke-miterlimit="10" d="M 45.355437 45.355237 L 45.355437 -0.0000830153 " transform="matrix(0.992424, 0, 0, -0.992424, 18.464727, 77.042886)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-1-0" x="58.818682" y="87.34425"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-2-0" x="63.58728" y="83.756636"/>
+</g>
+</svg>
+</div>
+
+</div>
+
+  </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 49: 一変数関数の微分 / 復習・直線の傾き ===== -->
+<template class="slide-data" data-title="復習・直線の傾き" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+   <ul>
+<li> 二点  $ (a, b) $  と  $ (a',b') $  を通る直線は唯一つ 
+<div class="math-display">\[\begin{aligned}y=\frac{b'-b}{a'-a}(x-a)+b\end{aligned}\]</div>
+<li class="spacer"><span class="icon-arrow">→</span>   $ \dfrac{b'-b}{a'-a} $  の部分はこの直線の<span class="keyword">傾き</span>とよばれる
+
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+
+<li> 直線の傾き  $ \dfrac{b'-b}{a'-a} $  は  $ y $ 軸方向の変化量を  $ x $ 軸方向の変化量で割ったもの
+
+<li> 傾きの意味：傾きが $\alpha $ なら $ x $ が増えたとき， $  y $ が『 $  x $ の増加分の $\alpha$ 倍』増えることを指す．
+
+  </ul> 
+  </div> 
+ <div class="column"> 
+ <ul> 
+  <li>  （図示）
+  </ul>  
+  </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 50: 一変数関数の微分 / 微分の定義 ===== -->
+<template class="slide-data" data-title="微分の定義" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+  <ul> 
+  <li>  ある関数  $ f $  の点  $ x $  における<span class="keyword">微分係数</span>, あるいは<span class="keyword">導関数</span>とは次の式で定義される関数
+<div class="math-display">\[\begin{aligned}\lim_{\Delta\to 0}\frac{f(x+\Delta)-f(x)}{\Delta}\end{aligned}\]</div>
+<li> 導関数は $ f'(x) $ や $ \frac{d}{dx}f(x) $ と表記される.
+
+<li> 極限  $ \displaystyle \lim_{\Delta\to 0}\frac{f(x+\Delta)-f(x)}{\Delta} $ が定まるとき, 関数 $ f $ は $ x $ において<span class="keyword">微分可能</span>という
+
+<li> 微分の意味： $  x $ がちょっとだけ（ $  \Delta $ だけ）増えたとき， $  f(x) $ が $  f'(x)\cdot \Delta $ だけ増える
+  </ul> 
+  </div> 
+ <div class="column"> 
+ <ul> 
+  <li> （図示）以下URLを参照<br>
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/calculator/a2vavmry?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: 微分の図示（オンラインで表示）</div>
+</div>
+<a href="https://www.geogebra.org/calculator/a2vavmry" target="_blank" class="qr-link">🔗 QRリンク</a>
+  </ul>  
+  </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 51: 一変数関数の微分 / 現実で出てくる微分の例： ===== -->
+<template class="slide-data" data-title="現実で出てくる微分の例：" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<ul> 
+   <li> 限界税率
+   <li class="sub-item"><span class="icon-arrow">→</span> 追加の所得にどれだけの税率がかかるか？
+   <li> 限界税率の例（実際はもう少し複雑 & 計算しやすいように単純化）
+   <table class="slide-table"><tr><td>所得</td><td>&lt;200</td><td>&lt;300</td><td>&lt;700</td><td>&lt;900</td><td>&lt;1800</td><td>&lt;4000</td><td>≧ 4000</td></tr><tr><td>税率</td><td>5%</td><td>10%</td><td>20%</td><td>25%</td><td>30%</td><td>40%</td><td>45%</td></tr></table>
+<li> 以上の表において，所得が1000万円のときに支払う税の総額はいくらか？
+  <li class="sub-item"><span class="icon-arrow">→</span>
+    <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+   <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+ 
+  
+  
+  <li> 横軸を所得として税額のグラフを描くとどのようになるか？
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+  <li class="spacer"> </li>
+</ul>
+
+</template>
+
+<!-- ===== Slide 52: 一変数関数の微分 /  ===== -->
+<template class="slide-data" data-title="" data-section="一変数関数の微分" data-note="true" data-print-margin="180">
+
+</template>
+
+<!-- ===== Slide 53: 一変数関数の微分 / 微分の意味と計算公式: 計算公式① ===== -->
+<template class="slide-data" data-title="微分の意味と計算公式: 計算公式①" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+  <div class="column"> 
+   <ul>
+<li> <span class="keyword">定数の微分</span>
+<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=a $ （ $ a $ は実数）のとき
+<div class="math-display">\[\begin{aligned}f'(x)=0\end{aligned}\]</div>
+
+</ul>
+   </div> 
+  <div class="column"> 
+<ul>
+<li> <span class="keyword">比例関数の微分</span>
+<li class="sub-item"><span class="icon-arrow">→</span> $  f(x)=ax $ のとき
+<div class="math-display">\[\begin{aligned}f'(x)=a\end{aligned}\]</div>
+
+</ul>
+   </div> 
+   </div>
+</template>
+
+<!-- ===== Slide 54: 一変数関数の微分 / 計算公式② ===== -->
+<template class="slide-data" data-title="計算公式②" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+  <div class="column"> 
+<ul>
+<li> <span class="keyword">累乗の微分</span>
+<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=x^a $ （ $ a$ は実数の定数）のとき
+<div class="math-display">\[\begin{aligned}f'(x)=a\cdot x^{a-1}\end{aligned}\]</div> 
+
+<li>   $ f(x)= x^2 = \textcolor{blue}{x}\cdot \textcolor{red}{x} $ での説明
+<li class="sub-item"><span class="icon-arrow">→</span> $  \textcolor{red}{x} $ を変数と思えば傾きは $   \textcolor{blue}{x} $ 
+<ul>
+<li class="custom-marker"> $  \textcolor{red}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{blue}{x}\cdot\Delta $ だけ増える  
+
+</ul>
+
+<li class="sub-item"><span class="icon-arrow">→</span> $   \textcolor{blue}{x} $ を変数と思えば傾きは $   \textcolor{red}{x} $ 
+
+<ul>
+<li class="custom-marker"> $  \textcolor{blue}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{red}{x}\cdot\Delta $ だけ増える  
+
+
+
+</ul>
+
+<li class="sub-item"><span class="icon-arrow">→</span> 実際には，  $  \textcolor{red}{x} $ も  $  \textcolor{blue}{x} $ も $  \Delta $ 増える
+<ul>
+<li class="custom-marker">  $  x $ が $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
+<li class="spacer"> <span class="icon-arrow">→</span>  微分係数は $  2x $ 
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</ul>
+  </div> 
+  <div class="column"> 
+ <ul> 
+  <li> 例
+  </ul> 
+   </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 55: 一変数関数の微分 / 計算公式③ ===== -->
+<template class="slide-data" data-title="計算公式③" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+  <div class="column"> 
+<ul>
+
+<li> <span class="keyword">微分の線形性</span>
+<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=a\cdot g(x)+b\cdot h(x) $ <br>（ $ a,b $ は実数）のとき, 
+<div class="math-display">\[\begin{aligned}f'(x)=a\cdot g'(x)+b\cdot h'(x)\end{aligned}\]</div>
+
+</ul>
+   </div> 
+  <div class="column"> 
+  
+   </div> 
+   </div>
+</template>
+
+<!-- ===== Slide 56: 一変数関数の微分 / 計算公式④ ===== -->
+<template class="slide-data" data-title="計算公式④" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+  <div class="column"> 
+   <ul> 
+   <li>  <span class="keyword">合成関数の微分</span>
+ $ f(x)=h(g(x)) $ のとき, 
+<div class="math-display">\[\begin{aligned}f'(x)= h'(g(x))\times g'(x)\end{aligned}\]</div>
+   </ul> 
+   </div> 
+  <div class="column"> 
+
+   </div> 
+   </div>
+</template>
+
+<!-- ===== Slide 57: 一変数関数の微分 / 計算公式⑤ ===== -->
+<template class="slide-data" data-title="計算公式⑤" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+  <div class="column"> 
+   <ul> 
+   <li> <span class="keyword">積の微分</span>
+   <li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=h(x)\times g(x) $ のとき
+<div class="math-display">\[\begin{aligned}f'(x)= h'(x)\times g(x)+ h(x)\times g'(x)\end{aligned}\]</div>
+ 
+   </ul> 
+   </div> 
+  <div class="column"> 
+
+   </div> 
+   </div>
+</template>
+
+
+
+<!-- ===== Slide 59: 一変数関数の微分 / 関数の最大化・最小化 ===== -->
+<template class="slide-data" data-title="関数の最大化・最小化" data-section="一変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+<ul>
+<li> 経済学で使う数学のメインの使いみちは何かしらの最大化（あるいは最小化）
+<li class="sub-item"><span class="icon-arrow">→</span> （例）
+<li class="spacer">
+ <li> 経済学で微分を使う最も大きい理由の一つは関数の最大化・最小化問題を簡単にできるから
+
+ 
+ </ul> 
+  </div> 
+ <div class="column"> 
+ <ul> 
+   <li>  $x^*$ が定義域の中にあり, 定義域のすべての数 $ x$ について $ f(x^*)\ge f(x) $ となるとき, 関数 $ f $ は $ x^* $ で<span class="keyword">最大値をとる</span>という
+   
+   
+   <li class="spacer">
+   
+   <li class="sub-item"><span class="icon-arrow">→</span> このときの $ f(x^*) $ の値を<span class="keyword">最大値</span>という
+   <li class="sub-item"><span class="icon-arrow">→</span> このときの $ x^* $ を<span class="keyword">最大化解</span>という
+
+  </ul>  
+  </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 60: 一変数関数の微分 / 最大化の必要条件（一階の条件） ===== -->
+<template class="slide-data" data-title="最大化の必要条件（一階の条件）" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
+<div class="columns"> 
+ <div class="column"> 
+<ul>
+ <li class="custom-marker"><span class="marker">定理</span> 
+  関数 $ f $ が微分可能であるとき,  $ f $ が $ x^{*} $ で最大値をとるならば $ f'(x^{*})=0 $ が成立する. 
+  <li class="custom-marker"><span class="marker">証明</span> 
+  <li class="spacer"></li>  
+   <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li> 
+     <li class="spacer"></li>  
+   <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>    <li class="spacer"></li>  
+ </ul> 
+  </div> 
+  </div>
+</template>
+<template class="slide-data" data-title="一階の条件は十分条件ではない" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
+
+ <div class="column"> 
+ <ul> 
+    <li>  $ f'(x^{*})=0 $ になるのは $ f $ が $ x^{*} $ で最大値（あるいは最小値）をとるときだけでは無い. 
+ <li class="spacer">例
+ 
+ <div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="255.921" height="196.527" viewBox="0 0 155.921 96.527">
+<defs>
+<g>
+<g id="glyph-0-0">
+<path d="M 4.8125 -3.78125 C 4.859375 -3.90625 4.859375 -3.9375 4.859375 -4 C 4.859375 -4.1875 4.71875 -4.265625 4.5625 -4.265625 C 4.46875 -4.265625 4.3125 -4.203125 4.21875 -4.0625 C 4.203125 -4.015625 4.125 -3.703125 4.078125 -3.53125 C 4.015625 -3.265625 3.9375 -3 3.890625 -2.734375 L 3.4375 -0.953125 C 3.390625 -0.796875 2.96875 -0.109375 2.3125 -0.109375 C 1.8125 -0.109375 1.703125 -0.546875 1.703125 -0.90625 C 1.703125 -1.359375 1.875 -1.984375 2.203125 -2.859375 C 2.375 -3.265625 2.40625 -3.375 2.40625 -3.5625 C 2.40625 -4.015625 2.09375 -4.375 1.59375 -4.375 C 0.65625 -4.375 0.28125 -2.9375 0.28125 -2.859375 C 0.28125 -2.75 0.390625 -2.75 0.40625 -2.75 C 0.5 -2.75 0.515625 -2.78125 0.5625 -2.9375 C 0.828125 -3.859375 1.234375 -4.15625 1.5625 -4.15625 C 1.640625 -4.15625 1.8125 -4.15625 1.8125 -3.84375 C 1.8125 -3.59375 1.71875 -3.34375 1.640625 -3.15625 C 1.25 -2.09375 1.0625 -1.53125 1.0625 -1.0625 C 1.0625 -0.1875 1.6875 0.109375 2.28125 0.109375 C 2.671875 0.109375 3 -0.0625 3.28125 -0.34375 C 3.15625 0.171875 3.03125 0.65625 2.640625 1.1875 C 2.375 1.53125 2 1.8125 1.546875 1.8125 C 1.40625 1.8125 0.953125 1.78125 0.796875 1.390625 C 0.953125 1.390625 1.078125 1.390625 1.21875 1.28125 C 1.3125 1.1875 1.421875 1.0625 1.421875 0.875 C 1.421875 0.5625 1.15625 0.53125 1.046875 0.53125 C 0.828125 0.53125 0.5 0.6875 0.5 1.171875 C 0.5 1.671875 0.9375 2.03125 1.546875 2.03125 C 2.5625 2.03125 3.59375 1.125 3.859375 0.015625 Z M 4.8125 -3.78125 "/>
+</g>
+<g id="glyph-0-1">
+<path d="M 3.3125 -2.984375 C 3.375 -3.25 3.59375 -4.15625 4.296875 -4.15625 C 4.34375 -4.15625 4.578125 -4.15625 4.78125 -4.03125 C 4.5 -3.984375 4.3125 -3.734375 4.3125 -3.5 C 4.3125 -3.34375 4.421875 -3.15625 4.6875 -3.15625 C 4.90625 -3.15625 5.21875 -3.328125 5.21875 -3.71875 C 5.21875 -4.234375 4.640625 -4.375 4.296875 -4.375 C 3.71875 -4.375 3.375 -3.859375 3.265625 -3.625 C 3.015625 -4.28125 2.484375 -4.375 2.1875 -4.375 C 1.15625 -4.375 0.59375 -3.09375 0.59375 -2.859375 C 0.59375 -2.75 0.6875 -2.75 0.71875 -2.75 C 0.796875 -2.75 0.828125 -2.78125 0.84375 -2.859375 C 1.171875 -3.90625 1.828125 -4.15625 2.171875 -4.15625 C 2.359375 -4.15625 2.703125 -4.078125 2.703125 -3.5 C 2.703125 -3.1875 2.53125 -2.53125 2.171875 -1.140625 C 2.015625 -0.53125 1.671875 -0.109375 1.234375 -0.109375 C 1.171875 -0.109375 0.9375 -0.109375 0.734375 -0.234375 C 0.984375 -0.28125 1.203125 -0.5 1.203125 -0.765625 C 1.203125 -1.046875 0.984375 -1.125 0.828125 -1.125 C 0.53125 -1.125 0.28125 -0.859375 0.28125 -0.546875 C 0.28125 -0.09375 0.78125 0.109375 1.21875 0.109375 C 1.875 0.109375 2.234375 -0.578125 2.265625 -0.640625 C 2.375 -0.28125 2.734375 0.109375 3.328125 0.109375 C 4.34375 0.109375 4.90625 -1.171875 4.90625 -1.421875 C 4.90625 -1.515625 4.828125 -1.515625 4.796875 -1.515625 C 4.703125 -1.515625 4.6875 -1.46875 4.671875 -1.40625 C 4.34375 -0.34375 3.671875 -0.109375 3.34375 -0.109375 C 2.96875 -0.109375 2.796875 -0.421875 2.796875 -0.765625 C 2.796875 -0.984375 2.859375 -1.203125 2.96875 -1.640625 Z M 3.3125 -2.984375 "/>
+</g>
+<g id="glyph-0-2">
+<path d="M 3.640625 -3.96875 L 4.484375 -3.96875 C 4.6875 -3.96875 4.78125 -3.96875 4.78125 -4.15625 C 4.78125 -4.265625 4.6875 -4.265625 4.515625 -4.265625 L 3.6875 -4.265625 L 3.90625 -5.40625 C 3.9375 -5.609375 4.078125 -6.3125 4.140625 -6.421875 C 4.234375 -6.625 4.390625 -6.765625 4.609375 -6.765625 C 4.640625 -6.765625 4.90625 -6.765625 5.09375 -6.59375 C 4.65625 -6.546875 4.5625 -6.203125 4.5625 -6.046875 C 4.5625 -5.828125 4.734375 -5.703125 4.921875 -5.703125 C 5.1875 -5.703125 5.46875 -5.921875 5.46875 -6.296875 C 5.46875 -6.75 5.015625 -6.984375 4.609375 -6.984375 C 4.265625 -6.984375 3.640625 -6.8125 3.34375 -5.828125 C 3.28125 -5.609375 3.265625 -5.515625 3.015625 -4.265625 L 2.34375 -4.265625 C 2.15625 -4.265625 2.046875 -4.265625 2.046875 -4.078125 C 2.046875 -3.96875 2.125 -3.96875 2.3125 -3.96875 L 2.96875 -3.96875 L 2.234375 -0.046875 C 2.046875 0.90625 1.875 1.8125 1.359375 1.8125 C 1.328125 1.8125 1.078125 1.8125 0.890625 1.640625 C 1.34375 1.609375 1.4375 1.25 1.4375 1.09375 C 1.4375 0.875 1.265625 0.75 1.0625 0.75 C 0.8125 0.75 0.53125 0.96875 0.53125 1.34375 C 0.53125 1.796875 0.953125 2.03125 1.359375 2.03125 C 1.90625 2.03125 2.3125 1.453125 2.484375 1.0625 C 2.796875 0.453125 3.03125 -0.75 3.046875 -0.828125 Z M 3.640625 -3.96875 "/>
+</g>
+<g id="glyph-1-0">
+<path d="M 3.28125 2.375 C 3.28125 2.34375 3.28125 2.328125 3.109375 2.15625 C 1.875 0.90625 1.5625 -0.953125 1.5625 -2.484375 C 1.5625 -4.203125 1.9375 -5.921875 3.15625 -7.15625 C 3.28125 -7.28125 3.28125 -7.296875 3.28125 -7.328125 C 3.28125 -7.40625 3.234375 -7.4375 3.1875 -7.4375 C 3.078125 -7.4375 2.1875 -6.75 1.609375 -5.5 C 1.09375 -4.40625 0.984375 -3.3125 0.984375 -2.484375 C 0.984375 -1.703125 1.09375 -0.5 1.640625 0.609375 C 2.234375 1.828125 3.078125 2.484375 3.1875 2.484375 C 3.234375 2.484375 3.28125 2.453125 3.28125 2.375 Z M 3.28125 2.375 "/>
+</g>
+<g id="glyph-1-1">
+<path d="M 2.859375 -2.484375 C 2.859375 -3.25 2.75 -4.453125 2.203125 -5.5625 C 1.609375 -6.78125 0.765625 -7.4375 0.65625 -7.4375 C 0.609375 -7.4375 0.5625 -7.390625 0.5625 -7.328125 C 0.5625 -7.296875 0.5625 -7.28125 0.75 -7.109375 C 1.71875 -6.125 2.28125 -4.546875 2.28125 -2.484375 C 2.28125 -0.78125 1.921875 0.953125 0.6875 2.203125 C 0.5625 2.328125 0.5625 2.34375 0.5625 2.375 C 0.5625 2.4375 0.609375 2.484375 0.65625 2.484375 C 0.765625 2.484375 1.65625 1.796875 2.234375 0.546875 C 2.75 -0.546875 2.859375 -1.640625 2.859375 -2.484375 Z M 2.859375 -2.484375 "/>
+</g>
+</g>
+<clipPath id="clip-0">
+<path clip-rule="nonzero" d="M 0.339844 12 L 141 12 L 141 96.054688 L 0.339844 96.054688 Z M 0.339844 12 "/>
+</clipPath>
+</defs>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000352404 0.000093277 L 0.000352404 67.575705 " transform="matrix(0.995124, 0, 0, -0.995124, 11.210587, 85.660249)"/>
+<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.196239 1.593356 C -1.094179 0.996697 0.00100522 0.0977824 0.299335 -0.000352404 C 0.00100522 -0.0984872 -1.094179 -0.997402 -1.196239 -1.594061 " transform="matrix(0, -0.995124, -0.995124, 0, 11.210587, 18.415063)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-0" x="8.602368" y="12.529603"/>
+</g>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000352404 0.000093277 L 112.929936 0.000093277 " transform="matrix(0.995124, 0, 0, -0.995124, 11.210587, 85.660249)"/>
+<path fill="none" stroke-width="0.31879" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -1.196268 1.593802 C -1.094208 0.997143 0.000975901 0.0982281 0.299306 0.000093277 C 0.000975901 -0.0980415 -1.094208 -0.996956 -1.196268 -1.593616 " transform="matrix(0.995124, 0, 0, -0.995124, 123.588873, 85.660249)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-1" x="127.545524" y="87.794789"/>
+</g>
+<g clip-path="url(#clip-0)">
+<path fill="none" stroke-width="1.19553" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000352404 56.69452 C 8.004225 42.833964 6.669592 22.677079 22.677338 22.677079 C 35.234665 22.677079 32.796997 45.354065 45.354324 45.354065 C 61.358144 45.354065 52.027489 11.340549 68.03131 11.340549 C 77.958624 11.340549 80.784906 22.677079 90.708296 22.677079 C 101.797526 22.677079 107.842629 15.269866 113.385281 5.668358 " transform="matrix(0.995124, 0, 0, -0.995124, 11.210587, 85.660249)"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-2" x="127.942579" y="82.496751"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-1-0" x="133.863565" y="82.496751"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-1" x="137.718674" y="82.496751"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-1-1" x="143.384908" y="82.496751"/>
+</g>
+</svg>
+</div>
+
+  </ul>  
+  </div> 
+  </div>
+</template>
+
+<!-- ===== Slide 61: 一変数関数の微分 / 凹関数 ===== -->
+<template class="slide-data" data-title="凹関数" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+  <li> 上に凸である関数であれば一階の条件で十分
+  
+  
+ <li> 上に凸の形状をしている関数を<span class="keyword">凹関数</span>と呼ぶ 
+ 
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+  <li> 学部レベルの経済学の最大化問題で出てくる関数はほぼ凹関数
+  
+
+ <li>  $f $ が凹関数であるための条件<br> <span class="icon-arrow">→</span>   $f''(x)\le 0$ であること 
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 62: 一変数関数の微分 / 応用例: 独占市場① ===== -->
+<template class="slide-data" data-title="応用例: 独占市場①" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> <span class="keyword">独占市場</span>:ある財の市場においてそれをつくる企業がひとつしかない市場
+<li> 独占企業の問題
+<li class="sub-item"><span class="icon-arrow">→</span> 価格をいくらにすれば利潤を最大にできるか？
+<li> 独占企業の利潤は...
+</ul>
+</div>
+<div class="column">
+
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 63: 一変数関数の微分 / 応用例: 独占市場② ===== -->
+<template class="slide-data" data-title="応用例: 独占市場②" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 価格を決定する場合
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 64: 一変数関数の微分 / 応用例: 独占市場③ ===== -->
+<template class="slide-data" data-title="応用例: 独占市場③" data-section="一変数関数の微分" data-note="false" data-print-margin="280">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 生産量を決定する場合
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+
+
+<!-- ===== Slide 66: 多変数関数の微分 / 多変数関数の微分 ===== -->
+<template class="slide-data" data-title="多変数関数の微分" data-section="多変数関数の微分" data-note="false" data-print-margin="0">
+<div class="section-title-big">多変数関数の微分</div>
+</template>
+
+<!-- ===== Slide 67: 多変数関数の微分 / 多変数関数 ===== -->
+<template class="slide-data" data-title="多変数関数" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
+ <li> <span class="keyword">多変数関数</span>：
+<li class="spacer">
+<li class="custom-marker"><span class="marker">例</span> 
+<ol>
+<li>  $ f(x,y)=x+y $ 
+<li>  $ f(x,y,z)=x^2+y^2+z $ 
+<li>  $ f(x,y)=xy $ 
+<li>  $ f(x,y)=x^2y^3 $ 
+</ol>
+
+<li> ベクトル $  (x,y) $ （あるいは $  (x,y,z) $ ）から実数への関数と考えても良い.
+</ul> 
+</div>
+<div class="column">
+<ul>
+ <li> 経済学での例
+<li class="sub-item"><span class="icon-arrow">→</span> 材料の量を $ q_s $ , 使用する電気の量を $ q_e $ , 労働量を $ q_\ell $ としたとき，生産量が $ f(q_s,q_e,q_\ell)=q_s^{1/3}q_e^{1/6}q_\ell^{1/2} $ . 
+</ul> 
+</div>	
+</div>
+</template>
+
+<!-- ===== Slide 68: 多変数関数の微分 / 多変数関数の傾き ===== -->
+<template class="slide-data" data-title="多変数関数の傾き" data-section="多変数関数の微分" data-note="false" data-print-margin="180">
+<ul>
+<li> 図解
+<div class="geogebra-embed">
+<iframe src="https://www.geogebra.org/3d/tkjbbp3f?embed" width="800" height="500" allowfullscreen style="border:1px solid #e4e4e4;border-radius:4px;" frameborder="0"></iframe>
+<div class="print-label">📐 GeoGebra: 多変数関数の傾き（オンラインで表示）</div>
+</div>
+<a class="qr-link" href="https://www.geogebra.org/3d/tkjbbp3f?embed" target="_blank">🔗 QRリンク</a>
+
+</ul>
+</template>
+
+<!-- ===== Slide 69: 多変数関数の微分 / 偏微分 ===== -->
+<template class="slide-data" data-title="偏微分" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
+ <li> <span class="keyword">偏微分</span>：
+
+<li class="spacer">
+<li>  二変数関数 $ f(x,y) $ を考える．
+
+</ul> 
+</div>
+<div class="column">
+<ul>
+
+<li>  $ f(x,y) $ を $ x $ で偏微分することを記号で書くと
+<div class="math-display">\[\begin{aligned}\pd{f(x,y)}{x}\end{aligned}\]</div>
+
+<li class="sub-item"><span class="icon-arrow">→</span>  $ \partial $  は「ラウンドディー」, 「ラウンド」あるいは「パーシャル」と読む
+<li> 
+ $  \pd{f(2,3)}{x} $ は  $  f $  を  $  x $  で偏微分した後に  $  x=2 $ ， $  y=3 $  を代入したもの
+</ul> 
+</div>	
+</div>
+</template>
+
+<!-- ===== Slide 70: 多変数関数の微分 / 例 ===== -->
+<template class="slide-data" data-title="例" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<ul>
+  <li>それぞれ偏微分してみましょう</li>
+</ul>  
+<ol>
+<li>  $ f(x,y)=x+y $ 
+ <br><br> <br><br>
+<li>  $ f(x,y,z)=x^2+y^2+z $ 
+  <br><br><br><br>
+<li>  $ f(x,y)=xy $ 
+  <br><br><br><br>
+<li>  $ f(x,y)=x^2y^3 $ 
+</ol>
+</template>
+
+<!-- ===== Slide 71: 多変数関数の微分 / 多変数関数の最適化（無制約） ===== -->
+<template class="slide-data" data-title="多変数関数の最適化（無制約）" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<ul>
+<li> 二変数関数 $ f $ が凹関数であるとする（上に凸の形状をしている）．このとき，
+<div class="math-display">\[\begin{aligned}\pd{f(x^*,y^*)}{x}=\pd{f(x^*,y^*)}{y}=0\end{aligned}\]</div>
+が $ f $ が $ (x^*,y^*) $ で最大値を取るための必要十分条件である．
+<li class="sub-item"><span class="icon-arrow">→</span> 逆に下に凸の形状をしている（凸関数）ときには<div class="math-display">\[\begin{aligned}\pd{f(x^*,y^*)}{x}=\pd{f(x^*,y^*)}{y}=0\end{aligned}\]</div>
+が $ f $ が $ (x^*,y^*) $ で最<strong>小</strong>値を取るための必要十分条件である
+
+</ul>
+</template>
+
+<!-- ===== Slide 72: 多変数関数の微分 / 応用例：最小二乗法 ===== -->
+<template class="slide-data" data-title="応用例：最小二乗法" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 次のようなデータがあったとする
+<table class="slide-table"><tr><td>価格</td><td>100</td><td>110</td><td>120</td><td>130</td></tr><tr><td>需要量</td><td>79</td><td>73</td><td>63</td><td>40</td></tr></table>
+<li> 価格と需要量の関係（需要曲線）はどんな形をしていると考えられるか？
+<li class="sub-item"><span class="icon-arrow">→</span> プロットしてみる
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> <span class="keyword">誤差</span>の考え方
+ <li class="sub-item"><span class="icon-arrow">→</span> 観察データには「ノイズ」があるかも
+ <li class="sub-item"><span class="icon-arrow">→</span> 平均するとゼロになる誤差を考える
+ <li> <span class="keyword">線形モデル</span>
+ <li class="sub-item"><span class="icon-arrow">→</span> 需要量を $  D $ , 価格を $  P $ とする
+ <li class="sub-item"><span class="icon-arrow">→</span> $  D = aP+b $ という関係にあると想定する
+ <li> <span class="keyword">最小二乗法</span>
+ <li class="sub-item"><span class="icon-arrow">→</span> 誤差を最小にするような $  a,b $ を求める
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 73: 多変数関数の微分 / 残差二乗和 ===== -->
+<template class="slide-data" data-title="残差二乗和" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 実際の需要量データ $ D $ と線形モデルから推測される需要量 $  \hat D=a P+b $ の差を<span class="keyword">残差</span>と呼ぶ
+ 
+ 
+ 
+ <li> 残差二乗和はその合計
+ <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <table class="slide-table"><tr><td>価格</td><td>100</td><td>110</td><td>120</td><td>130</td></tr><tr><td>需要量</td><td>79</td><td>73</td><td>63</td><td>40</td></tr></table>
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 残差二乗和を<span class="keyword">最小</span>にする $  a,b $ を求めるのが最小二乗法
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 74: 多変数関数の微分 / まずは手計算でやってみよう ===== -->
+<template class="slide-data" data-title="まずは手計算でやってみよう" data-section="多変数関数の微分" data-note="false" data-print-margin="280">
+<div class="columns"><div class="column">
+<ul>
+<li> データ
+ <table class="slide-table"><tr><td>価格</td><td>100</td><td>110</td><td>120</td><td>130</td></tr><tr><td>需要量</td><td>79</td><td>73</td><td>63</td><td>40</td></tr></table>
+<li> 手順
+<ol>
+<li> モデルに $p=$ 価格を代入し，予測 $\hat D=a P+b$ を計算
+<li> 残差の二乗( $(\hat D-D)^{2}$ )の和を計算する
+<li> (2)で求めた和を変数 $a,b$ でそれぞれ偏微分 
+<li> (3)で求めた式を $=0$ とおいて連立方程式を解く  
+
+</ol>
+
+</ul>
+
+</div><div class="column"></div></div>
+</template>
+
+<!-- ===== Slide 75: 多変数関数の微分 / 実際にやってみよう ===== -->
+<template class="slide-data" data-title="実際にやってみよう" data-section="多変数関数の微分" data-note="false" data-print-margin="80">
+<ul> 
+ <li> プログラミング言語を使ってやってみる
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> より洗練された方法は「経済データ分析」や「計量経済学」で！
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 以下のコードは直接実行できます（▶ 実行 ボタンを押してください）
+ </ul> 
+ <div class="sage-cell-label">Python + SymPy — 最小二乗法</div>
+ <div class="sage-cell"><script type="text/x-sage">
+import sympy
+sympy.var('a b')  # variables
+
+price = [1, 2, 3, 4, 5]       # input the price data
+demand = [10, 8, 7, 4, 2]     # input the demand data
+n = len(price)
+
+def f(a, b):
+    return sum([(price[i]*a + b - demand[i])**2 for i in range(n)])
+
+eq1 = sympy.Eq(sympy.diff(f(a,b), a), 0)
+eq2 = sympy.Eq(sympy.diff(f(a,b), b), 0)
+
+result = sympy.solve([eq1, eq2], (a, b))
+print("解:", result)
+print(f"回帰直線: y = {result[a]}x + {result[b]}")
+</script></div>
+ <div class="sage-cell-print">🧮 SageMath Cell: 最小二乗法の計算（オンラインで実行）</div>
+</template>
+
+
+
+<!-- ===== Slide 77: 累乗，数列とその和 / 累乗，数列とその和 ===== -->
+<template class="slide-data" data-title="累乗，数列とその和" data-section="累乗，数列とその和" data-note="false" data-print-margin="0">
+<div class="section-title-big">累乗，数列とその和</div>
+</template>
+
+<!-- ===== Slide 78: 累乗，数列とその和 / 指数 ===== -->
+<template class="slide-data" data-title="指数" data-section="累乗，数列とその和" data-note="false" data-print-margin="280">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+ <li> 複数回同じものを掛けることを累乗という.
+ <li class="sub-item"><span class="icon-arrow">→</span> 累乗は $  4^5 $ などというように上に小さい数字をつけて表記する.
+
+<li class="sub-item"><span class="icon-arrow">→</span> 上付きの小さい文字の部分を<span class="keyword">指数</span>と呼ぶ. 
+
+<li> 注意
+<li class="sub-item"><span class="icon-arrow">→</span> 一般的に $  x^y\ne y^x $ である．
+
+<li class="sub-item"><span class="icon-arrow">→</span> 一般的に $ (x^y)^z\ne x^{(y^z)}  $ である．
+ 
+ <li class="sub-item"><span class="icon-arrow">→</span> 手書きで書くときは
+ 
+ 
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> <span class="keyword">指数法則</span>
+  
+
+ <ul>
+ <li>
+  $  x^ax^b=x^{a+b} $ 
+ <li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+
+ <li>
+  $  (x^a)^b=x^{ab} $ 
+ <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+ <li> 
+  $  (xy)^a=x^ay^a $  
+ </ul>
+  <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 79: 累乗，数列とその和 / 複利計算 ===== -->
+<template class="slide-data" data-title="複利計算" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 年利5%で千円を借りたとき， $  t $ 年後の返済額はいくら？
+</ul>
+</div>
+<div class="column">
+<ul>
+
+</ul>
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 80: 累乗，数列とその和 / 他の例 ===== -->
+<template class="slide-data" data-title="他の例" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+
+<div class="columns">
+  <div class="column">
+  <ul>
+  <li> 例：<span class="keyword">割引現在価値</span>（$1$ 年後に貰う $X$ 万円の価値は今すぐ貰うときの $Y$ 万円の価値）
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li> <span class="keyword">割引因子</span>とは？
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li> <span class="keyword">割引率</span>とは？
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+    <li class="spacer"></li>
+    <li class="spacer"></li> 
+  </li>
+  </ul>
+</div>
+<div class="column">
+  <ul>
+<li> $n$ 年後に貰う $X$ 万円の価値はいくらか？
+</li>
+</ul>
+</div>
+</ul>
+</template>
+
+<!-- ===== Slide 81: 累乗，数列とその和 / シグマ記号 ===== -->
+<template class="slide-data" data-title="シグマ記号" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<ul>
+<li> シグマ記号の意味
+
+<div class="math-display">\[\begin{aligned}\sum_{i=1}^{n}a_{i}=a_1+a_2+\dots+a_n\end{aligned}\]</div>
+
+</ul>
+</template>
+
+<!-- ===== Slide 82: 累乗，数列とその和 / 等比数列の和 ===== -->
+<template class="slide-data" data-title="等比数列の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
+<li>  $  a_{t+1}=\beta a_t $ がすべての $  t $ について成り立つ数列を等比数列という.
+
+<li> 数列 $  a=(a_1,a_2,\dots,a_n) $ が等比数列であるとき，その和
+<div class="math-display">\[\begin{aligned}S=a_1+a_2+\dots+a_n\end{aligned}\]</div>
+はどうやって計算するか？
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+<!-- ===== Slide 83: 累乗，数列とその和 / 応用：割引現在価値の和 ===== -->
+<template class="slide-data" data-title="応用：割引現在価値の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="380">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 利付債: 最終年度に償還される他に何年かごとに一定金額の振り込みが行われる債権
+<li class="spacer">
+<li class="spacer">
+</ul>
+</div>
+<div class="column">
+<ul>
+<li> 5年後に10万円が償還されるが，毎年1万円が受け取れる利付債の割引現在価値の和はいくらか
+</ul>
+</div>
+</div>
+</template>
+
+
+
+
+
+<!-- ===== Slide 86: 確率 / 確率 ===== -->
+<template class="slide-data" data-title="確率" data-section="確率" data-note="false" data-print-margin="0">
+<div class="section-title-big">確率</div>
+</template>
+
+<!-- ===== Slide 87: 確率 / 確率の定義 ===== -->
+<template class="slide-data" data-title="確率の定義" data-section="確率" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+  <li> 結果が不確実なものは多い
+  <li class="sub-item"><span class="icon-arrow">→</span> サイコロの目，コイントスの結果
+  <li class="sub-item"><span class="icon-arrow">→</span> 宝くじ，事故，天気
+  <li class="sub-item"><span class="icon-arrow">→</span> 全ては不確実
+<li> 確率とはモノゴトの起こりやすさを数値化したもの
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li> 結果が不確実な行為を<span class="keyword">試行(trial)</span>と呼ぶ
+ <li> 試行の結果を<span class="keyword">標本(sample)</span>と呼ぶ
+ <li> 標本の集合を<span class="keyword">事象(event)</span>と呼ぶ．
+
+ <li> 標本すべての集合を<span class="keyword">全事象</span>という
+ <li class="sub-item"><span class="icon-arrow">→</span> 全事象を $ \Omega $ と書く.
+ 
+
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 88: 確率 / 例 ===== -->
+<template class="slide-data" data-title="例" data-section="確率" data-note="false" data-print-margin="80">
+<div class="columns"><div class="column">
+<ul>
+<li> サイコロを振る
+<li class="sub-item"><span class="icon-arrow">→</span> 標本の例
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="sub-item"><span class="icon-arrow">→</span> 事象の例
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul></div><div class="column">
+<ul>
+<li> トランプのカードを1枚づつ二人に配る
+<li class="sub-item"><span class="icon-arrow">→</span> 標本の例
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="sub-item"><span class="icon-arrow">→</span> 事象の例（標本は必ずしも観察できるとは限らない）
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div></div>
+</template>
+
+<!-- ===== Slide 89: 確率 / 事象の図示 ===== -->
+<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="280">
+<div class="columns"><div class="column">
+<ul>
+<li> 確率とは事象の面積のようなもの
+<li class="sub-item"><span class="icon-arrow">→</span> 事象 $ A $ が起きる確率を $ P(A) $ と書く．
+<li class="sub-item"><span class="icon-arrow">→</span> 全事象の確率を $ 1 $ とする．
+<li class="sub-item"><span class="icon-arrow">→</span> 確率は $ 0 $ 以上 $ 1 $ 以下
+
+<li> ベン図 </li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div><div class="column">
+
+</div></div>
+</template>
+
+<!-- ===== Slide 90: 確率 / 事象の図示 ===== -->
+<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="180">
+<div class="columns"><div class="column">
+<ul>
+<li>  $ A $ と $ B $ の和事象  $ A\cup B $ とは
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div><div class="column">
+<ul>
+<li> もし事象 $ A $ と $ B $ に被りがなければ  $ P(A\cup B)=P(A)+P(B) $ 
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+
+</div></div>
+</template>
+
+<!-- ===== Slide 91: 確率 / 事象の図示 ===== -->
+<template class="slide-data" data-title="事象の図示" data-section="確率" data-note="false" data-print-margin="80">
+<div class="columns"><div class="column">
+<ul>
+<li>  $ A $ と $ B $ の積事象  $ A\cap B $ とは
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+
+</div><div class="column">
+<ul>
+<li>  $ A $ の余事象  $ \Omega\setminus A $ とは
+  <li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+
+</div></div>
+</template>
+
+<!-- ===== Slide 92: 確率 / 期待値 ===== -->
+<template class="slide-data" data-title="期待値" data-section="確率" data-note="false" data-print-margin="280">
+
+ <ul> 
+  <li> 標本が数字であるときに，平均的な値がどれだけであるか？
+  
+  <li> ある試行の標本 $ x_1,\dots, x_n $ すべてが実数であるとする.
+  
+  <li> このとき，以下の値 $ \bar x $ をこの試行の<span class="keyword">期待値</span>と呼ぶ.
+  <div class="math-display">\[\begin{aligned}\bar x=\sum_{i=1}^n P(x_i) x_i\end{aligned}\]</div>
+<li class="sub-item"><span class="icon-arrow">→</span> $ x_1,\dots, x_n $ の加重和(weighted sum)
+
+ </ul> 
+<ul> 
+ <li> 例：宝くじの期待値
+ 
+ <table class="slide-table"><tr><td>金額(円)</td><td>7億</td><td>2億</td><td>千万</td><td>百万</td><td>十万</td><td>3000</td><td>300</td></tr><tr><td>本数(本)</td><td>25</td><td>50</td><td>500</td><td>5000</td><td>4万</td><td>500万</td><td>5000万</td></tr></table> 
+
+くじは全部で５億本とする
+ </ul> 
+
+</template>
+
+<!-- ===== Slide 93: 確率 / 条件付き確率 ===== -->
+<template class="slide-data" data-title="条件付き確率" data-section="確率" data-note="false" data-print-margin="80">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+  <li> ある事象の確率を考えるときに追加情報があるときを考える.
+<li class="sub-item"><span class="icon-arrow">→</span> (例)どこの企業に投資しようかを考えているとき, A社が新製品を開発したとの情報が入ってきた．株価が上がる確率は？
+<li class="sub-item"><span class="icon-arrow">→</span> (例) 1%の人がかかる病気に精度95%の検査で陽性が出た．罹患している確率は？
+<li> こう言うものを考えるのが条件付き確率である.
+
+ </ul> 
+ </div> 
+ <div class="column"> 
+<ul> 
+ <li>  「$  F $ が起きた」という条件のもとでの 「$ E $ が起きる」確率は $ P(E\condi F) $ と書き，次のように計算される.
+ <div class="math-display">\[\begin{aligned}P(E\condi F)= \dfrac{P(E\cap F)}{P(F)}\end{aligned}\]</div>
+ </ul> 
+  </div> 
+ </div>
+</template>
+
+<!-- ===== Slide 94: 確率 / 条件付き確率 ===== -->
+<template class="slide-data" data-title="条件付き確率" data-section="確率" data-note="false" data-print-margin="380">
+<div class="columns"> 
+ <div class="column"> 
+ <ul> 
+  <li> 1%の人が罹患している病気に精度95%の検査で陽性になったとき，実際に罹患している確率はいくらか？</li>
+  </ul>
+</div>
+</div>
+</template>
