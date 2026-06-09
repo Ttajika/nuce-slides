@@ -41,6 +41,10 @@ window.MathJax = {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<!-- ログイン＋クラウド同期（有効化するには下2行のコメントを外し、slide-sync.js 冒頭の CONFIG を設定）
+     ※ 学期途中は休眠（コメントアウト）。読み込まなければ 🔑 ボタンも出ず、挙動は従来通り。 -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+<!-- <script src="slide-sync.js"></script> -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400&display=swap');
 
@@ -706,10 +710,14 @@ let filteredIndices = null; // null = no filter active
 // ═══ LOCAL STORAGE ═══
 const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 
-function saveLocal() {
+function saveLocal(remoteTs) {
   try {
-    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current };
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current,
+                   updatedAt: remoteTs || Date.now() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // A genuine local change (no timestamp passed) should be pushed to the cloud.
+    // When applying remote data we pass its timestamp, so we must NOT echo it back.
+    if (!remoteTs && window.SlideSync) SlideSync.scheduleRemoteSave();
   } catch(e) { /* quota exceeded or unavailable */ }
 }
 
@@ -1850,6 +1858,25 @@ document.addEventListener('DOMContentLoaded', () => {
   function initWhenReady() {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
       showSlide(current);
+      // Canvas is now sized; bring up cloud sync (no-op until slide-sync.js is configured).
+      if (window.SlideSync) SlideSync.init({
+        storageKey: STORAGE_KEY,
+        getCanvas: () => getCanvas(),
+        getState: () => ({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }),
+        applyState: (s) => {
+          if (s.notes) notes = s.notes;
+          if (s.understanding) understanding = s.understanding;
+          if (s.bookmarks) bookmarks = s.bookmarks;
+          if (s.strokes) strokes = s.strokes;
+          if (s.boardStrokes) boardStrokes = s.boardStrokes;
+        },
+        saveLocal: (ts) => saveLocal(ts),
+        refresh: () => {
+          const ta = document.getElementById('noteArea');
+          if (ta) ta.value = notes[current] || '';
+          showSlide(current);
+        },
+      });
     } else {
       setTimeout(initWhenReady, 100);
     }
