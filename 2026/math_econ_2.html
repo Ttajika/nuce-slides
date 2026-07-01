@@ -46,6 +46,9 @@ window.MathJax = {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<!-- ログイン＋クラウド同期（slide-sync.js 冒頭の CONFIG を設定すると有効化）-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="slide-sync.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400&display=swap');
 @font-face { font-family: 'CM'; src: url('https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2') format('woff2'); font-weight: normal; font-style: normal; }
@@ -900,10 +903,14 @@ function scheduleSave() {
   saveTimer = setTimeout(saveLocal, 1000);
 }
 
-function saveLocal() {
+function saveLocal(remoteTs) {
   try {
     notes[current] = document.getElementById('noteArea').value;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }));
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current,
+                   updatedAt: remoteTs || Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // ローカル変更（引数なし）のときだけクラウドへ push。リモート適用時は echo し返さない。
+    if (!remoteTs && window.SlideSync) SlideSync.scheduleRemoteSave();
   } catch(e) {}
 }
 
@@ -1419,6 +1426,25 @@ document.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('scroll', repositionFab);
   }
   showSlide(current);
+  // Canvas is now sized; bring up cloud sync (no-op until slide-sync.js is configured).
+  if (window.SlideSync) SlideSync.init({
+    storageKey: STORAGE_KEY,
+    getCanvas: () => getCanvas(),
+    getState: () => ({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current }),
+    applyState: (s) => {
+      if (s.notes) notes = s.notes;
+      if (s.understanding) understanding = s.understanding;
+      if (s.bookmarks) bookmarks = s.bookmarks;
+      if (s.strokes) strokes = s.strokes;
+      if (s.boardStrokes) boardStrokes = s.boardStrokes;
+    },
+    saveLocal: (ts) => saveLocal(ts),
+    refresh: () => {
+      const ta = document.getElementById('noteArea');
+      if (ta) ta.value = notes[current] || '';
+      showSlide(current);
+    },
+  });
   window.addEventListener('resize', () => { resizeDrawCanvas(); if (boardMode) resizeBoardCanvas(); });
 });
 </script>

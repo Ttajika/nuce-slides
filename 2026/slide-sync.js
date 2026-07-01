@@ -26,8 +26,8 @@
   //   url / anonKey は Supabase ダッシュボード → Settings → API で取得。
   //   anon public キーは公開して問題ないキー（データは RLS で保護される）。
   const CONFIG = {
-    url:        'https://YOUR_PROJECT.supabase.co',
-    anonKey:    'YOUR_ANON_PUBLIC_KEY',
+    url:        'https://theovlywqssldjdcndrb.supabase.co',
+    anonKey:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZW92bHl3cXNzbGRqZGNuZHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4ODg1MDEsImV4cCI6MjA5ODQ2NDUwMX0.aaCfLt0LYl9mYzwCIeIMYe6m8WIHYkZaN-oaMUA-H9I',
     idDomain:   'class.local',   // ID をメール形式に変換する際のダミードメイン
   };
 
