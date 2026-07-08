@@ -799,6 +799,175 @@ const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 function getCanvas() { return document.getElementById('drawCanvas'); }
 function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
 
+
+
+//=========3d
+
+function setupPartial3D(root) {
+  root.querySelectorAll('.pd3d-wrap').forEach(wrap => {
+    const cv = wrap.querySelector('canvas.partial3d');
+    if (!cv || cv.dataset.pdInit) return;
+    cv.dataset.pdInit = '1';
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = cv.clientWidth || 460;
+    const cssH = Math.round(cssW * 0.76);
+    cv.style.height = cssH + 'px';
+    cv.width = Math.round(cssW * dpr);
+    cv.height = Math.round(cssH * dpr);
+    const ctx = cv.getContext('2d');
+
+    const N = 16;
+    const A = 0.375, B = -0.25;                    // 注目点 (a, b)：グリッド線上
+    const f  = (x,y) => 0.4 - 0.45*x*x - 0.6*y*y;
+    const fx = x => -0.9*x, fy = y => -1.2*y;
+    const Z0 = -0.95;                              // 切断面の床
+    let az = 35*Math.PI/180, elv = 24*Math.PI/180, mode = 'full';
+
+    function draw() {
+      const w = cv.width, h = cv.height;
+      const S = w * 0.30, cx = w/2, cy = h/2 - 0.04*h;
+      ctx.clearRect(0, 0, w, h);
+      const sa = Math.sin(az), ca = Math.cos(az);
+      const se = Math.sin(elv), ce = Math.cos(elv);
+      const proj = (x,y,z) => {
+        const X = x*ca + y*sa, Y = -x*sa + y*ca;
+        return [cx + S*Y, cy + S*(X*se - z*ce)];
+      };
+      const poly = (pts, fill, alpha, stroke, lw) => {
+        ctx.beginPath();
+        pts.forEach((p,k) => k ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+        ctx.closePath();
+        if (fill) { ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.fill(); ctx.globalAlpha = 1; }
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+      };
+      const path = (pts, stroke, lw, dash) => {
+        ctx.beginPath();
+        pts.forEach((p,k) => k ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+        ctx.setLineDash(dash || []);
+        ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.stroke();
+        ctx.setLineDash([]);
+      };
+      const seg = n => Array.from({length:n+1}, (_,k) => -1 + 2*k/n);
+
+      // 面（切断モードでは視点から見て奥側だけ残す＝切断面が常に手前を向く）
+      const quads = [];
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+        const x0 = -1+2*i/N, x1 = -1+2*(i+1)/N, y0 = -1+2*j/N, y1 = -1+2*(j+1)/N;
+        if (mode === 'cuty' && (sa >= 0 ? y1 > B + 1e-9 : y0 < B - 1e-9)) continue;
+        if (mode === 'cutx' && (ca >= 0 ? x1 > A + 1e-9 : x0 < A - 1e-9)) continue;
+        const xm = (x0+x1)/2, ym = (y0+y1)/2;
+        const d = (xm*ca + ym*sa)*ce + f(xm,ym)*se;
+        const nx = 0.9*xm, ny = 1.2*ym, nz = 1;
+        const nl = Math.sqrt(nx*nx+ny*ny+nz*nz);
+        const t = 0.55 + 0.45*Math.max(0, (0.4*nx - 0.3*ny + 0.86*nz)/nl);
+        const col = 'rgb(' + Math.round(191+47*t) + ',' + Math.round(219+25*t) + ',254)';
+        quads.push([d, [[x0,y0],[x1,y0],[x1,y1],[x0,y1]].map(p => proj(p[0],p[1],f(p[0],p[1]))), col]);
+      }
+      quads.sort((p,q) => p[0]-q[0]);
+      const drawQuads = () => quads.forEach(([,pts,col]) => poly(pts, col, 0.92, '#64748b', 0.45*dpr));
+
+      // 切断面（壁）＋断面曲線
+      const drawWall = () => {
+        if (mode === 'cuty') {
+          const curve = seg(48).map(x => proj(x, B, f(x,B)));
+          poly([...curve, proj(1,B,Z0), proj(-1,B,Z0)], '#eff6ff', 0.96, '#94a3b8', 0.6*dpr);
+          path(curve, '#2563eb', 2.6*dpr);
+        } else if (mode === 'cutx') {
+          const curve = seg(48).map(y => proj(A, y, f(A,y)));
+          poly([...curve, proj(A,1,Z0), proj(A,-1,Z0)], '#fef2f2', 0.96, '#94a3b8', 0.6*dpr);
+          path(curve, '#dc2626', 2.6*dpr);
+        }
+      };
+      // 接平面（面で表示）：切断モードでは曲面と同じ側（奥側）だけ残す
+      const drawTangentPlane = (alpha) => {
+        const P = 0.45, z = (x,y) => f(A,B) + fx(A)*(x-A) + fy(B)*(y-B);
+        let rect;
+        if (mode === 'cuty') {
+          const y0 = sa >= 0 ? B - P : B, y1 = sa >= 0 ? B : B + P;
+          rect = [[A-P,y0],[A+P,y0],[A+P,y1],[A-P,y1]];
+        } else if (mode === 'cutx') {
+          const x0 = ca >= 0 ? A - P : A, x1 = ca >= 0 ? A : A + P;
+          rect = [[x0,B-P],[x1,B-P],[x1,B+P],[x0,B+P]];
+        } else {
+          rect = [[A-P,B-P],[A+P,B-P],[A+P,B+P],[A-P,B+P]];
+        }
+        const corners = rect.map(p => proj(p[0],p[1],z(p[0],p[1])));
+        poly(corners, '#fbbf24', alpha, '#d97706', 1.2*dpr);
+      };
+      // 接線（断面内の接線）
+      const drawTangentLine = () => {
+        if (mode === 'cuty') {
+          const tpts = [-0.42, 0.42].map(t2 => proj(A+t2, B, f(A,B) + fx(A)*t2));
+          path(tpts, '#f59e0b', 2.6*dpr);
+        } else if (mode === 'cutx') {
+          const tpts = [-0.42, 0.42].map(t2 => proj(A, B+t2, f(A,B) + fy(B)*t2));
+          path(tpts, '#f59e0b', 2.6*dpr);
+        }
+      };
+      // 奥側だけ残すので壁は常に手前＝面の後に描く
+      if (mode !== 'full') {
+        drawQuads(); drawWall();
+        // 接平面を面で残し、その上に接線を重ねる
+        drawTangentPlane(0.5); drawTangentLine();
+      } else {
+        drawQuads();
+        // 切断位置のガイド線（薄く）
+        path(seg(48).map(x => proj(x, B, f(x,B))), 'rgba(37,99,235,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
+        path(seg(48).map(y => proj(A, y, f(A,y))), 'rgba(220,38,38,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
+        drawTangentPlane(0.42);
+      }
+      // 注目点
+      const o = proj(A, B, f(A,B));
+      ctx.beginPath(); ctx.arc(o[0], o[1], 3.4*dpr, 0, 2*Math.PI);
+      ctx.fillStyle = '#111827'; ctx.fill();
+      ctx.lineWidth = 1.1*dpr; ctx.strokeStyle = '#fff'; ctx.stroke();
+      // モード表示
+      ctx.font = (11.5*dpr) + 'px sans-serif';
+      ctx.fillStyle = '#6b7280';
+      const label = mode === 'full' ? '点 (a, b) での接平面'
+                  : mode === 'cuty' ? 'y = b で切断：z = f(x, b) は x の関数'
+                  : 'x = a で切断：z = f(a, y) は y の関数';
+      ctx.fillText(label, 8*dpr, 16*dpr);
+    }
+
+    const btns = wrap.querySelectorAll('.pd3d-btn');
+    const setActive = () => btns.forEach(b => {
+      const on = b.dataset.mode === mode;
+      b.style.background = on ? '#2563eb' : '#fff';
+      b.style.color = on ? '#fff' : '';
+      b.style.borderColor = on ? '#2563eb' : '#d1d5db';
+    });
+    btns.forEach(b => b.addEventListener('click', () => {
+      mode = b.dataset.mode;
+      // 視点は切断の前後で固定（ユーザーが回した向きを保つ）
+      setActive(); draw();
+    }));
+    setActive();
+
+    let dragging = false, px0 = 0, py0 = 0;
+    cv.addEventListener('pointerdown', e => {
+      dragging = true; px0 = e.clientX; py0 = e.clientY;
+      cv.setPointerCapture(e.pointerId);
+      cv.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      az += (e.clientX - px0) * 0.008;
+      elv = Math.min(1.4, Math.max(0.08, elv + (e.clientY - py0) * 0.006));
+      px0 = e.clientX; py0 = e.clientY;
+      draw();
+    });
+    cv.addEventListener('pointerup', () => { dragging = false; cv.style.cursor = 'grab'; });
+    cv.addEventListener('pointercancel', () => { dragging = false; cv.style.cursor = 'grab'; });
+    draw();
+  });
+}
+
+//=========
+
+
+
 // URL-based page navigation: ?page=N or #N (1-based)
 function getPageFromURL() {
   const params = new URLSearchParams(window.location.search);
@@ -1000,6 +1169,7 @@ function showSlide(idx) {
     MathJax.typesetPromise([content]).then(() => {
       initQRCodes();
       initSageCells();
+      setupPartial3D(content);
       resizeDrawCanvas();
       redrawStrokes();
     });
@@ -2061,19 +2231,21 @@ document.addEventListener('keydown', e => {
 <!-- ===== Slide 5: はじめに / 成績評価方法 ===== -->
 <template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
 <ul>
-<li> 成績評価は以下の通り．
+<li> 成績評価は以下の点数に基づいて定まる
 
-<div class="math-display">\[\begin{aligned}\left[\overbrace{\text{小テストの合計点}}^{\text{最大55点}}+\overbrace{\text{質問点}}^{\text{最大14点}}+\overbrace{\text{最終試験}}^{\text{最大50点}} \right]\times \text{出席率}\end{aligned}\]</div>
+<div class="math-display">\[\begin{aligned}\left[\overbrace{\text{小テストの合計点}}^{\text{最大42点}}+\overbrace{\text{質問点}}^{\text{最大13点}}+\overbrace{\text{最終試験}}^{\text{最大60点}} \right]\times (0.5\times \text{出席率}+0.5)\end{aligned}\]</div>
 
 <li class="sub-item"><span class="icon-arrow">→</span> 小テストはCanvas LMSで出題（何回でもチャレンジ可）
+<li class="sub-item"><span class="icon-arrow">→</span> 小テストの点数は合計が42になるように変換される．
 <li class="sub-item"><span class="icon-arrow">→</span> 小テストにはWolfram Alpha を用いる．
 <li class="sub-item"><span class="icon-arrow">→</span> 質問点は授業１回あたり最大1点を加算する．
-<li> 点数と成績
+<li> 点数と成績：上記の点数と成績の関係は次のとおりである．
 <div style="text-align:center">
 <table class="slide-table"><tr><td>点数</td><td>$ \le 59 $</td><td>$  60 \text{ ～ } 69 $</td><td>$ 70 \text{ ～ } 79 $</td><td>$ 80 \text{ ～ } 89 $</td><td>$ 90\le $</td></tr><tr><td>評価</td><td>D</td><td>C</td><td>B</td><td>A</td><td>S</td></tr></table>
 </div>
 <li> 上記以外の事項での評価は行わない．
 <li> 欠席はいかなる理由でも欠席として扱うが，録画を見た上で四百字程度のまとめを提出すれば「出席」として扱う。
+  <li class="sub-item"><span class="icon-arrow">→</span> 公欠届は不要
 </ul>
 </template>
 
@@ -3087,11 +3259,6 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  
   
   
-  <li> 横軸を所得として税額のグラフを描くとどのようになるか？
-  <li class="spacer"> </li>
-  <li class="spacer"> </li>
-  <li class="spacer"> </li>
-  <li class="spacer"> </li>
   <li class="spacer"> </li>
   <li class="spacer"> </li>
 </ul>
@@ -3434,13 +3601,16 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <!-- ===== Slide 68: 多変数関数の微分 / 多変数関数の傾き ===== -->
 <template class="slide-data" data-title="多変数関数の傾き" data-section="多変数関数の微分" data-note="false" data-print-margin="180">
 <ul>
-<li> 図解
-<div class="geogebra-embed">
-<iframe src="https://www.geogebra.org/3d/tkjbbp3f?embed" width="800" height="500" allowfullscreen style="border:1px solid #e4e4e4;border-radius:4px;" frameborder="0"></iframe>
-<div class="print-label">📐 GeoGebra: 多変数関数の傾き（オンラインで表示）</div>
+<li> 図解<div class="pd3d-wrap" style="text-align:center;margin:8px 0;">
+<canvas class="partial3d" style="width:min(96%,520px);touch-action:none;cursor:grab;"></canvas>
+<div style="margin-top:4px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+<button type="button" class="pd3d-btn" data-mode="full" style="font-size:12px;padding:3px 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">曲面＋接平面</button>
+<button type="button" class="pd3d-btn" data-mode="cuty" style="font-size:12px;padding:3px 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">y=b で切断</button>
+<button type="button" class="pd3d-btn" data-mode="cutx" style="font-size:12px;padding:3px 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">x=a で切断</button>
 </div>
-<a class="qr-link" href="https://www.geogebra.org/3d/tkjbbp3f?embed" target="_blank">🔗 QRリンク</a>
-
+<p style="font-size:0.8em;color:var(--text-dim);margin-top:2px;">（ドラッグで回転）</p>
+</div>
+</div>
 </ul>
 </template>
 
@@ -3718,11 +3888,25 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </template>
 
 <!-- ===== Slide 82: 累乗，数列とその和 / 等比数列の和 ===== -->
-<template class="slide-data" data-title="等比数列の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="等比数列" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
 <div class="columns">
 <div class="column">
 <ul>
 <li>  $  a_{t+1}=\beta a_t $ がすべての $  t $ について成り立つ数列を等比数列という.
+
+</ul>
+</div>
+<div class="column">
+</div>
+</div>
+</template>
+
+
+<!-- ===== Slide 82: 累乗，数列とその和 / 等比数列の和 ===== -->
+<template class="slide-data" data-title="等比数列の和" data-section="累乗，数列とその和" data-note="false" data-print-margin="80">
+<div class="columns">
+<div class="column">
+<ul>
 
 <li> 数列 $  a=(a_1,a_2,\dots,a_n) $ が等比数列であるとき，その和
 <div class="math-display">\[\begin{aligned}S=a_1+a_2+\dots+a_n\end{aligned}\]</div>

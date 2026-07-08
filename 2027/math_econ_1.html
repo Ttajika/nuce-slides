@@ -5077,11 +5077,6 @@ $f(x)=h(g(x))$ のとき,
 <li class="spacer">
 <li class="spacer">
 <li class="spacer">
-
-
-<li> 例3: $ \int_{-2}^2 x e^{-x^2}dx$
-<li class="spacer">
-<li class="spacer">
 <li class="spacer">
 <li class="spacer">
 <li class="spacer">
@@ -5089,18 +5084,50 @@ $f(x)=h(g(x))$ のとき,
 <li class="spacer">
 <li class="spacer">
 
+<li> 例3: $ \int_{-1}^2 x e^{-x^2}dx$
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
 
 </ul>
   </div> 
   </div>
 </template>
 
-<!-- ===== Slide 93: 積分 / 積分の難しさ ===== -->
-<template class="slide-data" data-title="積分の難しさ" data-section="積分" data-note="false" data-print-margin="80">
+<!-- ===== Slide 93: 積分 / 広義積分 ===== -->
+<template class="slide-data" data-title="広義積分" data-section="積分" data-note="false" data-print-margin="80">
+<div class="columns">
+ <div class="column">
 <ul>
-<li> $ \int_0^1 (x^2)^{1/2}dx$ をWolfram Alphaで計算してみよう
-<li> $ \int_0^1 (x^2+1)^{1/2}dx$ をWolfram Alphaで計算してみよう
+<li> 積分範囲が無限になるときは，通常の積分は定義できない．
+  <li class="sub-item">» 積分範囲の「極限」で考える
+<li> 例：\[\int_0^\infty e^{-x}dx=\lim_{b\to\infty}\int_0^b e^{-x}dx\]
+
+
 </ul>
+</div>
+<div class="column">
+  <ul>
+    <li> 広義積分は定義できないときもある
+    <li>例： $\int_{-\infty}^{\infty}dx$を
+      <ol>
+      <li>$\displaystyle\lim_{a\to-\infty}\lim_{b\to\infty}\int_b^a dx$で定義するときと，
+      <li>$\displaystyle\lim_{b\to\infty}\lim_{a\to-\infty}\int_b^a dx$で定義するときの違い．
+      </ol>
+  </ul>
+</div>
+</div>
 </template>
 
 
@@ -5139,7 +5166,8 @@ $f(x)=h(g(x))$ のとき,
  <div class="column"> 
  
  <ol>
- <li> $F(-\infty)=0&lt;F(\infty)=1$
+$[a,b]$上の分布関数は以下の性質を満たす
+ <li> $F(a)=0&lt;F(b)=1$
   <li> $x\ge x'$ ならば $F(x)\ge F(x')$
   <li>  $F$ は右連続
  </ol>  
@@ -5162,12 +5190,37 @@ $f(x)=h(g(x))$ のとき,
   <li> 例:
   <li class="sub-item">»  <strong class="keyword">一様分布</strong>:
   <div class="math-display">\[\begin{aligned}f(x)=\frac{1}{ b-a}\end{aligned}\]</div> 
-  
+  <li> まず，これが確率分布になっていることをチェックする
   </ul> 
   </div> 
  <div class="column"> 
  <ul> 
   <li class="spacer"> 
+  </ul>  
+  </div> 
+  </div>
+</template>
+
+
+
+
+
+
+<!-- ===== Slide 98: 応用：確率分布 / 期待値 ===== -->
+<template class="slide-data" data-title="期待値" data-section="応用：確率分布" data-note="false" data-print-margin="180">
+<div class="columns"> 
+ <div class="column"> 
+  <ul> 
+  
+  <li> 例:
+  <li class="sub-item">»  <strong class="keyword">正規分布</strong>: $a=-\infty$, $a=\infty$
+  <div class="math-display">\[\begin{aligned}f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp(-(x-\mu)^2/\sigma^2)\end{aligned}\]</div> 
+  
+  </ul> 
+  </div> 
+ <div class="column"> 
+ <ul> 
+  <li> 一般に，期待値は定義できるとは限らない（例：コーシー分布） 
   </ul>  
   </div> 
   </div>
@@ -5181,9 +5234,12 @@ $f(x)=h(g(x))$ のとき,
  <li> くじの良し悪しは人によって違う
  <li class="sub-item">»  確率30%で0円，確率70% で1000円をもらえるくじと確率40%で0円，確率60% で1500円をもらえるくじとどちらが良い？
  
- <li> 期待効用仮説：効用の期待値で判断する
+ <li> 期待効用仮説：効用の期待値（<strong class="keyword">期待効用</strong>）で判断する
  <li class="sub-item">»   $0.3u(0)+0.7u(1000)$ と， $0.4u(0)+0.6u(1500)$ を比較する
- <li class="sub-item">»   $u$ はvNM（フォン・ノイマン＝モルゲンシュテルン）効用関数と呼ばれる   
+ <li class="sub-item">»   $u$ はvNM（フォン・ノイマン＝モルゲンシュテルン）効用関数と呼ばれる  
+  
+ <li> 一般に，$x$が$[a,b]$上の確率分布$F$に従うとき， 期待効用は
+  \[\int_a^b u(x)f(x)d x\]
  </ul> 
  </div> 
  <div class="column"> 
@@ -5198,7 +5254,7 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 100: 応用：確率分布 / 一次確率支配 ===== -->
-<template class="slide-data" data-title="一次確率支配" data-section="応用：確率分布" data-note="false" data-print-margin="300">
+<template class="slide-data" data-title="確率分布どうしの比較：一次確率支配" data-section="応用：確率分布" data-note="false" data-print-margin="400">
 
 <ul>
 <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，すべての $x$ について、$F(x)\ge G(x)$ をみたすとき、$G$ が $F$ を<strong class="keyword">一次確率支配</strong>するという。
@@ -5206,7 +5262,7 @@ $f(x)=h(g(x))$ のとき,
 
   <li class="spacer"></li>
 
- <li>  $G$ が $F$ を<strong class="keyword">一次確率支配</strong>するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり， $ u$ は $ u'>0$ を満たす関数である．
+ <li>  $G$ が $F$ を一次確率支配するとき、以下が成り立つ．ただし $f,g$ はそれぞれ $F,G$ の確率密度関数であり， $ u$ は $ u'>0$ を満たす関数である．
  <div class="math-display">\[\begin{aligned}\int_a^b u(x)g(x)dx\ge \int_a^b u(x)f(x)dx\end{aligned}\]</div>
 
  <li> 証明：
@@ -5216,7 +5272,73 @@ $f(x)=h(g(x))$ のとき,
 
  </template>
 
- <template class="slide-data" data-title="危険回避・中立・愛好" data-section="応用：確率分布" data-note="false" data-print-margin="200">
+
+
+ 
+<!-- ===== Slide 100: 応用：確率分布 / 一次確率支配 ===== -->
+<template class="slide-data" data-title="一次確率支配の十分条件" data-section="応用：確率分布" data-note="false" data-print-margin="400">
+
+<ul>
+  <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，次の条件が満たされているとき，<strong class="keyword">1回交差条件</strong>を満たす（$g$が$f$を下から交差する）という．
+    <li class="sub-item">» ある$z$に対して
+      \[\left\{ \begin{aligned}
+      f(x)>g(x) && \text{if} && x&lt; z\\
+      f(x)\le g(x) && \text{if} && x\ge z\\
+      \end{aligned}\right.\]
+
+
+    <li> 図解：
+      <li class="spacer"></li>
+
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+
+
+
+
+  <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，$\dfrac{g(x)}{f(x)}$ が単調増加関数であるとき，$G$が$F$を<strong class="keyword">単調尤度比支配</strong>するという。
+
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+
+ <li>  (1)$G$ が $F$を単調尤度比支配するとき，$g$が$f$を下から交差し，(2)$g$が$f$を下から交差するとき， $G$ が $F$ を一次確率支配する</div>
+
+ <li> 証明：
+    <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+</ul>
+ 
+ </div>
+
+ </template>
+ <!-- <template class="slide-data" data-title="危険回避・中立・愛好" data-section="応用：確率分布" data-note="false" data-print-margin="200">
 <ul>
   <li>確率分布，$F$によって表現される「くじ」を考える．このくじの期待値を$\bar{x}$と置く．</li>
   <li>危険への態度は次の三つがその代表的なものである：
@@ -5239,4 +5361,4 @@ $f(x)=h(g(x))$ のとき,
 </ul>
 
 
-</template>
+</template> -->

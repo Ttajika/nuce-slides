@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'NR>=2144 && NR<=2420 && /tikz-figure/' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk '/<template class=\"slide-data\"/{title=$0; sub\\(/.*data-title=\"/,\"\",title\\); sub\\(/\".*/,\"\",title\\); line=NR} /tikz-figure/{print line\": \"title}' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=1736 && NR<=1937' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=2144 && NR<=2416' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=2435 && NR<=2526' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=2526 && NR<=2627' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=2688 && NR<=2919' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(awk 'NR>=2957 && NR<=3144' /Users/tomoyatajika/Documents/GitHub/nuce-slides/2026/math_econ_2.html)",
+      "Bash(pdftocairo -png -r 130 -singlefile det2-1.pdf /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad/det2-1_hi)",
+      "Bash(pdftocairo -png -r 130 -singlefile det2-2.pdf /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad/det2-2_hi)",
+      "Bash(python3 -c ' *)",
+      "Bash(qlmanage -t -s 400 img/saddle3d.svg -o /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad)",
+      "Bash(qlmanage -t -s 420 img/saddle3d.svg -o /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad)",
+      "Bash(node --check /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad/check.js)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --screenshot=saddle_canvas.png --window-size=560,440 --hide-scrollbars file://__TRACKED_VAR__/saddle_test.html)",
+      "Bash(node --check /private/tmp/claude-501/-Users-tomoyatajika-Documents-GitHub-nuce-slides-2026/daba889a-1ee4-439a-a929-37c04ba73ae5/scratchpad/check2.js)"
+    ]
+  }
+}
