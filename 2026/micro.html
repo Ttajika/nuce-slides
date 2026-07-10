@@ -107,12 +107,19 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .main { display:flex; flex:1; overflow:hidden; }
 
 .slide-area {
-  flex:1; display:flex; align-items:stretch; justify-content:center;
+  flex:1; display:flex; align-items:stretch;
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
+/* Content-only zoom: scales the slide and its annotation canvas together,
+   leaving the topbar and toolbars at their original size. */
+.zoom-layer {
+  position:relative; display:flex; align-items:stretch; align-self:stretch;
+  width:100%; max-width:1100px; margin:0 auto;
+  zoom:var(--content-zoom, 1);
+}
 .slide-content {
-  max-width:1100px; width:100%;
+  width:100%;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
@@ -230,10 +237,20 @@ a:hover { color:#1e40af; }
   transition:opacity 0.15s;
 }
 .tikz-figure:hover { opacity:0.85; }
-.tikz-figure svg {
-  max-height:260px;
+/* Figures track the window height so they stay as large as the slide allows.
+   vh scales with the content zoom exactly as px does, so this is zoom-safe. */
+.tikz-figure svg,
+.tikz-figure img {
+  max-height:clamp(200px, 40vh, 520px);
+  max-width:100%;
+  height:auto;
+  display:block;
+  margin:8px auto;
 }
-body.print-mode .tikz-figure svg {
+/* Slides carrying a single figure and almost no text can go bigger. */
+.tikz-figure.wide img { max-height:clamp(240px, 48vh, 640px); }
+body.print-mode .tikz-figure svg,
+body.print-mode .tikz-figure img {
   max-height:180px;
 }
 body.print-mode .tikz-figure { cursor:default; }
@@ -252,7 +269,7 @@ body.print-mode .tikz-figure { cursor:default; }
   box-shadow:0 8px 40px rgba(0,0,0,0.4);
   cursor:default;
 }
-.lightbox-inner svg { width:100%; height:auto; max-height:80vh; display:block; }
+.lightbox-inner svg, .lightbox-inner img { width:100%; height:auto; max-height:80vh; display:block; }
 .lightbox-close {
   position:fixed; top:16px; right:20px; z-index:1001;
   background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
@@ -283,7 +300,7 @@ body.print-mode .tikz-figure { cursor:default; }
   display:flex; align-items:center; justify-content:center;
   min-height:200px; color:var(--text-dim); font-size:16px;
 }
-.note-frame::before { content:'📝 ノート用スペース'; }
+.note-frame::before { content:''; }
 
 .framed { border:1px solid var(--border); padding:8px; border-radius:4px; margin:8px 0; }
 
@@ -338,7 +355,23 @@ body.print-mode .slide-area {
 
 /* Print: figures get proper spacing */
 .print-slide .tikz-figure { margin:8px 0 12px; }
-.print-slide .tikz-figure svg { max-height:160px; }
+.print-slide .tikz-figure svg,
+.print-slide .tikz-figure img { max-height:160px; }
+
+/* Print: animated figures become an empty box of the same shape, giving the
+   handout room to sketch the animation by hand.
+   These SVGs carry only a viewBox, so they have no intrinsic size and cannot
+   size a shrink-to-fit parent; each figure passes its own --ar instead. */
+body.print-mode .tikz-figure.anim {
+  height:300px;
+  aspect-ratio:var(--ar, 3/2);
+  width:auto;
+  max-width:100%;
+  margin:8px auto 12px;
+  border:1px dashed var(--border);
+  border-radius:6px;
+}
+body.print-mode .tikz-figure.anim img { display:none; }
 
 /* Print: QR codes always visible */
 body.print-mode .qr-link .qr-img { display:block !important; }
@@ -586,6 +619,9 @@ body.print-mode .fab-pen { display: none !important; }
     <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
     <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn sp-hide" onclick="zoomStep(-1)" title="スライドを縮小 (−)" style="font-weight:700">−</button>
+    <button class="nav-btn sp-hide" id="zoomInfo" onclick="zoomReset()" title="等倍に戻す (0)" style="font-size:11px;min-width:44px">100%</button>
+    <button class="nav-btn sp-hide" onclick="zoomStep(1)" title="スライドを拡大 (+)" style="font-weight:700">+</button>
     <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
@@ -634,8 +670,10 @@ body.print-mode .fab-pen { display: none !important; }
 
 <div class="main" id="mainArea">
   <div class="slide-area" id="slideArea">
-    <div class="slide-content" id="slideContent"></div>
-    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+    <div class="zoom-layer" id="zoomLayer">
+      <div class="slide-content" id="slideContent"></div>
+      <canvas class="draw-canvas" id="drawCanvas"></canvas>
+    </div>
   </div>
   <div class="notes-panel collapsed" id="notesPanel">
     <div class="notes-header">
@@ -656,6 +694,7 @@ body.print-mode .fab-pen { display: none !important; }
   <kbd>B</kbd> 板書スペース &nbsp;
   <kbd>N</kbd> メモ欄 &nbsp;
   <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>+</kbd><kbd>-</kbd><kbd>0</kbd> スライドの拡大/縮小/等倍 &nbsp;
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
 
@@ -822,21 +861,31 @@ function setDrawColor(c, el) {
 }
 
 function resizeDrawCanvas() {
-  const area = document.getElementById('slideArea');
+  const layer = document.getElementById('zoomLayer') || document.getElementById('slideArea');
   const c = getCanvas();
   if (!c) return;
-  c.width = area.scrollWidth;
-  c.height = area.scrollHeight;
+  c.width = layer.scrollWidth;
+  c.height = layer.scrollHeight;
   redrawStrokes();
+}
+
+// The canvas is displayed at rect size but backed by c.width/c.height pixels.
+// Under content zoom (or overflow) those differ, so map through the ratio.
+function canvasPoint(c, clientX, clientY) {
+  const rect = c.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x:0, y:0 };
+  return {
+    x: (clientX - rect.left) * (c.width / rect.width),
+    y: (clientY - rect.top) * (c.height / rect.height)
+  };
 }
 
 function getDrawPos(e) {
   const c = getCanvas();
   if (!c) return {x:0,y:0};
-  const rect = c.getBoundingClientRect();
   const cx = e.touches ? e.touches[0].clientX : e.clientX;
   const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: cx - rect.left, y: cy - rect.top };
+  return canvasPoint(c, cx, cy);
 }
 
 function redrawStrokes() {
@@ -1098,8 +1147,7 @@ bindBoardCanvasEvents();
 function getDrawPosFromPointer(e) {
   const c = getCanvas();
   if (!c) return {x:0, y:0};
-  const rect = c.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  return canvasPoint(c, e.clientX, e.clientY);
 }
 
 function initPencilDetection() {
@@ -1327,24 +1375,58 @@ function revealAllPhantoms() {
 }
 
 // ═══ LIGHTBOX ═══
-function openLightbox(svgEl) {
+function openLightbox(figEl) {
   const lb = document.getElementById('lightbox');
   const inner = document.getElementById('lightboxInner');
-  inner.innerHTML = svgEl.outerHTML;
+  inner.innerHTML = figEl.outerHTML;
   // Remove max-height constraint for expanded view
-  const svg = inner.querySelector('svg');
-  if (svg) { svg.style.maxHeight = '80vh'; svg.style.width = 'auto'; svg.style.maxWidth = '85vw'; }
+  const node = inner.querySelector('svg, img');
+  if (node) { node.style.maxHeight = '80vh'; node.style.width = 'auto'; node.style.maxWidth = '85vw'; }
   lb.classList.add('open');
 }
 function closeLightbox(e) {
   if (e && e.target.closest('.lightbox-inner')) return; // click inside
   document.getElementById('lightbox').classList.remove('open');
 }
+// ═══ CONTENT ZOOM (slide only — topbar/toolbars stay put) ═══
+const ZOOM_LEVELS = [0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
+let zoomIdx = ZOOM_LEVELS.indexOf(1);
+
+function applyZoom() {
+  const z = ZOOM_LEVELS[zoomIdx];
+  document.documentElement.style.setProperty('--content-zoom', z);
+  const info = document.getElementById('zoomInfo');
+  if (info) info.textContent = Math.round(z * 100) + '%';
+  try { localStorage.setItem('contentZoom', String(z)); } catch (err) {}
+  resizeDrawCanvas();
+}
+function zoomStep(d) {
+  zoomIdx = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomIdx + d));
+  applyZoom();
+}
+function zoomReset() { zoomIdx = ZOOM_LEVELS.indexOf(1); applyZoom(); }
+function initZoom() {
+  const i = ZOOM_LEVELS.indexOf(parseFloat(localStorage.getItem('contentZoom')));
+  if (i >= 0) zoomIdx = i;
+  applyZoom();
+}
+
+// Ctrl/Cmd + wheel (and trackpad pinch) zooms the slide instead of the browser
+let wheelAccum = 0;
+document.getElementById('slideArea').addEventListener('wheel', e => {
+  if (!(e.ctrlKey || e.metaKey) || mode !== 'slide') return;
+  e.preventDefault();
+  wheelAccum += e.deltaY;
+  if (Math.abs(wheelAccum) < 24) return;
+  zoomStep(wheelAccum < 0 ? 1 : -1);
+  wheelAccum = 0;
+}, {passive:false});
+
 function setupFigureZoom(container) {
   container.querySelectorAll('.tikz-figure').forEach(fig => {
     fig.addEventListener('click', () => {
-      const svg = fig.querySelector('svg');
-      if (svg) openLightbox(svg);
+      const el = fig.querySelector('svg, img');
+      if (el) openLightbox(el);
     });
   });
 }
@@ -1524,7 +1606,7 @@ function enterSlideMode() {
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
 
   const area = document.getElementById('slideArea');
-  area.innerHTML = '<div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas>';
+  area.innerHTML = '<div class="zoom-layer" id="zoomLayer"><div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas></div>';
   bindCanvasEvents();
   bindBoardCanvasEvents();
   showSlide(current);
@@ -1547,6 +1629,9 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
+  else if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomStep(1); }
+  else if (e.key === '-') { e.preventDefault(); zoomStep(-1); }
+  else if (e.key === '0') { e.preventDefault(); zoomReset(); }
 });
 
 // Touch swipe (only when not drawing, single finger only)
@@ -1840,6 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Restore saved notes, strokes, and last position
   loadLocal();
   if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
+  initZoom();
   // URL page specification: ?page=N or #N (1-based)
   const urlPage = getPageFromURL();
   if (urlPage !== null) current = urlPage;
@@ -1904,10 +1990,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </ul>
 <li class="sub-item">» 連絡先: tajika.tomoya@nihon-u.ac.jp</li>
 <li class="sub-item">» 研究室: 2号館 807号室</li>
-<li class="sub-item">» オフィスアワー: 月曜午後（だいたい15〜16時まで）</li>
-<ul>
-<li>オフィスアワーはアポなしで来て良い</li>
-<li>zoomなどが良ければ事前に連絡すること</li>
+<li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
+<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
 </ul>
 </ul>
 </div>
@@ -1960,11 +2044,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ===== 成績評価方法 ===== -->
 <template class="slide-data" data-title="成績評価方法" data-section="はじめに" data-note="false" data-print-margin="0">
-<div class="math-display">$$\text{総合成績}=\text{共通テスト}+\min\left\{[\text{小テスト}+\text{発言点}+\text{個別試験}]\times \text{平均出席率},50\right\}$$</div>
+<div class="math-display">$$\text{総合成績}=\text{共通テスト}+\min\left\{[\text{小テスト}+\text{発言点}+\text{個別試験}]\times \text{出席率},50\right\}$$</div>
 <div class="columns">
 <div class="column">
 <ul>
-<li class="sub-item">» 事情がある欠席者は「事前に」メールで連絡した上で，その日の授業の録画を見てまとめ（400字以上かつ全ての内容に触れること）を提出すると出席としてカウント</li>
+<li> 事情がある欠席者は「事前に」メールで連絡した上で，その日の授業の録画を見てまとめ（400字以上かつ全ての内容に触れること）を提出すると出席としてカウント</li>
 <li>小テストは選択式か計算問題, 全14回（1回あたり1点）</li>
 <li class="sub-item">» 小テストはCanvas LMSで出題</li>
 <li class="sub-item">» 小テストに何を用いても何回チャレンジしても良い（最高点のみが成績に加算）</li>
@@ -2203,7 +2287,6 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <ul>
 <li>埋没費用の誤謬：本来考えるべきでない埋没費用のことを気にして意思決定が狂う現象</li>
 <li class="sub-item">» 例：コンコルド効果</li>
-<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: concord.jpg<br><span class="tiny">Jeroen Stroes Aviation Photography from Netherlands</span></div>
 </ul>
 </div>
 </div>
@@ -2307,7 +2390,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="市場取引（需要曲線）" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線 - 階段状のグラフ（横軸:数量, 縦軸:支払意思額, 天照5000/出雲3500/高木2000/月読1000/大和800）</div>
+<div class="tikz-figure"><img src="img_micro/fig_demand_discrete.svg" alt="需要曲線"></div>
 </div>
 <div class="column">
 <ul>
@@ -2322,7 +2405,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="市場取引（供給曲線）" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線 - 階段状のグラフ（横軸:数量, 縦軸:費用, ヨセフ850/ヤコブ950/ルツ1800/イヴ3200/アダム4500）</div>
+<div class="tikz-figure"><img src="img_micro/fig_supply_discrete.svg" alt="供給曲線"></div>
 </div>
 <div class="column">
 <ul>
@@ -2338,7 +2421,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線の交点（均衡価格1800〜2000, 均衡取引量3）</div>
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="市場均衡"></div>
 </div>
 <div class="column">
 <ul>
@@ -2377,10 +2460,10 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="余剰の概念（消費者余剰）" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と消費者余剰（均衡価格以上の支払意思額部分を塗りつぶし）</div>
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete_CS.svg" alt="消費者余剰"></div>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と消費者余剰（書き込み用）</div>
+<p></p>
 </div>
 </div>
 </template>
@@ -2388,10 +2471,10 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="余剰の概念（生産者余剰）" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線と生産者余剰（均衡価格以下の費用部分を塗りつぶし）</div>
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete_PS.svg" alt="生産者余剰"></div>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 供給曲線と生産者余剰（書き込み用）</div>
+<p></p>
 </div>
 </div>
 </template>
@@ -2408,7 +2491,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </div>
 <div class="column">
 <ul><li>図解</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（総余剰の図示用）</div>
+<p></p>
 </div>
 </div>
 </template>
@@ -2416,23 +2499,24 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <template class="slide-data" data-title="社会的総余剰：図解" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 過少生産のケース - 需要・供給曲線</div>
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="過少生産のケース"></div>
 <p style="text-align:center;">過少生産のケース</p>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 過大生産のケース - 需要・供給曲線</div>
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="過大生産のケース"></div>
 <p style="text-align:center;">過大生産のケース</p>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="100">
 <ul>
 <li>滑らかな需要曲線・供給曲線は「階段の段差」が細かいと考えれば良い．</li>
 </ul>
+<div class="tikz-figure anim" style="--ar:620/400"><img src="img_micro/discrete_to_continuous_anime.svg" alt="階段状の需要・供給曲線から滑らかな需要・供給曲線へ"></div>
 </template>
 
-<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="50">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2602,15 +2686,15 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li>価格以外の理由で需要量や供給量が変わる場合がある.</li>
 <li class="sub-item">» 例：</li>
 <ol>
-<li>所得の増減</li>
+<li>価値の増減</li>
 <li>製造費用の増減</li>
 <li>課税</li>
 </ol>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（シフト前）</div>
+
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 需要曲線と供給曲線（シフト後）</div>
+<div class="tikz-figure anim" style="--ar:700/420"><img src="img_micro/demand_shift_explain.svg" alt="需要曲線の右シフトの仕組み"></div>
 </div>
 </div>
 </template>
@@ -2618,7 +2702,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <template class="slide-data" data-title="曲線のシフトのつづき" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: シフト後の需要・供給曲線</div>
+<div class="tikz-figure anim" style="--ar:700/400"><img src="img_micro/demand_shift.svg" alt="需要曲線の右シフトによる市場均衡の変化"></div>
 </div>
 <div class="column">
 <ul>
@@ -2639,7 +2723,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: patterns.pdf</div>
+<div class="tikz-figure"><img src="img_micro/patterns.svg" alt="ありうるシフトのパターン"></div>
 </div>
 </div>
 </template>
@@ -2702,7 +2786,6 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li class="sub-item">» 「働くこと」を財と考える．</li>
 <li class="sub-item">» 労働者が「労働」の供給者，企業が「労働」の需要者</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 労働市場の需要・供給曲線（横軸:量, 縦軸:賃金）</div>
 </div>
 <div class="column">
 <ul>
@@ -2731,11 +2814,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="columns">
 <div class="column">
 <ul><li>$q^{\text{前}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 豊作前の供給曲線と需要曲線（$q^{\text{前}}$, $p^{\text{前}}$, 消費者余剰・生産者余剰の塗りつぶし）</div>
+<div class="tikz-figure"><img src="img_micro/hosaku.svg" alt="豊作前の供給曲線と需要曲線"></div>
 </div>
 <div class="column">
 <ul><li>$q^{\text{後}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 豊作後の供給曲線シフト（$q^{\text{後}}$, $p^{\text{後}}$）</div>
+<div class="tikz-figure"><img src="img_micro/hosaku2.svg" alt="豊作後の供給曲線のシフト"></div>
 <ul>
 <li class="sub-item">» 生産できる量が増えた（豊作の）結果，収入はどうなるか？</li>
 </ul>
@@ -2773,11 +2856,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li>課税があるときの市場均衡の図示</li>
 <li class="sub-item">» 均衡じゃないときの図</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 課税下の非均衡（供給曲線上の$p$, 需要曲線上の$p+t$, 需給不一致）</div>
+<div class="tikz-figure anim" style="--ar:660/440"><img src="img_micro/tax_equilibrium.svg" alt="従量税のもとでの市場均衡"></div>
 </div>
 <div class="column">
 <ul><li class="sub-item">» 均衡にあるときの図</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 課税下の均衡（$p^*$, $p^*+t$, $q^*$）</div>
+<div class="tikz-figure"><img src="img_micro/tax_ch1.svg" alt="従量税の影響"></div>
 </div>
 </div>
 </template>
@@ -2790,7 +2873,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 死荷重損失（消費者余剰・生産者余剰・税収・死荷重の三角形）</div>
+<div class="tikz-figure anim" style="--ar:660/440"><img src="img_micro/tax_surplus_smooth.svg" alt="課税のある市場での余剰と死荷重損失"></div>
 <ul>
 <li>死荷重損失：課税によって失われた社会的総余剰の大きさ</li>
 </ul>
@@ -2799,14 +2882,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </template>
 
 <template class="slide-data" data-title="課税の効果のつづき③ どの財に課税すべきか?" data-section="需要と供給" data-note="false" data-print-margin="0">
-<div class="columns">
-<div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 非弾力的な需要曲線での課税（死荷重小）</div>
-</div>
-<div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 弾力的な需要曲線での課税（死荷重大）</div>
-</div>
-</div>
+<div class="tikz-figure"><img src="img_micro/optax1-ch1.svg" alt="死荷重損失の比較：非弾力的な需要（左, 死荷重小）と弾力的な需要（右, 死荷重大）"></div>
 <ul>
 <li>需要曲線の傾き（弾力性）に注目</li>
 <li><span class="keyword">ラムゼイ・ルール</span>(Ramsey, 1927，逆弾力性ルールとも):</li>
@@ -2995,7 +3071,6 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li>ある財について，それを生産できる企業が一社しかないとき，その状況を<span class="keyword">独占</span>と呼ぶ．</li>
 <li>独占企業は生産量を減らすことで価格を吊り上げることができる．</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 独占価格の図（需要曲線・供給曲線, 均衡点$E$, 独占点$p', q'$, 点$A,B,C$）</div>
 </div>
 <div class="column">
 <ul>
@@ -3012,13 +3087,6 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="独占---動画説明" data-section="独占市場" data-note="false" data-print-margin="0">
-<a href="https://www.dropbox.com/scl/fi/" target="_blank" class="qr-link">🔗 QRリンク</a>
-<ul>
-<li>社会的総余剰が最大にならないことの図示</li>
-<li class="sub-item">» 上の動画の図では市場均衡では生産者余剰が$0$</li>
-</ul>
-</template>
 
 <template class="slide-data" data-title="売り方の工夫---価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
 <ul>
@@ -3290,13 +3358,13 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <ul>
 <li>ex) 財$x$：2Lペットボトル / 財$y$：500mLペットボトル</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 完全代替財の無差別曲線（直線）</div>
+<div class="tikz-figure"><img src="img_micro/indifference_MRS3.svg" alt="完全代替財に近い無差別曲線"></div>
 </div>
 <div class="column">
 <ul>
 <li>ex) 財$x$：ケーキ / 財$y$：紅茶（or好きな飲み物）</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: ケーキと紅茶の無差別曲線（凸な曲線）</div>
+<div class="tikz-figure"><img src="img_micro/indifference_MRS2.svg" alt="凸な無差別曲線"></div>
 </div>
 </div>
 </template>
@@ -3306,7 +3374,7 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <li>無差別曲線を使って効用最大化行動を考える．</li>
 <li class="sub-item">» ポイント：改善できるならそこはベストではない</li>
 </ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 無差別曲線と予算線の接点（点A:最適, 点B,C:予算線上の非最適, 点D:無差別曲線の内側）</div>
+<div class="tikz-figure anim" style="--ar:600/540"><img src="img_micro/utility_max_anime.svg" alt="効用最大化"></div>
 </template>
 
 <template class="slide-data" data-title="限界効用" data-section="消費者の行動" data-note="false" data-print-margin="0">
@@ -3349,7 +3417,7 @@ $$MU_{x}-MU_{y}\Delta=0$$
 <template class="slide-data" data-title="限界代替率" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>変形すると交換すべき$y$の量$\Delta$は</li>
-$$MRS_{xy}\coloneqq \Delta = \frac{MU_{x}}{MU_{y}}$$
+$$MRS_{xy}:= \Delta = \frac{MU_{x}}{MU_{y}}$$
 <li>この交換比率$MRS_{xy}$を<span class="keyword">財$x$の財$y$に対する限界代替率</span>という．</li>
 <li>限界代替率の特徴</li>
 <li class="sub-item">» $x$を増やす量が十分小さいなら，それは無差別曲線の傾き（の絶対値）</li>
@@ -3364,11 +3432,10 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </template>
 
 <template class="slide-data" data-title="効用最大化条件・成り立たないケース" data-section="消費者の行動" data-note="false" data-print-margin="0">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 1. 端点解（完全代替財の無差別曲線と予算線）/ 2. 飽和点（円形の無差別曲線と点A）</div>
 </template>
 
 <template class="slide-data" data-title="所得による需要の変化" data-section="消費者の行動" data-note="false" data-print-margin="0">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 左=正常財（所得増で両財の消費増）/ 右=劣等財（所得増で$x$の消費増, $y$の消費減）</div>
+<div class="tikz-figure"><img src="img_micro/income_effect.svg" alt="正常財と劣等財"></div>
 <ul>
 <li><span class="keyword">正常財</span>（あるいは<span class="keyword">上級財</span>）</li>
 <li><span class="keyword">劣等財</span>（あるいは<span class="keyword">下級財</span>）</li>
@@ -3376,7 +3443,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </template>
 
 <template class="slide-data" data-title="所得消費曲線" data-section="消費者の行動" data-note="false" data-print-margin="0">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 所得消費曲線（所得増加に伴う最適消費点の軌跡）</div>
+<div class="tikz-figure anim" style="--ar:600/510"><img src="img_micro/income_normal_inferior_anime.svg" alt="所得消費曲線"></div>
 <ul>
 <li>正常財はずっと正常財とは限らない．</li>
 <li>劣等財はずっと劣等財ではない．<br>所得ゼロなら消費量もゼロ（価格が正で消費量が非負なら）→ これ以上は減らない</li>
@@ -3402,9 +3469,9 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </template>
 
 <template class="slide-data" data-title="価格による影響" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="tikz-figure"><img src="img_micro/price_effects.svg" alt="他の財の価格変化が需要に与える影響：左が粗代替財, 右が粗補完財"></div>
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 粗代替財（$p_x$上昇で$q_x$減, $q_y$増）</div>
 <ul>
 <li><span class="keyword">粗代替財</span></li>
 <li class="sub-item">» $x$と$y$のどちらかだけでいい場合にはそうなりやすい</li>
@@ -3412,7 +3479,6 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </ul>
 </div>
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 粗補完財（$p_x$上昇で$q_x$減, $q_y$も減）</div>
 <ul>
 <li><span class="keyword">粗補完財</span></li>
 <li class="sub-item">» $x$と$y$をペアで消費したい時にはそうなりやすい</li>
@@ -3437,7 +3503,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <template class="slide-data" data-title="スルツキー分解" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: スルツキー分解（点A:元の最適, 点B:新しい最適, 点C:補償所得での最適, 予算線の回転とシフト）</div>
+<div class="tikz-figure anim" style="--ar:580/528"><img src="img_micro/slutsky_anime.svg" alt="スルツキー分解"></div>
 </div>
 <div class="column">
 <ul>
@@ -3456,7 +3522,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <template class="slide-data" data-title="ギッフェン・パラドックス" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: ギッフェン財（$p_x$上昇で$q_x$が増加する無差別曲線と予算線）</div>
+<div class="tikz-figure"><img src="img_micro/giffen.svg" alt="ギッフェン財"></div>
 </div>
 <div class="column"></div>
 </div>
@@ -3538,12 +3604,14 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </template>
 
 <template class="slide-data" data-title="エッジワースボックス" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
-<a href="https://vimeo.com/1003081215" target="_blank" class="qr-link">🔗 QRリンク</a>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: エッジワースボックス（$O_L$原点, $O_K$対角, 初期保有点$E$, 消費点$A$, 各軸$q_{Lx}, q_{Ly}, q_{Kx}, q_{Ky}$）</div>
+<div class="columns">
+<div class="column"><div class="tikz-figure anim" style="--ar:1200/547"><img src="img_micro/GE_edgeworth_anime.svg" alt="エッジワースボックスの作り方：二人の消費者の予算制約の図を組み合わせる"></div></div>
+<div class="column"><div class="tikz-figure"><img src="img_micro/edgeworth-static.svg" alt="エッジワースボックス"></div></div>
+</div>
 </template>
 
 <template class="slide-data" data-title="パレート効率的な配分" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: エッジワースボックス内のパレート効率性（レオンの無差別曲線とケネスの無差別曲線の接点, 点A,B,C,D）</div>
+<div class="tikz-figure"><img src="img_micro/edgeworth-pareto.svg" alt="パレート効率的な配分と契約曲線"></div>
 <ul>
 <li>余剰がうまく計算できないので，パレート効率性で評価する</li>
 <li>パレート効率性の復習</li>
@@ -3553,17 +3621,17 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </template>
 
 <template class="slide-data" data-title="第一厚生定理" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
-<a href="https://vimeo.com/1003081186" target="_blank" class="qr-link">🔗 QRリンク</a>
 <ul>
 <li><span class="keyword">第一厚生定理</span>（厚生経済学の第一基本定理）：市場均衡の配分はパレート効率的である．</li>
 </ul>
+<div class="tikz-figure wide anim" style="--ar:1200/547"><img src="img_micro/GE_FWT.svg" alt="厚生経済学の第一基本定理：市場均衡の配分はパレート効率的である"></div>
 </template>
 
 <template class="slide-data" data-title="第二厚生定理" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
-<a href="https://vimeo.com/1003078070" target="_blank" class="qr-link">🔗 QRリンク</a>
 <ul>
 <li><span class="keyword">第二厚生定理</span>：パレート効率的な配分は（初期保有配分を操作すれば）市場均衡の配分として達成できる．</li>
 </ul>
+<div class="tikz-figure wide anim" style="--ar:1200/547"><img src="img_micro/GE_SWT.svg" alt="厚生経済学の第二基本定理：パレート効率的な配分は初期保有の再配分で市場均衡として達成できる"></div>
 </template>
 
 <template class="slide-data" data-title="市場理論の応用：講義科目配分" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
@@ -3611,8 +3679,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </ul>
 </div>
 <div class="column">
-<ul><li>利潤最大化してなさそうな例</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">🖼️</span>画像: harimaya.png<br><span class="tiny">(引用元：https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf)</span></div>
+<ul><li><a href="https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf">利潤最大化してなさそうな例</a></li></ul>
 </div>
 </div>
 </template>
@@ -3670,7 +3737,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 <div class="column">
 <ul><li>利潤最大化条件を図示すると</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 限界費用曲線$C'(q)$=供給曲線, 価格$p$の水平線との交点$q^*$</div>
+<div class="tikz-figure anim" style="--ar:700/440"><img src="img_micro/mc_supply_curve.svg" alt="限界費用と供給曲線"></div>
 </div>
 </div>
 </template>
@@ -3747,7 +3814,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <li>損益分岐点の価格と生産量を求めなさい．</li>
 <li>操業停止点の価格と生産量を求めなさい．</li>
 </ol>
-<div class="tikz-placeholder"><span class="tikz-icon">📊</span>図: 費用曲線（総費用$C(q)$, 限界費用$MC$, 平均可変費用$AVC$, 平均費用$AC$のグラフ）</div>
+<div class="tikz-figure"><img src="img_micro/cost_curves.svg" alt="費用曲線"></div>
 </template>
 
 <template class="slide-data" data-title="企業の参入・退出" data-section="企業の行動" data-note="false" data-print-margin="0">
@@ -3891,13 +3958,15 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <div class="columns">
 <div class="column">
 <ul><li><span class="keyword">等産出量曲線</span>: 同じ生産量を達成する点$(K,L)$を結んだ曲線</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 等産出量曲線（$f(K,L)=q_1, q_2, q_3$, 横軸$K$, 縦軸$L$）</div>
-<ul><li class="sub-item">» 等産出量曲線の傾きは</li>
-<li><span class="keyword">限界変形率</span>（あるいは技術的限界代替率）</li></ul>
+
+<a href="https://ttajika.github.io/micro-contents/anime_gallery.html#anime-isoquant" target="_blank" qr-link">アニメーション解説</a>
+
+<ul><li> 等産出量曲線の傾きは<span class="keyword">技術的限界代替率</span></li>
+</ul>
 </div>
 <div class="column">
 <ul><li><span class="keyword">等費用曲線</span>: 同じ費用がかかる点$(K,L)$を結んだもの</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 等費用曲線（$rK+wL=c_1, c_2$, 直線）</div>
+<div class="tikz-figure"><img src="img_micro/iso_cost_curve.svg" alt="等費用曲線"></div>
 <ul><li class="sub-item">» 等費用曲線の傾きは</li></ul>
 </div>
 </div>
@@ -3918,7 +3987,7 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <div class="columns">
 <div class="column">
 <ul><li>生産量を固定（例えば$f(K,L)=q$）した上で費用が最小になるように$K,L$を選ぶ.</li></ul>
-<div class="tikz-placeholder"><span class="tikz-icon">📐</span>図: 費用最小化（等産出量曲線$f(K,L)=q$と等費用曲線の接点）</div>
+<div class="tikz-figure anim" style="--ar:600/540"><img src="img_micro/cost_min_anime.svg" alt="費用最小化"></div>
 </div>
 <div class="column">
 <ul>

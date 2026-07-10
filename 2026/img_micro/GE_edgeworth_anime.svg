@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 547"
+     style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', Times, serif;">
+
+  <!-- ============ L's diagram (static, on the left) ============ -->
+  <g id="L-diagram">
+    <line x1="180" y1="350" x2="610" y2="350" stroke="#333" stroke-width="1.5"/>
+    <polygon points="615,350 605,345 605,355" fill="#333"/>
+    <line x1="180" y1="350" x2="180" y2="50" stroke="#333" stroke-width="1.5"/>
+    <polygon points="180,45 175,57 185,57" fill="#333"/>
+    <text x="628" y="358" font-size="22" font-style="italic">q<tspan font-size="14" dy="6">x</tspan></text>
+    <text x="172" y="42" text-anchor="end" font-size="22" font-style="italic">q<tspan font-size="14" dy="6">y</tspan></text>
+    <line x1="180" y1="150" x2="580" y2="350" stroke="#4a90d9" stroke-width="2.5"/>
+    <line x1="380" y1="350" x2="380" y2="250" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="180" y1="250" x2="380" y2="250" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+    <circle cx="380" cy="250" r="4" fill="#333"/>
+    <text x="172" y="256" text-anchor="end" font-size="18" font-style="italic">e<tspan font-size="13" dy="5">Ly</tspan></text>
+    <text x="380" y="375" text-anchor="middle" font-size="18" font-style="italic">e<tspan font-size="13" dy="5">Lx</tspan></text>
+    <text x="395" y="245" font-size="18" font-style="italic"><tspan font-style="normal">(</tspan>e<tspan font-size="13" dy="5">Lx</tspan><tspan font-size="18" dy="-5" font-style="normal">, </tspan>e<tspan font-size="13" dy="5">Ly</tspan><tspan font-size="18" dy="-5" font-style="normal">)</tspan></text>
+  </g>
+
+  <!--
+    K's diagram: sequential motion using nested groups to ensure correct transform order.
+      Outer <g> applies the TRANSLATE (slide left to overlay L).
+      Inner <g> applies the ROTATE (-180° around K's visual center (915, 200), in place).
+    With nested groups, the rotation is applied first to each point, then the translation —
+    no ambiguity with additive="sum".
+
+    Timing (6s loop):
+      0%–5%   separated (static)
+      5%–25%  rotate in place 0 → -180° (CCW)
+      25%–40% slide left to overlay L
+      40%–60% box state (static)
+      60%–75% slide back
+      75%–95% rotate back -180° → 0°
+      95%–100% separated (static)
+  -->
+  <g id="K-outer">
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0; 0 0; -550 20; -550 20; 0 0; 0 0"
+      keyTimes="0; 0.25; 0.4; 0.6; 0.75; 1"
+      dur="6s" repeatCount="indefinite"/>
+
+    <g id="K-inner">
+      <animateTransform attributeName="transform" type="rotate"
+        values="0 915 200; 0 915 200; -180 915 200; -180 915 200; 0 915 200; 0 915 200"
+        keyTimes="0; 0.05; 0.25; 0.75; 0.95; 1"
+        dur="6s" repeatCount="indefinite"/>
+
+      <line x1="700" y1="350" x2="1130" y2="350" stroke="#333" stroke-width="1.5"/>
+      <polygon points="1135,350 1125,345 1125,355" fill="#333"/>
+      <line x1="700" y1="350" x2="700" y2="50" stroke="#333" stroke-width="1.5"/>
+      <polygon points="700,45 695,57 705,57" fill="#333"/>
+      <text x="1148" y="358" font-size="22" font-style="italic">q<tspan font-size="14" dy="6">x</tspan></text>
+      <text x="692" y="42" text-anchor="end" font-size="22" font-style="italic">q<tspan font-size="14" dy="6">y</tspan></text>
+      <line x1="700" y1="70" x2="1100" y2="270" stroke="#4a90d9" stroke-width="2.5"/>
+      <line x1="900" y1="350" x2="900" y2="170" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="700" y1="170" x2="900" y2="170" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="900" cy="170" r="4" fill="#333"/>
+      <text x="692" y="176" text-anchor="end" font-size="18" font-style="italic">e<tspan font-size="13" dy="5">Ky</tspan></text>
+      <text x="900" y="375" text-anchor="middle" font-size="18" font-style="italic">e<tspan font-size="13" dy="5">Kx</tspan></text>
+      <text x="915" y="245" font-size="18" font-style="italic"><tspan font-style="normal">(</tspan>e<tspan font-size="13" dy="5">Kx</tspan><tspan font-size="18" dy="-5" font-style="normal">, </tspan>e<tspan font-size="13" dy="5">Ky</tspan><tspan font-size="18" dy="-5" font-style="normal">)</tspan></text>
+    </g>
+  </g>
+</svg>
