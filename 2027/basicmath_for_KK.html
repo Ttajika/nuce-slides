@@ -122,6 +122,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   padding:12px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
   overflow:auto;
+  zoom:var(--slide-zoom,1);
 }
 .slide-content .frame-title {
   font-size:20px; font-weight:700; color:var(--accent);
@@ -216,6 +217,8 @@ ul, ol { padding-left: 1.5em; margin:0.3em 0; }
 li { margin: 0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
+.icon-arrow { font-size:0.6em; vertical-align:0.2em; }
+.icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; }
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
@@ -648,6 +651,9 @@ body.print-mode .sage-cell-print {
     <span class="page-info" id="slideNum">1 / 1</span>
     <button class="nav-btn" onclick="nextSlide()">▶</button>
     <button class="nav-btn sp-hide" onclick="goToSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(-1)" title="スライド縮小 (-)">－</button>
+    <button class="nav-btn sp-hide" id="zoomInfo" onclick="zoomSlide(0)" title="クリックで100%に戻す" style="font-size:11px;min-width:42px">100%</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(1)" title="スライド拡大 (+)">＋</button>
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" onclick="toggleDraw()" id="drawBtn">✏️</button>
     <button class="nav-btn sp-hide" onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
@@ -728,6 +734,8 @@ body.print-mode .sage-cell-print {
   <kbd>B</kbd> 板書スペース &nbsp;
   <kbd>N</kbd> メモ欄 &nbsp;
   <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>+</kbd><kbd>-</kbd> スライド拡大/縮小 &nbsp;
+  <kbd>0</kbd> 100%に戻す &nbsp;
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
 
@@ -1918,6 +1926,8 @@ function initQRCodes() {
     if (!url) return;
     // Check if already has QR img
     if (el.querySelector('.qr-img')) return;
+    const vm = url.match(/vimeo\.com\/(\d+)(?:\/(\w+))?/);
+    if (!vm) { el.target = '_blank'; el.rel = 'noopener'; }
     try {
       const qr = qrcode(0, 'M');
       qr.addData(url);
@@ -1925,21 +1935,24 @@ function initQRCodes() {
       const img = document.createElement('div');
       img.className = 'qr-img';
       img.innerHTML = qr.createSvgTag(4);
+      const qrBtn = document.createElement('span');
+      qrBtn.textContent = ' 📱';
+      qrBtn.style.cursor = 'pointer';
+      qrBtn.title = 'QRコード表示';
+      el.appendChild(qrBtn);
       el.appendChild(img);
+      qrBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        img.style.display = img.style.display === 'block' ? 'none' : 'block';
+      });
+      img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
     } catch(e) {}
     el.addEventListener('click', function(e) {
-      // Check for Vimeo
-      const vm = url.match(/vimeo\.com\/(\d+)(?:\/(\w+))?/);
+      // Vimeo: play in modal; other links navigate normally
       if (vm) {
         e.preventDefault();
         openVideo(vm[1], vm[2] || '');
-        return;
-      }
-      // Toggle QR
-      const qrImg = this.querySelector('.qr-img');
-      if (qrImg) {
-        e.preventDefault();
-        qrImg.style.display = qrImg.style.display === 'block' ? 'none' : 'block';
       }
     });
   });
@@ -2106,9 +2119,27 @@ function clearStorage() {
 window.addEventListener('beforeunload', saveLocal);
 
 // ===== Keyboard shortcuts =====
+// Slide-only zoom (topbar stays fixed)
+const ZOOM_KEY = STORAGE_KEY + '_zoom';
+let slideZoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1;
+function zoomSlide(dir) {
+  slideZoom = dir === 0 ? 1 : Math.min(2, Math.max(0.6, Math.round((slideZoom + dir * 0.1) * 10) / 10));
+  applySlideZoom();
+}
+function applySlideZoom() {
+  document.documentElement.style.setProperty('--slide-zoom', slideZoom);
+  const z = document.getElementById('zoomInfo');
+  if (z) z.textContent = Math.round(slideZoom * 100) + '%';
+  localStorage.setItem(ZOOM_KEY, slideZoom);
+}
+applySlideZoom();
+
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   switch(e.key) {
+    case '+': case '=': zoomSlide(1); break;
+    case '-': zoomSlide(-1); break;
+    case '0': zoomSlide(0); break;
     case 'ArrowLeft': prevSlide(); break;
     case 'ArrowRight': nextSlide(); break;
     case 'd': case 'D': toggleDraw(); break;
@@ -2142,14 +2173,10 @@ document.addEventListener('keydown', e => {
 <div class="column">
 <ul>
 <li> 講義するひと
-<li class="sub-item"><span class="icon-arrow">→</span> 多鹿 智哉
-<ol>
-<li> 学位：博士（経済学）
-<li> 研究分野：ミクロ経済学・ゲーム理論
-</ol>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 多鹿 智哉
 
-<li class="sub-item">»  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
-<li class="sub-item"><span class="icon-arrow">→</span> 研究室<br>2号館 807号室
+<li class="sub-item"><svg class="icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg> 連絡先   <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 研究室<br>2号館 807号室
 <li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
 <a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
 </ol>
@@ -2158,13 +2185,13 @@ document.addEventListener('keydown', e => {
 <div class="column">
 <ul>
 <li> この講義の目的
-<li class="sub-item"><span class="icon-arrow">→</span> 経済学でよく使われる基本的な数学を身につける．
-<li class="sub-item"><span class="icon-arrow">→</span> 数式を用いた表現ができるようになる．
-<li class="sub-item"><span class="icon-arrow">→</span> 計算ができるようになる．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 経済学でよく使われる基本的な数学を身につける．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 数式を用いた表現ができるようになる．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 計算ができるようになる．
 
 <li> 参考書
 
-<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://tomoyatajika.notion.site/tomoyatajika/6c8d6a0e333c4d68b657158f51e3cd83" target="_blank">経済数学の教科書のリスト</a>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <a href="https://tomoyatajika.notion.site/tomoyatajika/6c8d6a0e333c4d68b657158f51e3cd83" target="_blank">経済数学の教科書のリスト</a>
 
 <a class="qr-link" href="https://tomoyatajika.notion.site/tomoyatajika/6c8d6a0e333c4d68b657158f51e3cd83" target="_blank">🔗 QRリンク</a>
 </ul> 
@@ -2181,13 +2208,13 @@ document.addEventListener('keydown', e => {
 <ul>
 <li> 現代にはパソコンがあるので必ずしも複雑な計算を手計算でする必要はない
 <li> 使用ソフトは<a href="https://www.wolframalpha.com/" target="_blank">Wolfram Alpha</a> を推奨（電卓ではやれることが少ない）<a class="qr-link" href="https://www.wolframalpha.com/" target="_blank">🔗 QRリンク</a>
-<li class="sub-item"><span class="icon-arrow">→</span> 大学数学レベルならだいたいなんでもできる
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 大学数学レベルならだいたいなんでもできる
 </li>
 </ul>
 </div>  
 <div class = "column">
 <ul>
-<li class="sub-item"><span class="icon-arrow">→</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <a href="https://vimeo.com/928301937/7323999c71" target="_blank">使用方法</a>
 <li class="spacer"><a class="qr-link" href="https://vimeo.com/928301937/7323999c71" target="_blank">🔗 QRリンク</a>
 </li>
 </ul>
@@ -2201,10 +2228,10 @@ document.addEventListener('keydown', e => {
  <div class="column"> 
  <ul> 
 <li> 授業について：
-<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">大学の講義は「授業90分+予復習180分」で二単位です．</span>
-<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">すべての授業は授業に出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</span>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">大学の講義は「授業90分+予復習180分」で二単位です．</span>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">すべての授業は授業に出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</span>
 
-<li class="sub-item"><span class="icon-arrow">→</span> この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．
 <ol>
 <li> 予習：講義資料を先に見て，わからなそうなところをメモしておく
 <li> 復習：練習問題を解く・わからないところを質問する・スタディグループを作って協力する
@@ -2217,9 +2244,9 @@ document.addEventListener('keydown', e => {
 <ul> 
 
   <li> 持ち物：筆記具，計算用紙，講義スライド 
-<li class="sub-item"><span class="icon-arrow">→</span> 基本はスライドを印刷（あるいはタブレットなどにダウンロード）して，そこに板書や理解したことなどを書き込むことを推奨する．
-<li class="sub-item"><span class="icon-arrow">→</span> 板書だけを書き込んでいても足りない．必ず理解したことも書く．
-<li class="sub-item"><span class="icon-arrow">→</span> 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 基本はスライドを印刷（あるいはタブレットなどにダウンロード）して，そこに板書や理解したことなどを書き込むことを推奨する．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 板書だけを書き込んでいても足りない．必ず理解したことも書く．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．
 
  </ul> 
  
@@ -2233,19 +2260,23 @@ document.addEventListener('keydown', e => {
 <ul>
 <li> 成績評価は以下の点数に基づいて定まる
 
-<div class="math-display">\[\begin{aligned}\left[\overbrace{\text{小テストの合計点}}^{\text{最大42点}}+\overbrace{\text{質問点}}^{\text{最大13点}}+\overbrace{\text{最終試験}}^{\text{最大60点}} \right]\times (0.5\times \text{出席率}+0.5)\end{aligned}\]</div>
+<div class="math-display">\[\begin{aligned}\left[\overbrace{\text{小テストの合計点}}^{\text{最大42点}}+\overbrace{\text{質問点}}^{\text{最大13点}}+\overbrace{\text{最終試験}}^{\text{最大60点}} \right]\times (0.5\times \sqrt{\text{出席率}}+0.5)\end{aligned}\]</div>
 
-<li class="sub-item"><span class="icon-arrow">→</span> 小テストはCanvas LMSで出題（何回でもチャレンジ可）
-<li class="sub-item"><span class="icon-arrow">→</span> 小テストの点数は合計が42になるように変換される．
-<li class="sub-item"><span class="icon-arrow">→</span> 小テストにはWolfram Alpha を用いる．
-<li class="sub-item"><span class="icon-arrow">→</span> 質問点は授業１回あたり最大1点を加算する．
-<li> 点数と成績：上記の点数と成績の関係は次のとおりである．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 小テストはCanvas LMSで出題（何回でもチャレンジ可）
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 小テストの点数は合計が42になるように変換される．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 小テストにはWolfram Alpha を用いる．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 質問点は授業１回あたり最大1点を加算する．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 出席はキャンパス手帳で取る．
+
+  <li> 点数と成績：上記の点数と成績の関係は次のとおりである．
 <div style="text-align:center">
 <table class="slide-table"><tr><td>点数</td><td>$ \le 59 $</td><td>$  60 \text{ ～ } 69 $</td><td>$ 70 \text{ ～ } 79 $</td><td>$ 80 \text{ ～ } 89 $</td><td>$ 90\le $</td></tr><tr><td>評価</td><td>D</td><td>C</td><td>B</td><td>A</td><td>S</td></tr></table>
 </div>
 <li> 上記以外の事項での評価は行わない．
-<li> 欠席はいかなる理由でも欠席として扱うが，録画を見た上で四百字程度のまとめを提出すれば「出席」として扱う。
-  <li class="sub-item"><span class="icon-arrow">→</span> 公欠届は不要
+<li> 欠席はいかなる理由でも欠席として扱うが，録画を見た上で四百字程度のまとめを提出すれば5回までは「出席」として扱う．6回以上はいかなる理由であっても対応しない．
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 提出先はtajika.tomoya@nihon-u.ac.jp, メールの件名は「金融公共分析手法入門第N回授業(yyyy/mm/dd)の欠席課題」とし，本文に氏名，学籍番号を含めること
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 期限は授業後2週間以内 
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 公欠届は不要
 </ul>
 </template>
 
@@ -2274,7 +2305,7 @@ document.addEventListener('keydown', e => {
 <li> 偏微分の定義と計算
 <li> 多変数関数の最適化（無制約）
 <ul>
-<li class="sub-item"><span class="icon-arrow">→</span> PCを使います
+<li class="sub-item"><span class="icon-arrow">♦︎</span> PCを使います
 </ul>
 </ol>
 <li> 数列とその和 
@@ -2293,7 +2324,7 @@ document.addEventListener('keydown', e => {
  </div> 
 <ul>
 <li> 前提知識
-<li class="sub-item"><span class="icon-arrow">→</span> 文字の四則演算ができる
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 文字の四則演算ができる
 
 </ul>
 </template>
@@ -2309,7 +2340,7 @@ document.addEventListener('keydown', e => {
  <div class="column"> 
  <ul> 
   <li> 経済学（に限らず多くの学問）では論理的な論証がなされる．
- <li class="sub-item"><span class="icon-arrow">→</span> 多くの論理的な論証は「前提・仮定から結論を導く」という形をしている．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 多くの論理的な論証は「前提・仮定から結論を導く」という形をしている．
  
  </ul> 
  </div> 
@@ -2317,14 +2348,14 @@ document.addEventListener('keydown', e => {
 <ul> 
 
  <li> 例：
- <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 前提：
  <ol>
  <li> 人は自分の利益を最大化する選択肢を取る
  <li> 選択肢は「授業中に居眠りする・しない」の二つである．
  <li> 「授業中に居眠りする」から得られる利益は $ -100  $ 
  <li> 「授業中に居眠りしない」から得られる利益は $  0 $ 
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 結論：授業中に居眠りしない
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 結論：授業中に居眠りしない
 
  
  </ul> 
@@ -2338,18 +2369,18 @@ document.addEventListener('keydown', e => {
  <div class="column"> 
  <ul> 
  <li> 前提・仮定が変わると結論が変わることもある．
- <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 前提：
  <ol>
  <li> 人は自分の利益を最大化する選択肢を取る.
  <li> 人々の利益は大きければ大きいほど良い
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> A1〜A2より，人々の選択肢はどんなものでも禁止しない方が良い.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> A1〜A2より，人々の選択肢はどんなものでも禁止しない方が良い.
  </ul> 
  </div> 
  <div class="column"> 
 <ul> 
  <li> 前提が変わると...
- <li class="sub-item"><span class="icon-arrow">→</span> 前提：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 前提：
  <ol>
  
   <li> <span style="color:#2563eb">人の利益には今日の利益と明日の利益がある</span>．
@@ -2358,7 +2389,7 @@ document.addEventListener('keydown', e => {
  <li>   <span style="color:#2563eb">「授業中に居眠りする」から得られる今日の利益は $  50 $ ，明日の利益は $  -100 $ </span>
  <li> <span style="color:#2563eb">「授業中に居眠りしない」から得られる今日の利益は $  0 $ ，明日の利益は $  0 $ </span>
  </ol>
-<li class="sub-item"><span class="icon-arrow">→</span> 結論はどう変わる？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 結論はどう変わる？
  </ul> 
   </div> 
  </div>
@@ -2369,13 +2400,13 @@ document.addEventListener('keydown', e => {
 <ul> 
 <li> 妥当な論証：前提がすべて正しいときには結論が正しいということ
 <li>  前提が正しくないときには何も言えない．
-<li class="sub-item"><span class="icon-arrow">→</span> 『「雨が降る」ならば「Aさんは傘をさす」』が正しくても，雨が降っていないときにAさんが傘をさすかどうか，それだけからはわからない．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 『「雨が降る」ならば「Aさんは傘をさす」』が正しくても，雨が降っていないときにAさんが傘をさすかどうか，それだけからはわからない．
 
-<li class="sub-item"><span class="icon-arrow">→</span>  正しくない前提のもとでの議論にはあまり意味がない．
-<li class="sub-item"><span class="icon-arrow">→</span>  前提が正しいかどうかをよく調べる必要がある．
+<li class="sub-item"><span class="icon-arrow">♦︎</span>  正しくない前提のもとでの議論にはあまり意味がない．
+<li class="sub-item"><span class="icon-arrow">♦︎</span>  前提が正しいかどうかをよく調べる必要がある．
 
 <li> 前提の正しさ，「前提ならば結論」という論証自体の正しさ，そして結論の正しさはそれぞれ別．
-<li class="sub-item"><span class="icon-arrow">→</span> まずは「前提ならば結論」という論証を正しくすること ← この講義の目的の一つ
+<li class="sub-item"><span class="icon-arrow">♦︎</span> まずは「前提ならば結論」という論証を正しくすること ← この講義の目的の一つ
   </ul>
 </template>
 
@@ -2394,7 +2425,7 @@ document.addEventListener('keydown', e => {
 <li> よってQである．
 
 </ol>
-<li class="sub-item"><span class="icon-arrow">→</span> Pを前件，Qを後件と呼ぶ．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> Pを前件，Qを後件と呼ぶ．
 
 
  </ul> 
@@ -2476,8 +2507,8 @@ document.addEventListener('keydown', e => {
   <li> よって「人々が合理的ならば国はいらない」
     </ol>
 <li> 「風が吹けば桶屋が儲かる」方式である
-<li class="sub-item"><span class="icon-arrow">→</span> 一つ一つの「ならば」文の検証が大事
-<li class="sub-item"><span class="icon-arrow">→</span> 間違いが一つでもあれば論証自体が正しくない．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 一つ一つの「ならば」文の検証が大事
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 間違いが一つでもあれば論証自体が正しくない．
  </ul> 
   </div> 
  </div>
@@ -2496,7 +2527,7 @@ document.addEventListener('keydown', e => {
  <li> よってYはAである．
  </ol>
  <li> 全称命題を否定するには<span class="keyword">反例</span>を示すこと
- <li class="sub-item"><span class="icon-arrow">→</span> 例：「すべてのカラスは黒い」を否定するには「黒くないカラス」を見つけること
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：「すべてのカラスは黒い」を否定するには「黒くないカラス」を見つけること
  </ul> 
  </div> 
  <div class="column"> 
@@ -2519,7 +2550,7 @@ document.addEventListener('keydown', e => {
  <li> Qである
  <li> よってPである
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <ol>
  <li> 妖精が天井裏でダンスしていれば物音がする
  <li> 今，物音がしている
@@ -2537,7 +2568,7 @@ document.addEventListener('keydown', e => {
  <li> Pでない
  <li> よってQでない．
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <ol>
  <li> 妖精が天井裏でダンスしていれば物音がする
  <li> 妖精が天井裏でダンスしているなんていうことはない
@@ -2550,7 +2581,7 @@ document.addEventListener('keydown', e => {
 <ul>
 <li class="spacer">
 <li> 注意点：「よって以降の結論」が正しくても論証として妥当でなければその議論は間違いである．
-<li class="sub-item"><span class="icon-arrow">→</span> 例：
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <ol>
 
  <li> 屋根裏にネズミがいれば物音がする
@@ -2571,12 +2602,12 @@ document.addEventListener('keydown', e => {
  <li> AであるようなYがある
  <li> よってどんなXについてもAである
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 例1: （結論は正しいが論証が正しくない）
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例1: （結論は正しいが論証が正しくない）
  <ol>
  <li> 1は奇数で３も奇数である．この二つを足したら4であるので偶数である.
  <li> よって奇数と奇数を足したら偶数である．
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 例2: （結論も論証も正しくない）
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例2: （結論も論証も正しくない）
   <ol>
  <li> 1は奇数で３も奇数である．この二つを足したら4である.
  <li> よって奇数と奇数を足したら4である．
@@ -2586,21 +2617,21 @@ document.addEventListener('keydown', e => {
  <div class="column"> 
 <ul> 
  <li> 論点先取
- <li class="sub-item"><span class="icon-arrow">→</span> 結論を仮定している
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 結論を仮定している
  <ol>
  <li> Qである
  <li> よってQである
  
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 論理的には間違いではないが，何も論証はできていない．
- <li class="sub-item"><span class="icon-arrow">→</span> 解答を書かせるとこれが一番多い間違いのパターン
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 論理的には間違いではないが，何も論証はできていない．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 解答を書かせるとこれが一番多い間違いのパターン
  
  <li> 矛盾
  <ol>
  <li> Pである
  <li> よってPでない
  </ol>
- <li class="sub-item"><span class="icon-arrow">→</span> 落ち着け
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 落ち着け
  </ul> 
   </div> 
  </div>
@@ -2617,8 +2648,8 @@ document.addEventListener('keydown', e => {
 <template class="slide-data" data-title="基礎の計算" data-section="四則演算" data-note="false" data-print-margin="80">
   <ul> 
   <li> 数学の計算には文字を使う
-  <li class="sub-item"><span class="icon-arrow">→</span> $  x,y,z,a,b,c $ 等のアルファベットがメイン
-  <li class="sub-item"><span class="icon-arrow">→</span> ギリシャ文字なども使われる
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> $  x,y,z,a,b,c $ 等のアルファベットがメイン
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> ギリシャ文字なども使われる
 
   <li> ギリシャ文字の一覧
   
@@ -2696,26 +2727,26 @@ document.addEventListener('keydown', e => {
   <div class="column"> 
   <ul> 
   <li> 等式の意味
-  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ は $  a $ と $  b $ が等しいという意味
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> $  a=b $ は $  a $ と $  b $ が等しいという意味
   
-  <li class="sub-item"><span class="icon-arrow">→</span> 他に意味はない
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 他に意味はない
   <li> 等式の性質
-  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ ならば $  a+c=b+c $ 
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> $  a=b $ ならば $  a+c=b+c $ 
   
-  <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ ならば $  a\cdot c=b\cdot c $ 
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> $  a=b $ ならば $  a\cdot c=b\cdot c $ 
   
   <li class="spacer">注意： $  ac=bc $ ならば $  a=b $ とは限らない
   
-    <li class="sub-item"><span class="icon-arrow">→</span> $  a=b $ かつ $  b=c $ ならば $  a=c $ 
+    <li class="sub-item"><span class="icon-arrow">♦︎</span> $  a=b $ かつ $  b=c $ ならば $  a=c $ 
 
   </ul> 
   </div> 
   <div class="column"> 
 <ul>
 <li> 因数分解
-<li class="sub-item"><span class="icon-arrow">→</span> $  a $ で「くくる」とは次のような作業
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $  a $ で「くくる」とは次のような作業
 <div class="math-display">\[\begin{aligned}a+ab=a(1+b)\end{aligned}\]</div>
-<li class="sub-item"><span class="icon-arrow">→</span> よく使う因数分解
+<li class="sub-item"><span class="icon-arrow">♦︎</span> よく使う因数分解
 <div class="math-display">\[\begin{aligned}a^2-b^2=(a+b)(a-b)\\
 a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 
@@ -2731,7 +2762,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
   <ul> 
 <li> 分数の分母と分子には同じものをかけても不変
 <div class="math-display">\[\begin{aligned}\frac{a}{b}=\frac{ac}{bc}\end{aligned}\]</div>
-<li class="sub-item"><span class="icon-arrow">→</span> ただし $ c\ne 0 $ 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> ただし $ c\ne 0 $ 
   </ul> 
   </div> 
   <div class="column"> 
@@ -2776,13 +2807,13 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  <div class="column"> 
  <ul> 
  <li> 数学で大事なものは<span class="keyword">定義</span>.
- <li class="sub-item"><span class="icon-arrow">→</span> 日常言語とどれだけかけ離れていても定義されたものが全て.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 日常言語とどれだけかけ離れていても定義されたものが全て.
  
  <li>  $  f(x) \coloneq x^2+3x+2 $  などと書くとき, 左辺を右辺で<span class="keyword">定義</span>するという.
-<li class="sub-item"><span class="icon-arrow">→</span> 定義の記号は $  =,\equiv, \coloneq $  などがある.
-<li class="sub-item"><span class="icon-arrow">→</span> どの記号を使うかは基本は趣味
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 定義の記号は $  =,\equiv, \coloneq $  などがある.
+<li class="sub-item"><span class="icon-arrow">♦︎</span> どの記号を使うかは基本は趣味
 	
-<li class="sub-item"><span class="icon-arrow">→</span> 別の数や記号を入れても等式が成立<br> 例：
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 別の数や記号を入れても等式が成立<br> 例：
  
  </ul> 
  </div> 
@@ -2798,8 +2829,8 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  <ul> 
  <li> <span class="keyword">関数</span>とはある要素を別の何かの要素に対応付ける関係（c.f. 写像, 対応, 作用素）
  
- <li class="sub-item"><span class="icon-arrow">→</span> 関数 $  f $ は入力 $  x $ を出力 $  f(x) $ に割り当てる.
- <li class="sub-item"><span class="icon-arrow">→</span> $  x $ に対して $  f(x) $ はただひとつ
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 関数 $  f $ は入力 $  x $ を出力 $  f(x) $ に割り当てる.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> $  x $ に対して $  f(x) $ はただひとつ
  
  <li> 自販機を例にすると， $  f $ は自販機， $  x $ はボタン， $  f(x) $ はボタンを押して出てくる飲み物
  </ul> 
@@ -2816,8 +2847,8 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  <div class="column"> 
  <ul> 
  <li> 関数の<span class="keyword">グラフ</span>とは入力と出力をペアにしたもの:  $  (x,f(x)) $ 
- <li class="sub-item"><span class="icon-arrow">→</span> 平面上に点を打てばよく見るグラフになる．
- <li class="sub-item"><span class="icon-arrow">→</span> 点を打つ作業を<span class="keyword">プロット</span>するという.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 平面上に点を打てばよく見るグラフになる．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 点を打つ作業を<span class="keyword">プロット</span>するという.
  </ul> 
  </div> 
  <div class="column"> 
@@ -2838,7 +2869,7 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 <div class="column">
 <ul>
 <li> 需要関数とは?
-<li class="sub-item"><span class="icon-arrow">→</span> ある価格において，市場で買いたいと思われる財の総量
+<li class="sub-item"><span class="icon-arrow">♦︎</span> ある価格において，市場で買いたいと思われる財の総量
 <li> 例：各旅人は馬一頭が欲しいが支払ってもいいと思っている価格（<span class="keyword">支払許容額</span>，<span class="keyword">支払意思額</span>）が右のようになっている.
 <li> 需要関数を描くと？
 </ul>
@@ -2857,10 +2888,10 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
 <ul>
 <li> 需要関数が以下のような形とする．
 <div class="math-display">\[\begin{aligned}D(p)=20000-10p\end{aligned}\]</div>
-<li class="sub-item"><span class="icon-arrow">→</span> 読み方
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 読み方
 <li class="spacer">
 <li> 逆に考えて，適当な量が与えられたとき，その量が需要量となるような価格を考えたい．
-<li class="sub-item"><span class="icon-arrow">→</span> 逆需要関数： $ P(q) $ とは需要量が $ q $ となるような価格を出力する関数
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 逆需要関数： $ P(q) $ とは需要量が $ q $ となるような価格を出力する関数
 </ul>
 </div>
 <div class="column">
@@ -2878,14 +2909,14 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  <div class="column"> 
  <ul> 
  <li> 二つの関数を合成する関数のことを合成関数という
- <li class="sub-item"><span class="icon-arrow">→</span> 例:  $  f(x)=2x^2+1 $ と $  g(y)=3y+4 $ を合成する．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例:  $  f(x)=2x^2+1 $ と $  g(y)=3y+4 $ を合成する．
  </ul> 
  </div> 
  <div class="column"> 
 <ul> 
  <li> 例：需要量が $q$ のとき，売上高は以下のように書ける．<div class="math-display">\[\text{Sales}(p,q)=p\cdot q\]</div>
- <li class="sub-item"><span class="icon-arrow">→</span> 需要関数が $  D(p)=10-3p $ とする．
-<li class="sub-item"><span class="icon-arrow">→</span> 価格が $  p $ のときの売上高を $  p $ の関数として書いてみよう．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 需要関数が $  D(p)=10-3p $ とする．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 価格が $  p $ のときの売上高を $  p $ の関数として書いてみよう．
  </ul> 
   </div> 
  </div>
@@ -2900,14 +2931,14 @@ a^2+2ab+b^2=(a+b)^2\end{aligned}\]</div>
  <ul> 
  <li> 「<span class="keyword">方程式を解く</span>」とは変数を含む等式が与えられたときにそれを満たす変数を<strong>すべて</strong >リストアップすること．
  
- <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <li class="spacer">
  <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
  
- <li class="sub-item"><span class="icon-arrow">→</span> 方程式を満たす変数を<span class="keyword">解</span>あるいは<span class="keyword">根</span>という．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 方程式を満たす変数を<span class="keyword">解</span>あるいは<span class="keyword">根</span>という．
  </ul> 
  </div> 
  <div class="column"> 
@@ -2932,11 +2963,11 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li> 価格理論における基本仮説
 
 「市場価格は需要量と供給量が一致するように決定される．」
-<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">需要量</span>とは？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">需要量</span>とは？
 <div style="text-align:center">
 所与の価格について買いたい財の量
 </div>
-<li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">供給量</span>とは？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">供給量</span>とは？
 <div style="text-align:center">
 所与の価格について売りたい財の量
 
@@ -2950,8 +2981,8 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <li class="spacer">
   <li> <span class="keyword">市場均衡</span>とは以下が成立すること
   <div class="math-display">\[\begin{aligned}D(p)=S(p)\end{aligned}\]</div>
-  <li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">市場均衡価格</span>: 市場均衡を成立させる価格
-    <li class="sub-item"><span class="icon-arrow">→</span> <span class="keyword">市場均衡取引量</span>: 市場均衡のときに取引される量（ $  = \text{需要量} =\text{供給量} $ ）
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">市場均衡価格</span>: 市場均衡を成立させる価格
+    <li class="sub-item"><span class="icon-arrow">♦︎</span> <span class="keyword">市場均衡取引量</span>: 市場均衡のときに取引される量（ $  = \text{需要量} =\text{供給量} $ ）
 
  </ul> 
   </div> 
@@ -2970,7 +3001,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <ul> 
  <li> 「<span class="keyword">連立方程式を解く</span>」とは変数を含む<span class="keyword">複数の</span>等式が与えられたときにそれら全てを満たす変数を<strong>すべて</strong>リストアップすること．
  
- <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <li class="spacer">
  
 
@@ -3008,11 +3039,11 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <div class="column"> 
  <ul> 
  <li> 複数の財があるケースを考える．
- <li class="sub-item"><span class="icon-arrow">→</span> その財自身の価格だけでなく，他の財価格の影響もある．
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> その財自身の価格だけでなく，他の財価格の影響もある．
  <li class="spacer">
  <li> 複数の財についての市場均衡
- <li class="spacer"><span class="icon-arrow">→</span>  全ての財について需要と供給が一致すること
- <li class="sub-item"><span class="icon-arrow">→</span> 例（２財のケース）
+ <li class="spacer"><span class="icon-arrow">♦︎</span>  全ての財について需要と供給が一致すること
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例（２財のケース）
  <div class="math-display">\[\begin{aligned}D_1(p_1,p_2)=S_1(p_1,p_2)\\
   D_2(p_1,p_2)=S_2(p_1,p_2)\end{aligned}\]</div>
  </ul> 
@@ -3031,9 +3062,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
 <li>  <span class="keyword">需要関数</span>とは与えられた価格について, 市場で買いたいと思われる総量を出力する関数.
 
-<li class="sub-item"><span class="icon-arrow">→</span> 例：各旅人は馬一頭が欲しいが, 支払ってもいいと思っている価格, <span class="keyword">支払意思額</span>は右のようになっている.
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 例：各旅人は馬一頭が欲しいが, 支払ってもいいと思っている価格, <span class="keyword">支払意思額</span>は右のようになっている.
 
-<li class="sub-item"><span class="icon-arrow">→</span> 縦軸を価格, 横軸を支払意思額にしてみる➔需要曲線
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 縦軸を価格, 横軸を支払意思額にしてみる➔需要曲線
 </ul>
 </div>
 <div class="column">
@@ -3049,9 +3080,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
 <li>  <span class="keyword">供給関数</span>とは与えられた価格について, 市場で売りたいと思われる総量を出力する関数.
 
-<li class="sub-item"><span class="icon-arrow">→</span> 例：各商人は馬一頭を仕入れることができるが, 仕入れにかかる金額, <span class="keyword">費用</span>は右のようになっている.
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 例：各商人は馬一頭を仕入れることができるが, 仕入れにかかる金額, <span class="keyword">費用</span>は右のようになっている.
 
-<li class="sub-item"><span class="icon-arrow">→</span> 縦軸を価格, 横軸を費用にしてみる➔供給曲線
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 縦軸を価格, 横軸を費用にしてみる➔供給曲線
 
 </ul>
 </div>
@@ -3069,7 +3100,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li> 需要曲線と供給曲線を同じ図に書いてみる.
 
 <li> <span class="keyword">取引余剰</span>とは
-<li class="sub-item"><span class="icon-arrow">→</span> 取引によって得られる価値の総合計
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 取引によって得られる価値の総合計
 </ul>
 </div>
 <div class="column">
@@ -3194,7 +3225,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
    <ul>
 <li> 二点  $ (a, b) $  と  $ (a',b') $  を通る直線は唯一つ 
 <div class="math-display">\[\begin{aligned}y=\frac{b'-b}{a'-a}(x-a)+b\end{aligned}\]</div>
-<li class="spacer"><span class="icon-arrow">→</span>   $ \dfrac{b'-b}{a'-a} $  の部分はこの直線の<span class="keyword">傾き</span>とよばれる
+<li class="spacer"><span class="icon-arrow">♦︎</span>   $ \dfrac{b'-b}{a'-a} $  の部分はこの直線の<span class="keyword">傾き</span>とよばれる
 
 <li class="spacer"></li>
 <li class="spacer"></li>
@@ -3245,11 +3276,11 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <template class="slide-data" data-title="現実で出てくる微分の例：" data-section="一変数関数の微分" data-note="false" data-print-margin="180">
 <ul> 
    <li> 限界税率
-   <li class="sub-item"><span class="icon-arrow">→</span> 追加の所得にどれだけの税率がかかるか？
+   <li class="sub-item"><span class="icon-arrow">♦︎</span> 追加の所得にどれだけの税率がかかるか？
    <li> 限界税率の例（実際はもう少し複雑 & 計算しやすいように単純化）
    <table class="slide-table"><tr><td>所得</td><td>&lt;200</td><td>&lt;300</td><td>&lt;700</td><td>&lt;900</td><td>&lt;1800</td><td>&lt;4000</td><td>≧ 4000</td></tr><tr><td>税率</td><td>5%</td><td>10%</td><td>20%</td><td>25%</td><td>30%</td><td>40%</td><td>45%</td></tr></table>
 <li> 以上の表において，所得が1000万円のときに支払う税の総額はいくらか？
-  <li class="sub-item"><span class="icon-arrow">→</span>
+  <li class="sub-item"><span class="icon-arrow">♦︎</span>
     <li class="spacer"> </li>
   <li class="spacer"> </li>
   <li class="spacer"> </li>
@@ -3276,7 +3307,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <div class="column"> 
    <ul>
 <li> <span class="keyword">定数の微分</span>
-<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=a $ （ $ a $ は実数）のとき
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $ f(x)=a $ （ $ a $ は実数）のとき
 <div class="math-display">\[\begin{aligned}f'(x)=0\end{aligned}\]</div>
 
 </ul>
@@ -3284,7 +3315,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <div class="column"> 
 <ul>
 <li> <span class="keyword">比例関数の微分</span>
-<li class="sub-item"><span class="icon-arrow">→</span> $  f(x)=ax $ のとき
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $  f(x)=ax $ のとき
 <div class="math-display">\[\begin{aligned}f'(x)=a\end{aligned}\]</div>
 
 </ul>
@@ -3298,29 +3329,29 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <div class="column"> 
 <ul>
 <li> <span class="keyword">累乗の微分</span>
-<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=x^a $ （ $ a$ は実数の定数）のとき
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $ f(x)=x^a $ （ $ a$ は実数の定数）のとき
 <div class="math-display">\[\begin{aligned}f'(x)=a\cdot x^{a-1}\end{aligned}\]</div> 
 
 <li>   $ f(x)= x^2 = \textcolor{blue}{x}\cdot \textcolor{red}{x} $ での説明
-<li class="sub-item"><span class="icon-arrow">→</span> $  \textcolor{red}{x} $ を変数と思えば傾きは $   \textcolor{blue}{x} $ 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $  \textcolor{red}{x} $ を変数と思えば傾きは $   \textcolor{blue}{x} $ 
 <ul>
-<li class="custom-marker"> $  \textcolor{red}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{blue}{x}\cdot\Delta $ だけ増える  
+<li class="custom-marker"> $  \textcolor{red}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">♦︎</span>  $  f(x) $ は $   \textcolor{blue}{x}\cdot\Delta $ だけ増える  
 
 </ul>
 
-<li class="sub-item"><span class="icon-arrow">→</span> $   \textcolor{blue}{x} $ を変数と思えば傾きは $   \textcolor{red}{x} $ 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $   \textcolor{blue}{x} $ を変数と思えば傾きは $   \textcolor{red}{x} $ 
 
 <ul>
-<li class="custom-marker"> $  \textcolor{blue}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $   \textcolor{red}{x}\cdot\Delta $ だけ増える  
+<li class="custom-marker"> $  \textcolor{blue}{x} $ だけ $  \Delta $ 増 <span class="icon-arrow">♦︎</span>  $  f(x) $ は $   \textcolor{red}{x}\cdot\Delta $ だけ増える  
 
 
 
 </ul>
 
-<li class="sub-item"><span class="icon-arrow">→</span> 実際には，  $  \textcolor{red}{x} $ も  $  \textcolor{blue}{x} $ も $  \Delta $ 増える
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 実際には，  $  \textcolor{red}{x} $ も  $  \textcolor{blue}{x} $ も $  \Delta $ 増える
 <ul>
-<li class="custom-marker">  $  x $ が $  \Delta $ 増 <span class="icon-arrow">→</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
-<li class="spacer"> <span class="icon-arrow">→</span>  微分係数は $  2x $ 
+<li class="custom-marker">  $  x $ が $  \Delta $ 増 <span class="icon-arrow">♦︎</span>  $  f(x) $ は $  ( \textcolor{blue}{x}+\textcolor{red}{x} )\cdot \Delta= 2x\cdot \Delta $ だけ増
+<li class="spacer"> <span class="icon-arrow">♦︎</span>  微分係数は $  2x $ 
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
@@ -3344,7 +3375,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
 
 <li> <span class="keyword">微分の線形性</span>
-<li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=a\cdot g(x)+b\cdot h(x) $ <br>（ $ a,b $ は実数）のとき, 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $ f(x)=a\cdot g(x)+b\cdot h(x) $ <br>（ $ a,b $ は実数）のとき, 
 <div class="math-display">\[\begin{aligned}f'(x)=a\cdot g'(x)+b\cdot h'(x)\end{aligned}\]</div>
 
 </ul>
@@ -3377,7 +3408,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <div class="column"> 
    <ul> 
    <li> <span class="keyword">積の微分</span>
-   <li class="sub-item"><span class="icon-arrow">→</span> $ f(x)=h(x)\times g(x) $ のとき
+   <li class="sub-item"><span class="icon-arrow">♦︎</span> $ f(x)=h(x)\times g(x) $ のとき
 <div class="math-display">\[\begin{aligned}f'(x)= h'(x)\times g(x)+ h(x)\times g'(x)\end{aligned}\]</div>
  
    </ul> 
@@ -3396,7 +3427,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <div class="column"> 
 <ul>
 <li> 経済学で使う数学のメインの使いみちは何かしらの最大化（あるいは最小化）
-<li class="sub-item"><span class="icon-arrow">→</span> （例）
+<li class="sub-item"><span class="icon-arrow">♦︎</span> （例）
 <li class="spacer">
  <li> 経済学で微分を使う最も大きい理由の一つは関数の最大化・最小化問題を簡単にできるから
 
@@ -3410,8 +3441,8 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
    
    <li class="spacer">
    
-   <li class="sub-item"><span class="icon-arrow">→</span> このときの $ f(x^*) $ の値を<span class="keyword">最大値</span>という
-   <li class="sub-item"><span class="icon-arrow">→</span> このときの $ x^* $ を<span class="keyword">最大化解</span>という
+   <li class="sub-item"><span class="icon-arrow">♦︎</span> このときの $ f(x^*) $ の値を<span class="keyword">最大値</span>という
+   <li class="sub-item"><span class="icon-arrow">♦︎</span> このときの $ x^* $ を<span class="keyword">最大化解</span>という
 
   </ul>  
   </div> 
@@ -3515,7 +3546,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
   <li> 学部レベルの経済学の最大化問題で出てくる関数はほぼ凹関数
   
 
- <li>  $f $ が凹関数であるための条件<br> <span class="icon-arrow">→</span>   $f''(x)\le 0$ であること 
+ <li>  $f $ が凹関数であるための条件<br> <span class="icon-arrow">♦︎</span>   $f''(x)\le 0$ であること 
  </ul> 
   </div> 
  </div>
@@ -3528,7 +3559,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul>
 <li> <span class="keyword">独占市場</span>:ある財の市場においてそれをつくる企業がひとつしかない市場
 <li> 独占企業の問題
-<li class="sub-item"><span class="icon-arrow">→</span> 価格をいくらにすれば利潤を最大にできるか？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 価格をいくらにすれば利潤を最大にできるか？
 <li> 独占企業の利潤は...
 </ul>
 </div>
@@ -3592,7 +3623,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <div class="column">
 <ul>
  <li> 経済学での例
-<li class="sub-item"><span class="icon-arrow">→</span> 材料の量を $ q_s $ , 使用する電気の量を $ q_e $ , 労働量を $ q_\ell $ としたとき，生産量が $ f(q_s,q_e,q_\ell)=q_s^{1/3}q_e^{1/6}q_\ell^{1/2} $ . 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 材料の量を $ q_s $ , 使用する電気の量を $ q_e $ , 労働量を $ q_\ell $ としたとき，生産量が $ f(q_s,q_e,q_\ell)=q_s^{1/3}q_e^{1/6}q_\ell^{1/2} $ . 
 </ul> 
 </div>	
 </div>
@@ -3632,7 +3663,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li>  $ f(x,y) $ を $ x $ で偏微分することを記号で書くと
 <div class="math-display">\[\begin{aligned}\pd{f(x,y)}{x}\end{aligned}\]</div>
 
-<li class="sub-item"><span class="icon-arrow">→</span>  $ \partial $  は「ラウンドディー」, 「ラウンド」あるいは「パーシャル」と読む
+<li class="sub-item"><span class="icon-arrow">♦︎</span>  $ \partial $  は「ラウンドディー」, 「ラウンド」あるいは「パーシャル」と読む
 <li> 
  $  \pd{f(2,3)}{x} $ は  $  f $  を  $  x $  で偏微分した後に  $  x=2 $ ， $  y=3 $  を代入したもの
 </ul> 
@@ -3662,7 +3693,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <li> 二変数関数 $ f $ が凹関数であるとする（上に凸の形状をしている）．このとき，
 <div class="math-display">\[\begin{aligned}\pd{f(x^*,y^*)}{x}=\pd{f(x^*,y^*)}{y}=0\end{aligned}\]</div>
 が $ f $ が $ (x^*,y^*) $ で最大値を取るための必要十分条件である．
-<li class="sub-item"><span class="icon-arrow">→</span> 逆に下に凸の形状をしている（凸関数）ときには<div class="math-display">\[\begin{aligned}\pd{f(x^*,y^*)}{x}=\pd{f(x^*,y^*)}{y}=0\end{aligned}\]</div>
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 逆に下に凸の形状をしている（凸関数）ときには<div class="math-display">\[\begin{aligned}\pd{f(x^*,y^*)}{x}=\pd{f(x^*,y^*)}{y}=0\end{aligned}\]</div>
 が $ f $ が $ (x^*,y^*) $ で最<strong>小</strong>値を取るための必要十分条件である
 
 </ul>
@@ -3676,19 +3707,19 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  <li> 次のようなデータがあったとする
 <table class="slide-table"><tr><td>価格</td><td>100</td><td>110</td><td>120</td><td>130</td></tr><tr><td>需要量</td><td>79</td><td>73</td><td>63</td><td>40</td></tr></table>
 <li> 価格と需要量の関係（需要曲線）はどんな形をしていると考えられるか？
-<li class="sub-item"><span class="icon-arrow">→</span> プロットしてみる
+<li class="sub-item"><span class="icon-arrow">♦︎</span> プロットしてみる
  </ul> 
  </div> 
  <div class="column"> 
 <ul> 
  <li> <span class="keyword">誤差</span>の考え方
- <li class="sub-item"><span class="icon-arrow">→</span> 観察データには「ノイズ」があるかも
- <li class="sub-item"><span class="icon-arrow">→</span> 平均するとゼロになる誤差を考える
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 観察データには「ノイズ」があるかも
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 平均するとゼロになる誤差を考える
  <li> <span class="keyword">線形モデル</span>
- <li class="sub-item"><span class="icon-arrow">→</span> 需要量を $  D $ , 価格を $  P $ とする
- <li class="sub-item"><span class="icon-arrow">→</span> $  D = aP+b $ という関係にあると想定する
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 需要量を $  D $ , 価格を $  P $ とする
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> $  D = aP+b $ という関係にあると想定する
  <li> <span class="keyword">最小二乗法</span>
- <li class="sub-item"><span class="icon-arrow">→</span> 誤差を最小にするような $  a,b $ を求める
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 誤差を最小にするような $  a,b $ を求める
  </ul> 
   </div> 
  </div>
@@ -3704,7 +3735,7 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
  
  
  <li> 残差二乗和はその合計
- <li class="sub-item"><span class="icon-arrow">→</span> 例：
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 例：
  <table class="slide-table"><tr><td>価格</td><td>100</td><td>110</td><td>120</td><td>130</td></tr><tr><td>需要量</td><td>79</td><td>73</td><td>63</td><td>40</td></tr></table>
  </ul> 
  </div> 
@@ -3741,9 +3772,9 @@ $  ax+b=c $ という等式を満たす $  x $ を全て答えるとき
 <ul> 
  <li> プログラミング言語を使ってやってみる
  
- <li class="sub-item"><span class="icon-arrow">→</span> より洗練された方法は「経済データ分析」や「計量経済学」で！
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> より洗練された方法は「経済データ分析」や「計量経済学」で！
  
- <li class="sub-item"><span class="icon-arrow">→</span> 以下のコードは直接実行できます（▶ 実行 ボタンを押してください）
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 以下のコードは直接実行できます（▶ 実行 ボタンを押してください）
  </ul> 
  <div class="sage-cell-label">Python + SymPy — 最小二乗法</div>
  <div class="sage-cell"><script type="text/x-sage">
@@ -3780,16 +3811,16 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
  <div class="column"> 
  <ul> 
  <li> 複数回同じものを掛けることを累乗という.
- <li class="sub-item"><span class="icon-arrow">→</span> 累乗は $  4^5 $ などというように上に小さい数字をつけて表記する.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 累乗は $  4^5 $ などというように上に小さい数字をつけて表記する.
 
-<li class="sub-item"><span class="icon-arrow">→</span> 上付きの小さい文字の部分を<span class="keyword">指数</span>と呼ぶ. 
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 上付きの小さい文字の部分を<span class="keyword">指数</span>と呼ぶ. 
 
 <li> 注意
-<li class="sub-item"><span class="icon-arrow">→</span> 一般的に $  x^y\ne y^x $ である．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 一般的に $  x^y\ne y^x $ である．
 
-<li class="sub-item"><span class="icon-arrow">→</span> 一般的に $ (x^y)^z\ne x^{(y^z)}  $ である．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 一般的に $ (x^y)^z\ne x^{(y^z)}  $ である．
  
- <li class="sub-item"><span class="icon-arrow">→</span> 手書きで書くときは
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 手書きで書くときは
  
  
  </ul> 
@@ -3951,9 +3982,9 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
  <div class="column"> 
  <ul> 
   <li> 結果が不確実なものは多い
-  <li class="sub-item"><span class="icon-arrow">→</span> サイコロの目，コイントスの結果
-  <li class="sub-item"><span class="icon-arrow">→</span> 宝くじ，事故，天気
-  <li class="sub-item"><span class="icon-arrow">→</span> 全ては不確実
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> サイコロの目，コイントスの結果
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 宝くじ，事故，天気
+  <li class="sub-item"><span class="icon-arrow">♦︎</span> 全ては不確実
 <li> 確率とはモノゴトの起こりやすさを数値化したもの
  </ul> 
  </div> 
@@ -3964,7 +3995,7 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
  <li> 標本の集合を<span class="keyword">事象(event)</span>と呼ぶ．
 
  <li> 標本すべての集合を<span class="keyword">全事象</span>という
- <li class="sub-item"><span class="icon-arrow">→</span> 全事象を $ \Omega $ と書く.
+ <li class="sub-item"><span class="icon-arrow">♦︎</span> 全事象を $ \Omega $ と書く.
  
 
  </ul> 
@@ -3977,22 +4008,22 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 <div class="columns"><div class="column">
 <ul>
 <li> サイコロを振る
-<li class="sub-item"><span class="icon-arrow">→</span> 標本の例
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 標本の例
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
-<li class="sub-item"><span class="icon-arrow">→</span> 事象の例
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 事象の例
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
 </ul></div><div class="column">
 <ul>
 <li> トランプのカードを1枚づつ二人に配る
-<li class="sub-item"><span class="icon-arrow">→</span> 標本の例
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 標本の例
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
-<li class="sub-item"><span class="icon-arrow">→</span> 事象の例（標本は必ずしも観察できるとは限らない）
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 事象の例（標本は必ずしも観察できるとは限らない）
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
@@ -4005,9 +4036,9 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 <div class="columns"><div class="column">
 <ul>
 <li> 確率とは事象の面積のようなもの
-<li class="sub-item"><span class="icon-arrow">→</span> 事象 $ A $ が起きる確率を $ P(A) $ と書く．
-<li class="sub-item"><span class="icon-arrow">→</span> 全事象の確率を $ 1 $ とする．
-<li class="sub-item"><span class="icon-arrow">→</span> 確率は $ 0 $ 以上 $ 1 $ 以下
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 事象 $ A $ が起きる確率を $ P(A) $ と書く．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 全事象の確率を $ 1 $ とする．
+<li class="sub-item"><span class="icon-arrow">♦︎</span> 確率は $ 0 $ 以上 $ 1 $ 以下
 
 <li> ベン図 </li>
 <li class="spacer"></li>
@@ -4070,7 +4101,7 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
   
   <li> このとき，以下の値 $ \bar x $ をこの試行の<span class="keyword">期待値</span>と呼ぶ.
   <div class="math-display">\[\begin{aligned}\bar x=\sum_{i=1}^n P(x_i) x_i\end{aligned}\]</div>
-<li class="sub-item"><span class="icon-arrow">→</span> $ x_1,\dots, x_n $ の加重和(weighted sum)
+<li class="sub-item"><span class="icon-arrow">♦︎</span> $ x_1,\dots, x_n $ の加重和(weighted sum)
 
  </ul> 
 <ul> 
@@ -4089,8 +4120,8 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
  <div class="column"> 
  <ul> 
   <li> ある事象の確率を考えるときに追加情報があるときを考える.
-<li class="sub-item"><span class="icon-arrow">→</span> (例)どこの企業に投資しようかを考えているとき, A社が新製品を開発したとの情報が入ってきた．株価が上がる確率は？
-<li class="sub-item"><span class="icon-arrow">→</span> (例) 1%の人がかかる病気に精度95%の検査で陽性が出た．罹患している確率は？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> (例)どこの企業に投資しようかを考えているとき, A社が新製品を開発したとの情報が入ってきた．株価が上がる確率は？
+<li class="sub-item"><span class="icon-arrow">♦︎</span> (例) 1%の人がかかる病気に精度95%の検査で陽性が出た．罹患している確率は？
 <li> こう言うものを考えるのが条件付き確率である.
 
  </ul> 

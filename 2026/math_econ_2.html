@@ -76,7 +76,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .section-select option { background:#1e293b; color:#fff; }
 .main { display:flex; flex:1; overflow:hidden; }
 .slide-area { flex:1; display:flex; align-items:stretch; justify-content:center; overflow:auto; background:var(--bg); padding:24px 32px; position:relative; }
-.slide-content { max-width:860px; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px 36px; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:auto; }
+.slide-content { max-width:860px; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px 36px; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:auto; zoom:var(--slide-zoom,1); }
 .slide-content .frame-title { font-size:20px; font-weight:700; color:var(--accent); border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:16px; }
 .slide-content .section-badge { font-size:11px; color:var(--text-dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
 .notes-panel { width:300px; background:var(--note-bg); border-left:3px solid var(--note-border); display:flex; flex-direction:column; flex-shrink:0; transition:width 0.2s; }
@@ -91,6 +91,7 @@ ul, ol { padding-left:1.5em; margin:0.3em 0; }
 li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
+.icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
@@ -103,6 +104,9 @@ a:hover { color:#1e40af; }
 .qr-link .qr-img { display:none; width:100%; margin-top:6px; padding:4px; background:#fff; border-radius:4px; }
 .qr-link.qr-open .qr-img { display:block; }
 .qr-link.qr-open { flex-direction:column; }
+.qr-link .qr-toggle { background:#fff; border:1px solid var(--accent); color:var(--accent); border-radius:3px; font-size:11px; padding:1px 6px; cursor:pointer; margin-left:2px; font-family:inherit; }
+.qr-link .qr-toggle:hover { background:var(--accent); color:#fff; }
+body.print-mode .qr-link .qr-toggle { display:none; }
 .video-overlay { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; cursor:pointer; }
 .video-overlay.open { display:flex; }
 .video-container { width:min(80vw,800px); aspect-ratio:16/9; cursor:default; }
@@ -280,7 +284,7 @@ body.print-mode .fab-pen { display: none !important; }
 <body class="slide-mode">
 
 <div class="topbar" id="topbar">
-  <div class="topbar-title">経済数学II — 2025年度版</div>
+  <div class="topbar-title">経済数学II — 2026年度版</div>
   <div class="topbar-nav">
     <select class="section-select" id="sectionSelect" onchange="goToSection(this.value)">
       <option value="">— セクション —</option>
@@ -290,6 +294,9 @@ body.print-mode .fab-pen { display: none !important; }
     <span class="page-info" id="pageInfo">1 / ?</span>
     <button class="nav-btn" onclick="nextSlide()">▶</button>
     <button class="nav-btn sp-hide" onclick="goSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(-1)" title="スライド縮小 (-)">－</button>
+    <button class="nav-btn sp-hide" id="zoomInfo" onclick="zoomSlide(0)" title="クリックで100%に戻す" style="font-size:11px;min-width:42px">100%</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(1)" title="スライド拡大 (+)">＋</button>
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn sp-hide" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
@@ -364,6 +371,8 @@ body.print-mode .fab-pen { display: none !important; }
   <kbd>B</kbd> 板書スペース &nbsp;
   <kbd>N</kbd> メモ欄 &nbsp;
   <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>+</kbd><kbd>-</kbd> スライド拡大/縮小 &nbsp;
+  <kbd>0</kbd> 100%に戻す &nbsp;
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
 
@@ -1083,25 +1092,29 @@ function closeLightbox(e) {
 function setupLinks(el) {
   el.querySelectorAll('.qr-link').forEach(link => {
     const url = link.getAttribute('href');
-    link.removeAttribute('href');
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener');
     // Generate QR
     try {
       const qr = qrcode(0, 'M');
       qr.addData(url);
       qr.make();
+      const qrBtn = document.createElement('button');
+      qrBtn.className = 'qr-toggle';
+      qrBtn.textContent = 'QR';
+      qrBtn.title = 'QRコードを表示';
+      qrBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); link.classList.toggle('qr-open'); };
+      link.appendChild(qrBtn);
       const imgDiv = document.createElement('div');
       imgDiv.className = 'qr-img';
       imgDiv.innerHTML = qr.createSvgTag(4, 0);
       const urlSpan = document.createElement('div');
       urlSpan.style.cssText = 'font-size:11px;word-break:break-all;margin-top:4px;';
-      urlSpan.innerHTML = '<a href="'+url+'" target="_blank">'+url+'</a>';
+      urlSpan.textContent = url;
       imgDiv.appendChild(urlSpan);
+      imgDiv.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
       link.appendChild(imgDiv);
     } catch(e) {}
-    link.onclick = (e) => {
-      e.preventDefault();
-      link.classList.toggle('qr-open');
-    };
   });
   // 埋め込みリンク：data-embed-tpl のテンプレートを srcdoc で開く（オフライン対応）。
   // テンプレートが無ければ href を iframe で開く。
@@ -1718,7 +1731,7 @@ function enterPrintMode() {
   document.body.classList.add('print-mode');
   document.getElementById('modeToggle').textContent = '📊 スライド表示';
   const area = document.getElementById('slideArea');
-  let html = '<div class="print-header"><h1>経済数学II — 2025年度版</h1><p>多鹿 智哉 | 最終更新: ' + document.lastModified + '</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
+  let html = '<div class="print-header"><h1>経済数学II — 2026年度版</h1><p>多鹿 智哉 | 最終更新: ' + document.lastModified + '</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
   SLIDES.forEach((s, idx) => {
     if (s.is_note) return;
     if (idx === 0) return;
@@ -1893,6 +1906,21 @@ function repositionFab() {
 }
 
 // ─── Keyboard ───
+// Slide-only zoom (topbar stays fixed)
+const ZOOM_KEY = STORAGE_KEY + '_zoom';
+let slideZoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1;
+function zoomSlide(dir) {
+  slideZoom = dir === 0 ? 1 : Math.min(2, Math.max(0.6, Math.round((slideZoom + dir * 0.1) * 10) / 10));
+  applySlideZoom();
+}
+function applySlideZoom() {
+  document.documentElement.style.setProperty('--slide-zoom', slideZoom);
+  const z = document.getElementById('zoomInfo');
+  if (z) z.textContent = Math.round(slideZoom * 100) + '%';
+  localStorage.setItem(ZOOM_KEY, slideZoom);
+}
+applySlideZoom();
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
   if (e.key === 'Escape') { closeLightbox(); closeVideo(); return; }
@@ -1909,6 +1937,9 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
+  else if (e.key === '+' || e.key === '=') zoomSlide(1);
+  else if (e.key === '-') zoomSlide(-1);
+  else if (e.key === '0') zoomSlide(0);
 });
 
 // Touch swipe
@@ -2019,7 +2050,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ===== Slide 0:  /  ===== -->
 <template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
-<div style="text-align:center; padding:40px 0;"><h1 style="font-size:32px; color:var(--accent); font-family:'Noto Serif JP',serif;">経済数学II</h1><p style="color:var(--text-dim); margin-top:8px;">2025年度版</p><p style="margin-top:16px;">多鹿 智哉</p></div>
+<div style="text-align:center; padding:40px 0;"><h1 style="font-size:32px; color:var(--accent); font-family:'Noto Serif JP',serif;">経済数学II</h1><p style="color:var(--text-dim); margin-top:8px;">2026年度版</p><p style="margin-top:16px;">多鹿 智哉</p></div>
 </template>
 
 <!-- ===== Slide 1: はじめに / はじめに ===== -->
@@ -2034,7 +2065,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li> 学位：博士（経済学）
 <li> 研究分野：ミクロ経済学・ゲーム理論
 </ol>
-<li class="sub-item"><span style="color:#2563eb">»</span>  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item"><svg class="icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg> 連絡先   <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
 <li class="sub-item"><span style="color:#2563eb">»</span>  研究室<br>
 2号館 8-7号室
 <li class="sub-item"><span style="color:#2563eb">»</span>  オフィスアワー 以下から予約
@@ -2128,9 +2159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li> 発言点（授業内容に関する質問一回につき1点（講義一回につき最大1回カウント））
 
 <li class="sub-item"><span style="color:#2563eb">»</span>  試験についての質問とか単位についての質問などはノーカウント
-<li class="sub-item"><span style="color:#2563eb">»</span>  ↓質問などはこちらからでも可能
-
- <a class="qr-link" href="https://forms.gle/oQpQnftmr3HMpMxK8">🔗 QRリンク</a>
+<li class="sub-item"><span style="color:#2563eb">»</span> 対面の質問のみ質問点としてカウント
 </ul>
 </div>
 </div>
@@ -2307,164 +2336,10 @@ b
 </template>
 
 <!-- ===== Slide 11: ベクトルと行列 / 線形包の図示 ===== -->
-<template class="slide-data" data-title="線形包の図示" data-section="ベクトルと行列" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="線形包の図示" data-section="ベクトルと行列" data-note="false" data-print-margin="280">
 <div class="columns">
 <div class="column">
 
- <div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="166.284" height="168.697" viewBox="0 0 166.284 168.697">
-<defs>
-<g>
-<g id="glyph-0-0">
-<path d="M 3.28125 2.375 C 3.28125 2.34375 3.28125 2.328125 3.109375 2.15625 C 1.875 0.90625 1.5625 -0.96875 1.5625 -2.484375 C 1.5625 -4.203125 1.9375 -5.9375 3.15625 -7.171875 C 3.28125 -7.296875 3.28125 -7.3125 3.28125 -7.34375 C 3.28125 -7.40625 3.25 -7.4375 3.1875 -7.4375 C 3.078125 -7.4375 2.1875 -6.765625 1.609375 -5.5 C 1.09375 -4.421875 0.984375 -3.3125 0.984375 -2.484375 C 0.984375 -1.703125 1.09375 -0.5 1.640625 0.609375 C 2.234375 1.828125 3.078125 2.484375 3.1875 2.484375 C 3.25 2.484375 3.28125 2.453125 3.28125 2.375 Z M 3.28125 2.375 "/>
-</g>
-<g id="glyph-0-1">
-<path d="M 2.875 -2.484375 C 2.875 -3.25 2.765625 -4.453125 2.21875 -5.578125 C 1.625 -6.796875 0.765625 -7.4375 0.671875 -7.4375 C 0.609375 -7.4375 0.5625 -7.40625 0.5625 -7.34375 C 0.5625 -7.3125 0.5625 -7.296875 0.75 -7.109375 C 1.71875 -6.125 2.296875 -4.546875 2.296875 -2.484375 C 2.296875 -0.78125 1.921875 0.96875 0.6875 2.21875 C 0.5625 2.328125 0.5625 2.34375 0.5625 2.375 C 0.5625 2.4375 0.609375 2.484375 0.671875 2.484375 C 0.765625 2.484375 1.65625 1.8125 2.25 0.546875 C 2.75 -0.546875 2.875 -1.640625 2.875 -2.484375 Z M 2.875 -2.484375 "/>
-</g>
-<g id="glyph-0-2">
-<path d="M 4.5625 -3.171875 C 4.5625 -3.96875 4.515625 -4.765625 4.171875 -5.5 C 3.703125 -6.453125 2.890625 -6.609375 2.484375 -6.609375 C 1.890625 -6.609375 1.15625 -6.34375 0.75 -5.421875 C 0.4375 -4.75 0.390625 -3.96875 0.390625 -3.171875 C 0.390625 -2.4375 0.421875 -1.53125 0.828125 -0.78125 C 1.265625 0.015625 1.984375 0.21875 2.46875 0.21875 C 3 0.21875 3.765625 0.015625 4.203125 -0.9375 C 4.515625 -1.625 4.5625 -2.390625 4.5625 -3.171875 Z M 2.46875 0 C 2.078125 0 1.5 -0.25 1.3125 -1.203125 C 1.203125 -1.796875 1.203125 -2.703125 1.203125 -3.296875 C 1.203125 -3.921875 1.203125 -4.578125 1.296875 -5.125 C 1.484375 -6.296875 2.21875 -6.390625 2.46875 -6.390625 C 2.796875 -6.390625 3.453125 -6.21875 3.640625 -5.234375 C 3.734375 -4.671875 3.734375 -3.921875 3.734375 -3.296875 C 3.734375 -2.546875 3.734375 -1.875 3.625 -1.234375 C 3.484375 -0.296875 2.921875 0 2.46875 0 Z M 2.46875 0 "/>
-</g>
-<g id="glyph-1-0">
-<path d="M 3.921875 -3.765625 C 3.765625 -3.765625 3.625 -3.765625 3.5 -3.625 C 3.328125 -3.484375 3.3125 -3.3125 3.3125 -3.25 C 3.3125 -3 3.5 -2.890625 3.6875 -2.890625 C 3.96875 -2.890625 4.234375 -3.140625 4.234375 -3.53125 C 4.234375 -4.015625 3.765625 -4.390625 3.0625 -4.390625 C 1.71875 -4.390625 0.40625 -2.96875 0.40625 -1.5625 C 0.40625 -0.671875 0.984375 0.109375 2.015625 0.109375 C 3.4375 0.109375 4.265625 -0.9375 4.265625 -1.0625 C 4.265625 -1.125 4.203125 -1.1875 4.140625 -1.1875 C 4.09375 -1.1875 4.078125 -1.171875 4.015625 -1.09375 C 3.234375 -0.109375 2.15625 -0.109375 2.03125 -0.109375 C 1.40625 -0.109375 1.140625 -0.59375 1.140625 -1.1875 C 1.140625 -1.59375 1.34375 -2.5625 1.671875 -3.171875 C 1.984375 -3.734375 2.53125 -4.171875 3.078125 -4.171875 C 3.40625 -4.171875 3.796875 -4.03125 3.921875 -3.765625 Z M 3.921875 -3.765625 "/>
-</g>
-<g id="glyph-1-1">
-<path d="M 2.015625 -0.015625 C 2.015625 -0.671875 1.765625 -1.046875 1.375 -1.046875 C 1.046875 -1.046875 0.859375 -0.796875 0.859375 -0.53125 C 0.859375 -0.265625 1.046875 0 1.375 0 C 1.5 0 1.625 -0.046875 1.71875 -0.125 C 1.75 -0.15625 1.765625 -0.15625 1.78125 -0.15625 C 1.78125 -0.15625 1.796875 -0.15625 1.796875 -0.015625 C 1.796875 0.71875 1.453125 1.3125 1.125 1.640625 C 1.015625 1.75 1.015625 1.78125 1.015625 1.8125 C 1.015625 1.875 1.0625 1.921875 1.109375 1.921875 C 1.21875 1.921875 2.015625 1.15625 2.015625 -0.015625 Z M 2.015625 -0.015625 "/>
-</g>
-<g id="glyph-1-2">
-<path d="M 5.125 -6.78125 C 5.125 -6.78125 5.125 -6.890625 4.984375 -6.890625 C 4.84375 -6.890625 3.90625 -6.796875 3.734375 -6.78125 C 3.65625 -6.765625 3.59375 -6.71875 3.59375 -6.59375 C 3.59375 -6.46875 3.6875 -6.46875 3.828125 -6.46875 C 4.3125 -6.46875 4.328125 -6.40625 4.328125 -6.296875 L 4.296875 -6.109375 L 3.703125 -3.75 C 3.515625 -4.125 3.234375 -4.390625 2.78125 -4.390625 C 1.625 -4.390625 0.390625 -2.921875 0.390625 -1.484375 C 0.390625 -0.546875 0.9375 0.109375 1.71875 0.109375 C 1.921875 0.109375 2.40625 0.0625 3 -0.640625 C 3.078125 -0.21875 3.4375 0.109375 3.90625 0.109375 C 4.25 0.109375 4.484375 -0.125 4.640625 -0.4375 C 4.8125 -0.796875 4.9375 -1.40625 4.9375 -1.421875 C 4.9375 -1.515625 4.859375 -1.515625 4.828125 -1.515625 C 4.71875 -1.515625 4.71875 -1.484375 4.6875 -1.34375 C 4.515625 -0.6875 4.328125 -0.109375 3.921875 -0.109375 C 3.65625 -0.109375 3.625 -0.359375 3.625 -0.5625 C 3.625 -0.796875 3.65625 -0.875 3.6875 -1.046875 Z M 3.0625 -1.1875 C 3 -1 3 -0.984375 2.859375 -0.8125 C 2.421875 -0.265625 2.015625 -0.109375 1.734375 -0.109375 C 1.234375 -0.109375 1.09375 -0.65625 1.09375 -1.046875 C 1.09375 -1.53125 1.421875 -2.765625 1.640625 -3.21875 C 1.953125 -3.796875 2.40625 -4.171875 2.796875 -4.171875 C 3.4375 -4.171875 3.578125 -3.359375 3.578125 -3.296875 C 3.578125 -3.234375 3.5625 -3.171875 3.546875 -3.125 Z M 3.0625 -1.1875 "/>
-</g>
-<g id="glyph-1-3">
-<path d="M 3.703125 -3.75 C 3.515625 -4.125 3.234375 -4.390625 2.78125 -4.390625 C 1.625 -4.390625 0.390625 -2.921875 0.390625 -1.484375 C 0.390625 -0.546875 0.9375 0.109375 1.71875 0.109375 C 1.921875 0.109375 2.40625 0.0625 3 -0.640625 C 3.078125 -0.21875 3.4375 0.109375 3.90625 0.109375 C 4.25 0.109375 4.484375 -0.125 4.640625 -0.4375 C 4.8125 -0.796875 4.9375 -1.40625 4.9375 -1.421875 C 4.9375 -1.515625 4.859375 -1.515625 4.828125 -1.515625 C 4.71875 -1.515625 4.71875 -1.484375 4.6875 -1.34375 C 4.515625 -0.6875 4.328125 -0.109375 3.921875 -0.109375 C 3.65625 -0.109375 3.625 -0.359375 3.625 -0.5625 C 3.625 -0.78125 3.65625 -0.859375 3.765625 -1.296875 C 3.875 -1.71875 3.890625 -1.8125 3.984375 -2.1875 L 4.328125 -3.578125 C 4.40625 -3.859375 4.40625 -3.875 4.40625 -3.921875 C 4.40625 -4.09375 4.28125 -4.1875 4.125 -4.1875 C 3.875 -4.1875 3.734375 -3.96875 3.703125 -3.75 Z M 3.0625 -1.1875 C 3 -1 3 -0.984375 2.859375 -0.8125 C 2.421875 -0.265625 2.015625 -0.109375 1.734375 -0.109375 C 1.234375 -0.109375 1.09375 -0.65625 1.09375 -1.046875 C 1.09375 -1.53125 1.421875 -2.765625 1.640625 -3.21875 C 1.953125 -3.796875 2.40625 -4.171875 2.796875 -4.171875 C 3.4375 -4.171875 3.578125 -3.359375 3.578125 -3.296875 C 3.578125 -3.234375 3.5625 -3.171875 3.546875 -3.125 Z M 3.0625 -1.1875 "/>
-</g>
-<g id="glyph-1-4">
-<path d="M 2.375 -6.78125 C 2.375 -6.78125 2.375 -6.890625 2.25 -6.890625 C 2.015625 -6.890625 1.296875 -6.8125 1.03125 -6.78125 C 0.953125 -6.78125 0.84375 -6.765625 0.84375 -6.59375 C 0.84375 -6.46875 0.9375 -6.46875 1.078125 -6.46875 C 1.5625 -6.46875 1.578125 -6.40625 1.578125 -6.296875 C 1.578125 -6.234375 1.484375 -5.890625 1.4375 -5.6875 L 0.625 -2.453125 C 0.5 -1.953125 0.46875 -1.796875 0.46875 -1.453125 C 0.46875 -0.5 0.984375 0.109375 1.71875 0.109375 C 2.890625 0.109375 4.125 -1.375 4.125 -2.796875 C 4.125 -3.703125 3.59375 -4.390625 2.796875 -4.390625 C 2.34375 -4.390625 1.9375 -4.09375 1.640625 -3.796875 Z M 1.4375 -3.03125 C 1.5 -3.25 1.5 -3.265625 1.59375 -3.375 C 2.078125 -4.015625 2.515625 -4.171875 2.78125 -4.171875 C 3.140625 -4.171875 3.40625 -3.875 3.40625 -3.234375 C 3.40625 -2.65625 3.078125 -1.515625 2.890625 -1.125 C 2.5625 -0.46875 2.109375 -0.109375 1.71875 -0.109375 C 1.390625 -0.109375 1.0625 -0.375 1.0625 -1.109375 C 1.0625 -1.296875 1.0625 -1.484375 1.21875 -2.109375 Z M 1.4375 -3.03125 "/>
-</g>
-</g>
-</defs>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 141.733787 0.00172885 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 0.00111901 141.734397 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill-rule="nonzero" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 49.207031 90.042969 C 49.207031 89.109375 48.449219 88.351562 47.511719 88.351562 C 46.578125 88.351562 45.820312 89.109375 45.820312 90.042969 C 45.820312 90.980469 46.578125 91.738281 47.511719 91.738281 C 48.449219 91.738281 49.207031 90.980469 49.207031 90.042969 Z M 49.207031 90.042969 "/>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="36.722875" y="84.058748"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-1-0" x="40.581262" y="84.058748"/>
-<use xlink:href="#glyph-1-1" x="44.874588" y="84.058748"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-1-2" x="49.286954" y="84.058748"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-0-1" x="54.445564" y="84.058748"/>
-</g>
-<path fill="none" stroke-width="1.19553" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 28.345299 56.694012 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(69.999695%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 85.041505 42.51996 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill-rule="nonzero" fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1" d="M 105.65625 104.15625 C 105.65625 103.222656 104.898438 102.460938 103.964844 102.460938 C 103.027344 102.460938 102.269531 103.222656 102.269531 104.15625 C 102.269531 105.089844 103.027344 105.847656 103.964844 105.847656 C 104.898438 105.847656 105.65625 105.089844 105.65625 104.15625 Z M 105.65625 104.15625 "/>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="78.833552" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-3" x="82.690942" y="98.171978"/>
-<use xlink:href="#glyph-1-1" x="87.934594" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-4" x="92.346959" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-1" x="96.601047" y="98.171978"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="8.266406" y="157.437786"/>
-<use xlink:href="#glyph-0-2" x="12.124249" y="157.437786"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-1" x="17.084436" y="157.437786"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-2" x="21.492456" y="157.437786"/>
-<use xlink:href="#glyph-0-1" x="26.452399" y="157.437786"/>
-</g>
-</svg>
-</div>
-</div>
-<div class="column">
-
- <div class="tikz-figure"><svg class="tikz-svg" style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="166.284" height="168.697" viewBox="0 0 166.284 168.697">
-<defs>
-<g>
-<g id="glyph-0-0">
-<path d="M 3.28125 2.375 C 3.28125 2.34375 3.28125 2.328125 3.109375 2.15625 C 1.875 0.90625 1.5625 -0.96875 1.5625 -2.484375 C 1.5625 -4.203125 1.9375 -5.9375 3.15625 -7.171875 C 3.28125 -7.296875 3.28125 -7.3125 3.28125 -7.34375 C 3.28125 -7.40625 3.25 -7.4375 3.1875 -7.4375 C 3.078125 -7.4375 2.1875 -6.765625 1.609375 -5.5 C 1.09375 -4.421875 0.984375 -3.3125 0.984375 -2.484375 C 0.984375 -1.703125 1.09375 -0.5 1.640625 0.609375 C 2.234375 1.828125 3.078125 2.484375 3.1875 2.484375 C 3.25 2.484375 3.28125 2.453125 3.28125 2.375 Z M 3.28125 2.375 "/>
-</g>
-<g id="glyph-0-1">
-<path d="M 2.875 -2.484375 C 2.875 -3.25 2.765625 -4.453125 2.21875 -5.578125 C 1.625 -6.796875 0.765625 -7.4375 0.671875 -7.4375 C 0.609375 -7.4375 0.5625 -7.40625 0.5625 -7.34375 C 0.5625 -7.3125 0.5625 -7.296875 0.75 -7.109375 C 1.71875 -6.125 2.296875 -4.546875 2.296875 -2.484375 C 2.296875 -0.78125 1.921875 0.96875 0.6875 2.21875 C 0.5625 2.328125 0.5625 2.34375 0.5625 2.375 C 0.5625 2.4375 0.609375 2.484375 0.671875 2.484375 C 0.765625 2.484375 1.65625 1.8125 2.25 0.546875 C 2.75 -0.546875 2.875 -1.640625 2.875 -2.484375 Z M 2.875 -2.484375 "/>
-</g>
-<g id="glyph-0-2">
-<path d="M 4.5625 -3.171875 C 4.5625 -3.96875 4.515625 -4.765625 4.171875 -5.5 C 3.703125 -6.453125 2.890625 -6.609375 2.484375 -6.609375 C 1.890625 -6.609375 1.15625 -6.34375 0.75 -5.421875 C 0.4375 -4.75 0.390625 -3.96875 0.390625 -3.171875 C 0.390625 -2.4375 0.421875 -1.53125 0.828125 -0.78125 C 1.265625 0.015625 1.984375 0.21875 2.46875 0.21875 C 3 0.21875 3.765625 0.015625 4.203125 -0.9375 C 4.515625 -1.625 4.5625 -2.390625 4.5625 -3.171875 Z M 2.46875 0 C 2.078125 0 1.5 -0.25 1.3125 -1.203125 C 1.203125 -1.796875 1.203125 -2.703125 1.203125 -3.296875 C 1.203125 -3.921875 1.203125 -4.578125 1.296875 -5.125 C 1.484375 -6.296875 2.21875 -6.390625 2.46875 -6.390625 C 2.796875 -6.390625 3.453125 -6.21875 3.640625 -5.234375 C 3.734375 -4.671875 3.734375 -3.921875 3.734375 -3.296875 C 3.734375 -2.546875 3.734375 -1.875 3.625 -1.234375 C 3.484375 -0.296875 2.921875 0 2.46875 0 Z M 2.46875 0 "/>
-</g>
-<g id="glyph-1-0">
-<path d="M 3.921875 -3.765625 C 3.765625 -3.765625 3.625 -3.765625 3.5 -3.625 C 3.328125 -3.484375 3.3125 -3.3125 3.3125 -3.25 C 3.3125 -3 3.5 -2.890625 3.6875 -2.890625 C 3.96875 -2.890625 4.234375 -3.140625 4.234375 -3.53125 C 4.234375 -4.015625 3.765625 -4.390625 3.0625 -4.390625 C 1.71875 -4.390625 0.40625 -2.96875 0.40625 -1.5625 C 0.40625 -0.671875 0.984375 0.109375 2.015625 0.109375 C 3.4375 0.109375 4.265625 -0.9375 4.265625 -1.0625 C 4.265625 -1.125 4.203125 -1.1875 4.140625 -1.1875 C 4.09375 -1.1875 4.078125 -1.171875 4.015625 -1.09375 C 3.234375 -0.109375 2.15625 -0.109375 2.03125 -0.109375 C 1.40625 -0.109375 1.140625 -0.59375 1.140625 -1.1875 C 1.140625 -1.59375 1.34375 -2.5625 1.671875 -3.171875 C 1.984375 -3.734375 2.53125 -4.171875 3.078125 -4.171875 C 3.40625 -4.171875 3.796875 -4.03125 3.921875 -3.765625 Z M 3.921875 -3.765625 "/>
-</g>
-<g id="glyph-1-1">
-<path d="M 2.015625 -0.015625 C 2.015625 -0.671875 1.765625 -1.046875 1.375 -1.046875 C 1.046875 -1.046875 0.859375 -0.796875 0.859375 -0.53125 C 0.859375 -0.265625 1.046875 0 1.375 0 C 1.5 0 1.625 -0.046875 1.71875 -0.125 C 1.75 -0.15625 1.765625 -0.15625 1.78125 -0.15625 C 1.78125 -0.15625 1.796875 -0.15625 1.796875 -0.015625 C 1.796875 0.71875 1.453125 1.3125 1.125 1.640625 C 1.015625 1.75 1.015625 1.78125 1.015625 1.8125 C 1.015625 1.875 1.0625 1.921875 1.109375 1.921875 C 1.21875 1.921875 2.015625 1.15625 2.015625 -0.015625 Z M 2.015625 -0.015625 "/>
-</g>
-<g id="glyph-1-2">
-<path d="M 5.125 -6.78125 C 5.125 -6.78125 5.125 -6.890625 4.984375 -6.890625 C 4.84375 -6.890625 3.90625 -6.796875 3.734375 -6.78125 C 3.65625 -6.765625 3.59375 -6.71875 3.59375 -6.59375 C 3.59375 -6.46875 3.6875 -6.46875 3.828125 -6.46875 C 4.3125 -6.46875 4.328125 -6.40625 4.328125 -6.296875 L 4.296875 -6.109375 L 3.703125 -3.75 C 3.515625 -4.125 3.234375 -4.390625 2.78125 -4.390625 C 1.625 -4.390625 0.390625 -2.921875 0.390625 -1.484375 C 0.390625 -0.546875 0.9375 0.109375 1.71875 0.109375 C 1.921875 0.109375 2.40625 0.0625 3 -0.640625 C 3.078125 -0.21875 3.4375 0.109375 3.90625 0.109375 C 4.25 0.109375 4.484375 -0.125 4.640625 -0.4375 C 4.8125 -0.796875 4.9375 -1.40625 4.9375 -1.421875 C 4.9375 -1.515625 4.859375 -1.515625 4.828125 -1.515625 C 4.71875 -1.515625 4.71875 -1.484375 4.6875 -1.34375 C 4.515625 -0.6875 4.328125 -0.109375 3.921875 -0.109375 C 3.65625 -0.109375 3.625 -0.359375 3.625 -0.5625 C 3.625 -0.796875 3.65625 -0.875 3.6875 -1.046875 Z M 3.0625 -1.1875 C 3 -1 3 -0.984375 2.859375 -0.8125 C 2.421875 -0.265625 2.015625 -0.109375 1.734375 -0.109375 C 1.234375 -0.109375 1.09375 -0.65625 1.09375 -1.046875 C 1.09375 -1.53125 1.421875 -2.765625 1.640625 -3.21875 C 1.953125 -3.796875 2.40625 -4.171875 2.796875 -4.171875 C 3.4375 -4.171875 3.578125 -3.359375 3.578125 -3.296875 C 3.578125 -3.234375 3.5625 -3.171875 3.546875 -3.125 Z M 3.0625 -1.1875 "/>
-</g>
-<g id="glyph-1-3">
-<path d="M 3.703125 -3.75 C 3.515625 -4.125 3.234375 -4.390625 2.78125 -4.390625 C 1.625 -4.390625 0.390625 -2.921875 0.390625 -1.484375 C 0.390625 -0.546875 0.9375 0.109375 1.71875 0.109375 C 1.921875 0.109375 2.40625 0.0625 3 -0.640625 C 3.078125 -0.21875 3.4375 0.109375 3.90625 0.109375 C 4.25 0.109375 4.484375 -0.125 4.640625 -0.4375 C 4.8125 -0.796875 4.9375 -1.40625 4.9375 -1.421875 C 4.9375 -1.515625 4.859375 -1.515625 4.828125 -1.515625 C 4.71875 -1.515625 4.71875 -1.484375 4.6875 -1.34375 C 4.515625 -0.6875 4.328125 -0.109375 3.921875 -0.109375 C 3.65625 -0.109375 3.625 -0.359375 3.625 -0.5625 C 3.625 -0.78125 3.65625 -0.859375 3.765625 -1.296875 C 3.875 -1.71875 3.890625 -1.8125 3.984375 -2.1875 L 4.328125 -3.578125 C 4.40625 -3.859375 4.40625 -3.875 4.40625 -3.921875 C 4.40625 -4.09375 4.28125 -4.1875 4.125 -4.1875 C 3.875 -4.1875 3.734375 -3.96875 3.703125 -3.75 Z M 3.0625 -1.1875 C 3 -1 3 -0.984375 2.859375 -0.8125 C 2.421875 -0.265625 2.015625 -0.109375 1.734375 -0.109375 C 1.234375 -0.109375 1.09375 -0.65625 1.09375 -1.046875 C 1.09375 -1.53125 1.421875 -2.765625 1.640625 -3.21875 C 1.953125 -3.796875 2.40625 -4.171875 2.796875 -4.171875 C 3.4375 -4.171875 3.578125 -3.359375 3.578125 -3.296875 C 3.578125 -3.234375 3.5625 -3.171875 3.546875 -3.125 Z M 3.0625 -1.1875 "/>
-</g>
-<g id="glyph-1-4">
-<path d="M 2.375 -6.78125 C 2.375 -6.78125 2.375 -6.890625 2.25 -6.890625 C 2.015625 -6.890625 1.296875 -6.8125 1.03125 -6.78125 C 0.953125 -6.78125 0.84375 -6.765625 0.84375 -6.59375 C 0.84375 -6.46875 0.9375 -6.46875 1.078125 -6.46875 C 1.5625 -6.46875 1.578125 -6.40625 1.578125 -6.296875 C 1.578125 -6.234375 1.484375 -5.890625 1.4375 -5.6875 L 0.625 -2.453125 C 0.5 -1.953125 0.46875 -1.796875 0.46875 -1.453125 C 0.46875 -0.5 0.984375 0.109375 1.71875 0.109375 C 2.890625 0.109375 4.125 -1.375 4.125 -2.796875 C 4.125 -3.703125 3.59375 -4.390625 2.796875 -4.390625 C 2.34375 -4.390625 1.9375 -4.09375 1.640625 -3.796875 Z M 1.4375 -3.03125 C 1.5 -3.25 1.5 -3.265625 1.59375 -3.375 C 2.078125 -4.015625 2.515625 -4.171875 2.78125 -4.171875 C 3.140625 -4.171875 3.40625 -3.875 3.40625 -3.234375 C 3.40625 -2.65625 3.078125 -1.515625 2.890625 -1.125 C 2.5625 -0.46875 2.109375 -0.109375 1.71875 -0.109375 C 1.390625 -0.109375 1.0625 -0.375 1.0625 -1.109375 C 1.0625 -1.296875 1.0625 -1.484375 1.21875 -2.109375 Z M 1.4375 -3.03125 "/>
-</g>
-</g>
-</defs>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 141.733787 0.00172885 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 0.00111901 141.734397 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill-rule="nonzero" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 77.433594 118.269531 C 77.433594 117.332031 76.671875 116.574219 75.738281 116.574219 C 74.804688 116.574219 74.046875 117.332031 74.046875 118.269531 C 74.046875 119.203125 74.804688 119.960938 75.738281 119.960938 C 76.671875 119.960938 77.433594 119.203125 77.433594 118.269531 Z M 77.433594 118.269531 "/>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="64.94834" y="112.284212"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-1-0" x="68.80573" y="112.284212"/>
-<use xlink:href="#glyph-1-1" x="73.099057" y="112.284212"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-1-2" x="77.511422" y="112.284212"/>
-</g>
-<g fill="rgb(0%, 0%, 100%)" fill-opacity="1">
-<use xlink:href="#glyph-0-1" x="82.671028" y="112.284212"/>
-</g>
-<path fill="none" stroke-width="1.19553" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 56.693402 28.345909 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(69.999695%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00111901 0.00172885 L 85.041505 42.51996 " transform="matrix(0.995713, 0, 0, -0.995713, 19.287948, 146.493909)"/>
-<path fill-rule="nonzero" fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1" d="M 105.65625 104.15625 C 105.65625 103.222656 104.898438 102.460938 103.964844 102.460938 C 103.027344 102.460938 102.269531 103.222656 102.269531 104.15625 C 102.269531 105.089844 103.027344 105.847656 103.964844 105.847656 C 104.898438 105.847656 105.65625 105.089844 105.65625 104.15625 Z M 105.65625 104.15625 "/>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="78.833552" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-3" x="82.690942" y="98.171978"/>
-<use xlink:href="#glyph-1-1" x="87.934594" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-4" x="92.346959" y="98.171978"/>
-</g>
-<g fill="rgb(69.999695%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-1" x="96.601047" y="98.171978"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-0" x="8.266406" y="157.438782"/>
-<use xlink:href="#glyph-0-2" x="12.124249" y="157.438782"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-1-1" x="17.084436" y="157.438782"/>
-</g>
-<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use xlink:href="#glyph-0-2" x="21.492456" y="157.438782"/>
-<use xlink:href="#glyph-0-1" x="26.452399" y="157.438782"/>
-</g>
-</svg>
-</div>
-</div>
-	
-</div>
 </template>
 
 <!-- ===== Slide 12: ベクトルと行列 / 一次独立 ===== -->
@@ -2756,20 +2631,15 @@ $ \det\left(\vec{a},\vec{a},\vec{b}\right)=0$
 
 <!-- ===== Slide 27: ベクトルと行列 / 行列式の性質 ===== -->
 <template class="slide-data" data-title="行列式の性質" data-section="ベクトルと行列" data-note="false" data-print-margin="80">
-<div class="columns">
-<div class="column">
+
 <ul>
  <li> 以下の性質が成り立つ
  <div class="math-display">\[\begin{aligned}\det \left(\vvect{a_{1}}{0}{0}, \vvect{b_{1}}{b_{2}}{b_{3}},\vvect{c_{1}}{c_{2}}{c_{3}}\right)
  =a_{1}\det \left(\vvec{b_{2}}{b_{3}},\vvec{c_{2}}{c_{3}} \right)\end{aligned}\]</div> 
 </ul> 
-</div>
-<div class="column">
 <ul>
  <li class="spacer">
 </ul> 
-</div>	
-</div>
 </template>
 
 <!-- ===== Slide 28: ベクトルと行列 / 行列式の性質（図解） ===== -->
@@ -3059,8 +2929,7 @@ A\vvec{b_1}{b_2}&A\vvec{c_1}{c_2}&A\vvec{d_1}{d_2}\\
 
 <!-- ===== Slide 42: ベクトルと行列 / 行列の演算（和） ===== -->
 <template class="slide-data" data-title="行列の演算（和）" data-section="ベクトルと行列" data-note="false" data-print-margin="80">
-<div class="columns">
-<div class="column">
+
 <ul>
  <li> 行列の和は各成分を足すことで計算できる
  <div class="math-display">\[\begin{aligned}\begin{bmatrix}
@@ -3074,13 +2943,7 @@ a_{11}+b_{11} & a_{12}+b_{12}\\
 a_{21}+b_{21} & a_{22} +b_{22}
 \end{bmatrix}\end{aligned}\]</div> 
 </ul> 
-</div>
-<div class="column">
-<ul>
- <li class="spacer">
-</ul> 
-</div>	
-</div>
+
 </template>
 
 <!-- ===== Slide 43: ベクトルと行列 / 行列の演算（スカラー倍） ===== -->
@@ -3931,7 +3794,7 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <li class="sub-item"><span style="color:#2563eb">»</span>  <span class="keyword">$x$, $y$</span> を <span class="keyword">$q_1,q_2$</span>, 
  <li class="sub-item"><span style="color:#2563eb">»</span>  <span class="keyword">$f(x,y)$</span> を <span class="keyword">$u(q_1,q_2)$</span>, 
  <li class="sub-item"><span style="color:#2563eb">»</span>  <span class="keyword">$g(x,y)=0$</span> を <span class="keyword">$I-p_1\cdot q_1-p_2\cdot q_2=0$</span>として考える．
- <div class="math-display">\[\begin{aligned}\text{\ya} \left\{
+ <div class="math-display">\[\begin{aligned}\Rightarrow \left\{
 \begin{aligned}
  {L}(q_1,q_2, \lambda)&=\phantom{u(q_1,q_2)+\lambda\cdot  (I-p_1q_1-p_2q_2)}\\
 \displaystyle \pdif{1}{L}(q_1,q_2, \lambda)&=\phantom{\displaystyle\pd{u(q_1,q_2)}{q_1} +\lambda (-p_1)}\\
@@ -4018,32 +3881,36 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
 
 
 
+ \[v(p_{1},p_{2},I)={L}(d_{1}(p_{1},p_{2},I),d_{2}(p_{1},p_{2},I),\lambda)\]
 
- </ul>
-</template>
-
-<!-- ===== Slide 89: シャドウ・プライス /  ===== -->
-<template class="slide-data" data-title="" data-section="シャドウ・プライス" data-note="false" data-print-margin="0">
-
-  <div class="columns"> 
- <div class="column"> 
-<ul>
-<li>
- $v(p_{1},p_{2},I)={L}(d_{1}(p_{1},p_{2},I),d_{2}(p_{1},p_{2},I),\lambda)$
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
 </ul> 
- </div> 
- <div class="column"> 
+
 <ul>
  <li>  包絡線定理より間接効用関数を $I$ で微分すると次の式が成り立つ
  <div class="math-display">\[\begin{aligned}\pdif{3} v(p_{1},p_{2},I)=\lambda\end{aligned}\]</div> 
 <li class="spacer">
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
 <li> $\lambda$ は所得の限界効用（所得がほんの少し増えると効用がどれだけ増えるか）
 
 
  <li> このように制約条件がわずかに緩んだときの目的関数の限界的な増分を<span class="keyword">シャドウ・プライス</span>と呼び，それがラグランジュ乗数，$\lambda$ になる．
  </ul> 
-  </div> 
- </div>
+
 </template>
 
 <!-- ===== Slide 90: 一般均衡理論 / 一般均衡理論 ===== -->
@@ -4178,8 +4045,8 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <div class="column"> 
   <ul>
  <li> 次のような制約付きの社会厚生最大化問題を考えてみよう． 
- <div class="math-display">\[\begin{aligned}&\max _{(q _{h1},q _{h2})_{h=1}^m} \\
- &\sum_{h=1}^mw_{h}u_{h}(q_{h1},q_{h2})\\
+ <div class="math-display">\[\begin{aligned}&\max _{(q _{h1},q _{h2})_{h=1}^m} 
+ \sum_{h=1}^mw_{h}u_{h}(q_{h1},q_{h2})\\
  &\text{s.t.}\quad \left\{
  \begin{array}{c}
  \sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\\\

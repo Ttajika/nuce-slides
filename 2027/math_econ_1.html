@@ -119,6 +119,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   padding:28px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
   overflow:auto;
+  zoom:var(--slide-zoom,1);
 }
 
 .slide-content .frame-title {
@@ -160,6 +161,7 @@ ul, ol { padding-left:1.5em; margin:0.3em 0; }
 li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
+.icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; }
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
@@ -579,6 +581,9 @@ body.print-mode .fab-pen { display: none !important; }
     <span class="page-info" id="pageInfo">1 / ?</span>
     <button class="nav-btn" onclick="nextSlide()">▶</button>
     <button class="nav-btn sp-hide" onclick="goSlide(SLIDES.length-1)">⏭</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(-1)" title="スライド縮小 (-)">－</button>
+    <button class="nav-btn sp-hide" id="zoomInfo" onclick="zoomSlide(0)" title="クリックで100%に戻す" style="font-size:11px;min-width:42px">100%</button>
+    <button class="nav-btn sp-hide" onclick="zoomSlide(1)" title="スライド拡大 (+)">＋</button>
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn sp-hide" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
@@ -655,6 +660,8 @@ body.print-mode .fab-pen { display: none !important; }
   <kbd>B</kbd> 板書スペース &nbsp;
   <kbd>N</kbd> メモ欄 &nbsp;
   <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>+</kbd><kbd>-</kbd> スライド拡大/縮小 &nbsp;
+  <kbd>0</kbd> 100%に戻す &nbsp;
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
 
@@ -1387,11 +1394,8 @@ function setupLinks(container) {
     if (!url) return;
     const isVimeo = /vimeo\.com/.test(url);
     
-    // Prevent default navigation
-    link.addEventListener('click', e => e.preventDefault());
-    
     // Clear old content, rebuild
-    const label = isVimeo ? '▶ 動画を再生' : '🔗 QRコード';
+    const label = isVimeo ? '▶ 動画を再生' : '🔗 リンクを開く';
     link.textContent = '';
     
     // Main button
@@ -1401,6 +1405,8 @@ function setupLinks(container) {
     link.appendChild(btn);
     
     if (isVimeo) {
+      // Vimeo: prevent navigation, play in modal instead
+      link.addEventListener('click', e => e.preventDefault());
       btn.addEventListener('click', () => openVideo(url));
       // Also add a small QR toggle
       const qrBtn = document.createElement('span');
@@ -1418,13 +1424,25 @@ function setupLinks(container) {
         link.classList.toggle('qr-open');
       });
     } else {
-      // Non-Vimeo: toggle QR code
+      // Non-Vimeo: keep the link clickable, add a separate QR toggle
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+      const qrBtn = document.createElement('span');
+      qrBtn.textContent = ' 📱';
+      qrBtn.style.cursor = 'pointer';
+      qrBtn.title = 'QRコード表示';
+      link.appendChild(qrBtn);
       const qrDiv = document.createElement('div');
       qrDiv.className = 'qr-img';
       const svg = generateQR(url);
       if (svg) qrDiv.innerHTML = svg;
       link.appendChild(qrDiv);
-      btn.addEventListener('click', () => link.classList.toggle('qr-open'));
+      qrBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        link.classList.toggle('qr-open');
+      });
+      qrDiv.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
     }
   });
 }
@@ -1535,6 +1553,21 @@ function enterSlideMode() {
 }
 
 // Keyboard shortcuts
+// Slide-only zoom (topbar stays fixed)
+const ZOOM_KEY = STORAGE_KEY + '_zoom';
+let slideZoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1;
+function zoomSlide(dir) {
+  slideZoom = dir === 0 ? 1 : Math.min(2, Math.max(0.6, Math.round((slideZoom + dir * 0.1) * 10) / 10));
+  applySlideZoom();
+}
+function applySlideZoom() {
+  document.documentElement.style.setProperty('--slide-zoom', slideZoom);
+  const z = document.getElementById('zoomInfo');
+  if (z) z.textContent = Math.round(slideZoom * 100) + '%';
+  localStorage.setItem(ZOOM_KEY, slideZoom);
+}
+applySlideZoom();
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
   if (e.key === 'Escape') { closeLightbox(); closeVideo(); return; }
@@ -1551,6 +1584,9 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
+  else if (e.key === '+' || e.key === '=') zoomSlide(1);
+  else if (e.key === '-') zoomSlide(-1);
+  else if (e.key === '0') zoomSlide(0);
 });
 
 // Touch swipe (only when not drawing, single finger only)
@@ -1900,11 +1936,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <ul>
 <li> 講義するひと
 <li class="sub-item">»  多鹿 智哉
-<ol class="custom-enum" data-fmt=" \textbullet">
-<li> 学位：博士（経済学）
-<li> 研究分野：ミクロ経済学・ゲーム理論
-</ol>
-<li class="sub-item">»  連絡先 ✉  <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
+<li class="sub-item"><svg class="icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg> 連絡先   <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a>
 <li class="sub-item">»  研究室<br>
 2号館 8-7室
 <li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
