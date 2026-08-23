@@ -26,9 +26,31 @@
 ### パスワード忘れ対策
 
 - 自己リセット（メールリンク）は使えないが、データ自体は消えない（サーバー＆ローカルに残る）。
-- **教員が Supabase ダッシュボード（Authentication → Users）からリセット**できる運用とする。
 - 画面の注意書きに「パスワードを忘れたら教員に連絡」と記載済み。
+- **注意：ダッシュボードの「パスワード再設定を送信」ボタンはメール送信方式なので、架空アドレス
+  `@class.local` には届かず使えない。** 教員がリセットするには下記の手順を使う。
 - （将来オプション）登録時にリカバリーコードを表示する方式も追加可能。
+
+#### 教員によるパスワードリセット手順（SQL Editor）
+
+1. Supabase ダッシュボード → 左メニュー **SQL Editor** → New query
+2. 次の SQL を、ID と新しいパスワード（仮パスワード）を書き換えて実行する：
+
+   ```sql
+   update auth.users
+   set encrypted_password = crypt('仮パスワード123', gen_salt('bf'))
+   where email = '学籍番号@class.local';
+   ```
+
+   - `email` は学生が入力した ID に `@class.local` を付けたもの（`slide-sync.js` の `idToEmail` と同じ規則）。
+   - Supabase Auth は bcrypt を使うので、pgcrypto の `crypt(..., gen_salt('bf'))` で作ったハッシュをそのまま受け付ける。
+   - 結果に `Success. 1 rows affected` と出れば完了。`0 rows` なら ID（綴り・大文字小文字）を確認する。
+3. 学生に仮パスワードを伝え、ログインしてもらう。`user_id` は変わらないので、クラウド上の書き込み・メモはそのまま使える。
+
+対象ユーザーを探すには Authentication → Users で `学籍番号@class.local` を検索すればよい（`Last sign in` で本人確認の参考にもなる）。
+
+参考（別解）：service_role キーを使う Admin API でも同じことができる（`PUT /auth/v1/admin/users/<user_id>` に `{"password": "..."}`）。
+ブラウザには置けないので手元の PC から curl 等で叩く。通常は上の SQL で十分。
 
 ## 実装ファイル
 
