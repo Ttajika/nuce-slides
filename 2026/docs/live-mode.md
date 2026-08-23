@@ -4,7 +4,7 @@ iPad で書きながら、PC（や学生の端末）に同じスライド・手�
 リアルタイムに映す仕組み。PC 側ではスライド内の 🔴 ボタンでそのタブを録画できる。
 
 - 通信は Supabase Realtime の **Broadcast / Presence**（DB 書き込みなし、追加設定なし）。
-- `slide-sync.js`（ログイン）が前提。現在は `micro.html` のみ対応。
+- `slide-sync.js`（ログイン）が前提。対応ファイル：`2026/micro.html`、`2026/math_econ_2.html`、`2027/math_econ_1.html`、`2027/basicmath_for_KK.html`（2027 は同ディレクトリの `slide-sync.js` / `slide-live.js` のコピーを使う。更新時は両方に反映すること）。
 
 ## URL の使い分け
 
@@ -68,10 +68,22 @@ create policy "only presenter can send" on realtime.messages
 | `ptr` | ポインター位置 `[x,y]` or `null` |
 | `board` | 板書ポップアップ開閉 `{on}` |
 | `hello` | viewer → presenter：全体を要求 |
+| `media` | 動画・埋め込みオーバーレイの開閉 `{u}`（iframe の URL、srcdoc テンプレートは `tpl:ID`、閉じたら `null`） |
 | `end` | 配信終了 |
 
 stroke 形式：`{c:色, w:太さ, a:透明度, p:[[x,y],...]}`。
 Presence で presenter の在否と viewer 数を把握。
+
+## 動画・GeoGebra などの埋め込みと録画・配信
+
+- **タブ録画はそのタブの中身しか映らない**。新しいタブや別アプリで開いたものは録画に入らない（配信にも流れない）。
+- そのため Vimeo・GeoGebra・自サイト（`ttajika.github.io`）へのリンクは**タブ内オーバーレイ（iframe）で開く**ようにしてある。
+  `math_econ_2.html` の qr-link もこのルールに変更済み（QR ボタン・QR 画像はそのまま学生向け）。
+  それ以外の外部サイトは iframe 拒否の可能性があるので従来どおり新しいタブ。
+- presenter がオーバーレイを開く／閉じると viewer も同じものを開く／閉じる（`media` イベント）。
+  **iframe の中の操作（動画の再生位置、GeoGebra のスライダー操作）は同期しない**ので、
+  動画を流す・GeoGebra を動かすのは録画／投影している PC 側で行うのが確実。
+- 録画に動画の音を入れるには「このタブ」選択時に**「タブの音声を共有」**を ON にする。
 
 ## 制約
 
@@ -83,5 +95,6 @@ Presence で presenter の在否と viewer 数を把握。
 
 1. `<script src="slide-sync.js">` の直後に `<script src="slide-live.js"></script>`
 2. `SlideSync.init({...})` の直後に `micro.html` と同じ `SlideLive.init({...})` を追加（アダプタの変数名は各ファイルに合わせる）
+3. 動画モーダルが `#videoOverlay` / `#videoContainer` 以外の構造なら `getMedia` / `setMedia` を渡す（例：`2027/basicmath_for_KK.html` は `#videoModal` / `#videoFrame`）
 
-`math_econ_1.html` は slide-sync がコメントアウト、`basicmath_for_KK.html` は未導入なので、先に slide-sync を有効にする必要がある。
+2026 の `math_econ_1.html`・`basicmath_for_KK.html` は終了済み科目のため未対応（2027 版で対応）。
