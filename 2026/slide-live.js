@@ -94,6 +94,8 @@
       .sl-banner.show { display:flex; }
       .sl-banner button { padding:6px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.5);
         background:rgba(255,255,255,.15); color:#fff; cursor:pointer; font-size:13px; }
+      .sl-meter { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:6px 0 2px; }
+      .sl-meter div { height:100%; width:0; background:linear-gradient(90deg,#16a34a,#facc15 70%,#dc2626); transition:width .08s; }
       .live-canvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:11; pointer-events:none; }
     `;
     const st = document.createElement('style');
@@ -497,7 +499,7 @@
   //  RECORDER（?rec=1 の viewer のみ）
   // ═══════════════════════════════════════════════════════════════════════
   let rec = null, recChunks = [], recStart = 0, recTimer = null, recWritable = null, recFileHandle = null;
-  let recStreams = [], recAudioCtx = null, recAutoTimer = null, recMaxTimer = null;
+  let recStreams = [], recAudioCtx = null, recAutoTimer = null, recMaxTimer = null, recMicLabel = '';
 
   function recFileName() {
     const d = new Date();
@@ -539,6 +541,11 @@
       <div class="sl-modal">
         <h3>🔴 録画の開始</h3>
         <p style="margin:0 0 6px">次の画面で<strong>「このタブ」</strong>を選んでください（タブの音声共有も ON にすると動画の音が入ります）。マイク音声も同時に録音します。</p>
+        <div style="margin:10px 0 4px;font-size:13px">🎤 マイク：
+          <select id="slMicSel" style="max-width:100%;font-size:13px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px"></select>
+        </div>
+        <div class="sl-meter"><div id="slMicLevel"></div></div>
+        <div id="slMicStatus" class="sl-note">マイクを確認中…</div>
         <div id="slRecFileStatus" class="sl-note">${canPick ? '保存先：未選択（終了時にダウンロード。長時間の場合は保存先の指定を推奨）' : '保存先：終了時にダウンロード'}</div>
         <div class="sl-btns">
           ${canPick ? '<button id="slRecPickBtn">📁 保存先を指定</button>' : ''}
@@ -556,8 +563,73 @@
         $('slRecFileStatus').textContent = '保存先：' + recFileHandle.name + '（録画中に逐次書き込み）';
       } catch (e) { /* キャンセル */ }
     };
-    $('slRecCancelBtn').onclick = () => ov.classList.remove('open');
-    $('slRecGoBtn').onclick = async () => { ov.classList.remove('open'); await recBegin(); };
+    $('slRecCancelBtn').onclick = () => { ov.classList.remove('open'); stopMicPreview(); };
+    $('slRecGoBtn').onclick = async () => { ov.classList.remove('open'); stopMicPreview(); await recBegin(); };
+    $('slMicSel').onchange = () => { try { localStorage.setItem('slMicId', $('slMicSel').value); } catch (e) {} startMicPreview(); };
+    populateMics().then(startMicPreview);
+  }
+
+  // ── マイク選択・レベルメーター ───────────────────────────────────────────
+  let micPrev = null, micPrevCtx = null, micPrevRaf = null;
+  function micConstraint() {
+    const sel = $('slMicSel');
+    const id = sel ? sel.value : (localStorage.getItem('slMicId') || '');
+    if (id === 'none') return null;
+    const audio = { echoCancellation: false, noiseSuppression: true };
+    if (id && id !== 'default') audio.deviceId = { exact: id };
+    return audio;
+  }
+  async function populateMics() {
+    const sel = $('slMicSel'); if (!sel) return;
+    let saved = ''; try { saved = localStorage.getItem('slMicId') || ''; } catch (e) {}
+    // ラベル取得のため一度権限を要求（拒否されていれば失敗し、下で案内を出す）
+    try { const t = await navigator.mediaDevices.getUserMedia({ audio: true }); t.getTracks().forEach(x => x.stop()); }
+    catch (e) { micError(e); }
+    let devs = [];
+    try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput'); } catch (e) {}
+    sel.innerHTML = '';
+    const add = (v, label) => { const o = document.createElement('option'); o.value = v; o.textContent = label; sel.appendChild(o); };
+    add('default', '既定のマイク（OS の設定）');
+    devs.forEach((d, k) => { if (d.deviceId && d.deviceId !== 'default') add(d.deviceId, d.label || ('マイク ' + (k + 1))); });
+    add('none', 'マイクなし（タブの音声のみ）');
+    if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
+  }
+  function micError(e) {
+    const st = $('slMicStatus'); if (!st) return;
+    const n = e && e.name;
+    let msg = 'マイクを取得できません（' + (n || e) + '）。';
+    if (n === 'NotAllowedError') msg += ' ブラウザのアドレスバー左の 🔒 → マイクを「許可」にし、OS のプライバシー設定でもブラウザにマイクを許可してください。';
+    else if (n === 'NotFoundError') msg += ' マイクが見つかりません。接続を確認してください。';
+    else if (n === 'NotReadableError') msg += ' 他のアプリ（Zoom 等）がマイクを占有している可能性があります。';
+    st.textContent = msg; st.style.color = '#dc2626';
+  }
+  async function startMicPreview() {
+    stopMicPreview();
+    const st = $('slMicStatus'), bar = $('slMicLevel');
+    const c = micConstraint();
+    if (!c) { if (st) { st.textContent = 'マイクなしで録画します（タブの音声のみ）。'; st.style.color = ''; } if (bar) bar.style.width = '0'; return; }
+    try {
+      micPrev = await navigator.mediaDevices.getUserMedia({ audio: c });
+      const label = micPrev.getAudioTracks()[0].label || '';
+      if (st) { st.textContent = '使用中：' + label + ' — 話してみて、バーが動けば OK'; st.style.color = '#16a34a'; }
+      micPrevCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const an = micPrevCtx.createAnalyser(); an.fftSize = 512;
+      micPrevCtx.createMediaStreamSource(micPrev).connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      const loop = () => {
+        an.getByteTimeDomainData(buf);
+        let sum = 0; for (let k = 0; k < buf.length; k++) { const v = (buf[k] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / buf.length);
+        if (bar) bar.style.width = Math.min(100, rms * 400) + '%';
+        micPrevRaf = requestAnimationFrame(loop);
+      };
+      loop();
+    } catch (e) { micError(e); }
+  }
+  function stopMicPreview() {
+    if (micPrevRaf) cancelAnimationFrame(micPrevRaf); micPrevRaf = null;
+    if (micPrev) micPrev.getTracks().forEach(t => t.stop()); micPrev = null;
+    if (micPrevCtx) { try { micPrevCtx.close(); } catch (e) {} micPrevCtx = null; }
   }
 
   async function recBegin() {
@@ -569,8 +641,11 @@
       });
     } catch (e) { console.warn('[slide-live] getDisplayMedia', e); return; }
     let mic = null;
-    try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true } }); }
-    catch (e) { console.warn('[slide-live] mic', e); }
+    const mc = micConstraint();
+    if (mc) {
+      try { mic = await navigator.mediaDevices.getUserMedia({ audio: mc }); }
+      catch (e) { console.warn('[slide-live] mic', e); showBanner('⚠ マイクを取得できなかったため、マイク音声なしで録画しています。'); }
+    }
 
     const tracks = [display.getVideoTracks()[0]];
     recStreams = [display]; if (mic) recStreams.push(mic);
@@ -614,6 +689,7 @@
     };
     display.getVideoTracks()[0].onended = () => { if (rec) recStop(); };  // ブラウザ側の「共有を停止」
     rec.start(1000);
+    recMicLabel = mic ? (mic.getAudioTracks()[0].label || 'マイク') : 'マイクなし';
     recStart = Date.now();
     recTimer = setInterval(updateRecBtn, 1000);
     recMaxTimer = setTimeout(() => { if (rec) { showBanner('最長録画時間に達したため停止しました。'); recStop(); } }, CONFIG.recMaxMin * 60000);
@@ -640,6 +716,7 @@
     const sec = Math.floor((Date.now() - recStart) / 1000);
     const z = n => String(n).padStart(2, '0');
     b.textContent = '⏹ ' + z(Math.floor(sec / 3600)) + ':' + z(Math.floor(sec / 60) % 60) + ':' + z(sec % 60);
+    b.title = '録画中（音声：' + recMicLabel + '）— クリックで停止';
     b.classList.add('rec');
   }
 
