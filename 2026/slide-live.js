@@ -31,7 +31,7 @@
   const CONFIG = {
     // 配信を許可するログイン ID（slide-sync.js のログイン ID。@ より前の部分）。
     // 空配列のままだと「ログイン済みなら誰でも配信可」になるので、必ず自分の ID を入れること。
-    presenterIds: [tajika.tomoya],
+    presenterIds: ['tajika.tomoya'],
     // Supabase 側で realtime.messages に RLS を設定したら true にする（なりすまし防止）
     privateChannel: false,
     tickMs: 60,          // presenter の差分送信間隔
