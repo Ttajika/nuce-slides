@@ -342,8 +342,20 @@
       updateAuthUI();
       if (currentUser) syncFromRemote();
       else setSyncStatus('');
+      authListeners.forEach(fn => { try { fn(currentUser); } catch (e) { console.warn('[slide-sync] onAuth', e); } });
     });
   };
+
+  // ── 他モジュール（slide-live.js など）向けの読み取り API ────────────────
+  const authListeners = [];
+  SS.client = () => _supabase;              // Supabase クライアント（未設定なら null）
+  SS.user   = () => currentUser;            // ログイン中ユーザー（未ログインなら null）
+  SS.loginId = () => {                      // ログイン ID（メール形式から @ より前を返す）
+    const em = currentUser && currentUser.email;
+    return em ? em.split('@')[0] : null;
+  };
+  SS.onAuth = (fn) => { authListeners.push(fn); };   // ログイン状態変化のコールバック登録
+  SS.isConfigured = isConfigured;
 
   window.SlideSync = SS;
 })();
