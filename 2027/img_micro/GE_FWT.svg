@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 547"
+     style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', Times, serif;">
+
+  <!-- ============ L's diagram (static, RED) ============ -->
+  <g id="L-diagram">
+    <!-- axes -->
+    <line x1="180" y1="350" x2="610" y2="350" stroke="#c83232" stroke-width="1.5"/>
+    <polygon points="615,350 605,345 605,355" fill="#c83232"/>
+    <line x1="180" y1="350" x2="180" y2="50" stroke="#c83232" stroke-width="1.5"/>
+    <polygon points="180,45 175,57 185,57" fill="#c83232"/>
+    <text x="628" y="358" font-size="22" font-style="italic" fill="#c83232">q<tspan font-size="14" dy="6">x</tspan></text>
+    <text x="172" y="42" text-anchor="end" font-size="22" font-style="italic" fill="#c83232">q<tspan font-size="14" dy="6">y</tspan></text>
+
+    <!-- budget line -->
+    <line x1="180" y1="150" x2="580" y2="350" stroke="#c83232" stroke-width="2.5"/>
+
+    <!-- indifference curve (Cobb-Douglas-like, through optimal (280,200) tangent slope 0.5).
+         Short tangent segments near optimal + outer control points pulled away from budget
+         line for clear separation. -->
+    <path d="M 200 80 C 220 150, 276 198, 280 200 C 284 202, 350 220, 480 245"
+          stroke="#c83232" stroke-width="3" fill="none"/>
+
+    <!-- endowment: math (200,100), screen (380,250) -->
+    <line x1="380" y1="350" x2="380" y2="250" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <line x1="180" y1="250" x2="380" y2="250" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <circle cx="380" cy="250" r="4" fill="#c83232"/>
+    <text x="172" y="256" text-anchor="end" font-size="16" font-style="italic" fill="#c83232">e<tspan font-size="12" dy="4">Ly</tspan></text>
+    <text x="380" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#c83232">e<tspan font-size="12" dy="4">Lx</tspan></text>
+
+    <!-- optimal: math (100,150), screen (280,200) -->
+    <line x1="280" y1="350" x2="280" y2="200" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <line x1="180" y1="200" x2="280" y2="200" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <circle cx="280" cy="200" r="4" fill="#c83232"/>
+    <text x="172" y="206" text-anchor="end" font-size="16" font-style="italic" fill="#c83232">q<tspan font-size="12" dy="4">Ly</tspan></text>
+    <text x="280" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#c83232">q<tspan font-size="12" dy="4">Lx</tspan></text>
+  </g>
+
+  <!-- ============ K's diagram (animated, BLUE) ============ -->
+  <g id="K-outer">
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0; 0 0; -550 20; -550 20; 0 0; 0 0"
+      keyTimes="0; 0.22; 0.30; 0.70; 0.78; 1"
+      dur="12s" repeatCount="indefinite"/>
+
+    <g id="K-inner">
+      <animateTransform attributeName="transform" type="rotate"
+        values="0 915 200; 0 915 200; -180 915 200; -180 915 200; 0 915 200; 0 915 200"
+        keyTimes="0; 0.05; 0.175; 0.825; 0.95; 1"
+        dur="12s" repeatCount="indefinite"/>
+
+      <!-- axes -->
+      <line x1="700" y1="350" x2="1130" y2="350" stroke="#4a90d9" stroke-width="1.5"/>
+      <polygon points="1135,350 1125,345 1125,355" fill="#4a90d9"/>
+      <line x1="700" y1="350" x2="700" y2="50" stroke="#4a90d9" stroke-width="1.5"/>
+      <polygon points="700,45 695,57 705,57" fill="#4a90d9"/>
+      <text x="1148" y="358" font-size="22" font-style="italic" fill="#4a90d9">q<tspan font-size="14" dy="6">x</tspan></text>
+      <text x="692" y="42" text-anchor="end" font-size="22" font-style="italic" fill="#4a90d9">q<tspan font-size="14" dy="6">y</tspan></text>
+
+      <!-- budget line -->
+      <line x1="700" y1="70" x2="1100" y2="270" stroke="#4a90d9" stroke-width="2.5"/>
+
+      <!-- indifference curve through K-optimal (1000,220) tangent slope 0.5.
+           Same shape as L's curve, offset by (+720, +20). -->
+      <path d="M 920 100 C 940 170, 996 218, 1000 220 C 1004 222, 1070 240, 1100 250"
+            stroke="#4a90d9" stroke-width="3" fill="none"/>
+
+      <!-- endowment: K-screen (900,170) → maps to (380,250) -->
+      <line x1="900" y1="350" x2="900" y2="170" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <line x1="700" y1="170" x2="900" y2="170" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <circle cx="900" cy="170" r="4" fill="#4a90d9"/>
+      <text x="692" y="176" text-anchor="end" font-size="16" font-style="italic" fill="#4a90d9">e<tspan font-size="12" dy="4">Ky</tspan></text>
+      <text x="900" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#4a90d9">e<tspan font-size="12" dy="4">Kx</tspan></text>
+
+      <!-- optimal: K-screen (1000,220) → maps to (280,200) -->
+      <line x1="1000" y1="350" x2="1000" y2="220" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <line x1="700" y1="220" x2="1000" y2="220" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <circle cx="1000" cy="220" r="4" fill="#4a90d9"/>
+      <text x="692" y="226" text-anchor="end" font-size="16" font-style="italic" fill="#4a90d9">q<tspan font-size="12" dy="4">Ky</tspan></text>
+      <text x="1000" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#4a90d9">q<tspan font-size="12" dy="4">Kx</tspan></text>
+    </g>
+  </g>
+
+  <!-- ============ Text overlays ============ -->
+
+  <!-- Initial / final: each consumer optimizes on their own budget line -->
+  <text x="600" y="450" font-size="22" font-weight="bold" fill="#4d3a8c" opacity="1" text-anchor="middle"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    各消費者は予算制約のもとで効用最大化
+    <animate attributeName="opacity"
+      values="1; 1; 0; 0; 1; 1"
+      keyTimes="0; 0.10; 0.15; 0.85; 0.90; 1"
+      dur="12s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Box state: tangency ⟹ Pareto efficient -->
+  <text x="780" y="260" font-size="22" font-weight="bold" fill="#4d3a8c" opacity="0"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    無差別曲線が接する
+    <animate attributeName="opacity"
+      values="0; 0; 1; 1; 0; 0"
+      keyTimes="0; 0.35; 0.40; 0.65; 0.70; 1"
+      dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="780" y="298" font-size="26" font-weight="bold" fill="#4d3a8c" opacity="0"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    ⟹ パレート効率的！
+    <animate attributeName="opacity"
+      values="0; 0; 1; 1; 0; 0"
+      keyTimes="0; 0.35; 0.40; 0.65; 0.70; 1"
+      dur="12s" repeatCount="indefinite"/>
+  </text>
+</svg>

@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 547"
+     style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', Times, serif;">
+
+  <!--
+    SWT animation (10s loop):
+      0-15%   box state: tangent indifference curves only, no budget line
+              text "パレート効率的な配分" visible
+      15-25%  budget line fades in (the supporting / separating hyperplane)
+      25-30%  hold box state with budget line
+      30-45%  K slides back to the right
+      45-60%  K rotates upright in place
+      60-80%  separated state, each consumer's utility-maximization diagram
+              text "各消費者の効用最大化" visible
+      80-92%  K rotates back to flipped
+      92-100% K slides back into box; budget line fades out
+  -->
+
+  <!-- ============ L's diagram (static, RED) ============ -->
+  <g id="L-diagram">
+    <!-- axes -->
+    <line x1="180" y1="350" x2="610" y2="350" stroke="#c83232" stroke-width="1.5"/>
+    <polygon points="615,350 605,345 605,355" fill="#c83232"/>
+    <line x1="180" y1="350" x2="180" y2="50" stroke="#c83232" stroke-width="1.5"/>
+    <polygon points="180,45 175,57 185,57" fill="#c83232"/>
+    <text x="628" y="358" font-size="22" font-style="italic" fill="#c83232">q<tspan font-size="14" dy="6">x</tspan></text>
+    <text x="172" y="42" text-anchor="end" font-size="22" font-style="italic" fill="#c83232">q<tspan font-size="14" dy="6">y</tspan></text>
+
+    <!-- indifference curve through optimal (280,200) tangent slope 0.5 -->
+    <path d="M 200 80 C 220 150, 276 198, 280 200 C 284 202, 350 220, 480 245"
+          stroke="#c83232" stroke-width="3" fill="none"/>
+
+    <!-- budget line: fades in during phase 1 (15-25%) -->
+    <line x1="180" y1="150" x2="580" y2="350" stroke="#c83232" stroke-width="2.5" opacity="0">
+      <animate attributeName="opacity"
+        values="0; 0; 1; 1; 0"
+        keyTimes="0; 0.15; 0.25; 0.92; 1"
+        dur="14s" repeatCount="indefinite"/>
+    </line>
+
+    <!-- optimal/Pareto efficient allocation point: math (100,150), screen (280,200) -->
+    <line x1="280" y1="350" x2="280" y2="200" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <line x1="180" y1="200" x2="280" y2="200" stroke="#c83232" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+    <circle cx="280" cy="200" r="4" fill="#c83232"/>
+    <text x="172" y="206" text-anchor="end" font-size="16" font-style="italic" fill="#c83232">q<tspan font-size="12" dy="4">Ly</tspan></text>
+    <text x="280" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#c83232">q<tspan font-size="12" dy="4">Lx</tspan></text>
+  </g>
+
+  <!-- ============ K's diagram (animated, BLUE) ============
+       Note: K starts in BOX state (rotated and translated), then un-translates,
+       un-rotates to separated, holds, then re-rotates and re-translates back. -->
+  <g id="K-outer">
+    <animateTransform attributeName="transform" type="translate"
+      values="-550 20; -550 20; 0 0; 0 0; -550 20"
+      keyTimes="0; 0.32; 0.40; 0.93; 1"
+      dur="14s" repeatCount="indefinite"/>
+
+    <g id="K-inner">
+      <animateTransform attributeName="transform" type="rotate"
+        values="-180 915 200; -180 915 200; 0 915 200; 0 915 200; -180 915 200; -180 915 200"
+        keyTimes="0; 0.40; 0.50; 0.83; 0.93; 1"
+        dur="14s" repeatCount="indefinite"/>
+
+      <!-- axes -->
+      <line x1="700" y1="350" x2="1130" y2="350" stroke="#4a90d9" stroke-width="1.5"/>
+      <polygon points="1135,350 1125,345 1125,355" fill="#4a90d9"/>
+      <line x1="700" y1="350" x2="700" y2="50" stroke="#4a90d9" stroke-width="1.5"/>
+      <polygon points="700,45 695,57 705,57" fill="#4a90d9"/>
+      <text x="1148" y="358" font-size="22" font-style="italic" fill="#4a90d9">q<tspan font-size="14" dy="6">x</tspan></text>
+      <text x="692" y="42" text-anchor="end" font-size="22" font-style="italic" fill="#4a90d9">q<tspan font-size="14" dy="6">y</tspan></text>
+
+      <!-- indifference curve through K-optimal (1000,220) tangent slope 0.5 -->
+      <path d="M 920 100 C 940 170, 996 218, 1000 220 C 1004 222, 1070 240, 1100 250"
+            stroke="#4a90d9" stroke-width="3" fill="none"/>
+
+      <!-- budget line: same opacity animation as L's -->
+      <line x1="700" y1="70" x2="1100" y2="270" stroke="#4a90d9" stroke-width="2.5" opacity="0">
+        <animate attributeName="opacity"
+          values="0; 0; 1; 1; 0"
+          keyTimes="0; 0.15; 0.25; 0.92; 1"
+          dur="14s" repeatCount="indefinite"/>
+      </line>
+
+      <!-- optimal/Pareto efficient allocation point: K-screen (1000,220) -->
+      <line x1="1000" y1="350" x2="1000" y2="220" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <line x1="700" y1="220" x2="1000" y2="220" stroke="#4a90d9" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+      <circle cx="1000" cy="220" r="4" fill="#4a90d9"/>
+      <text x="692" y="226" text-anchor="end" font-size="16" font-style="italic" fill="#4a90d9">q<tspan font-size="12" dy="4">Ky</tspan></text>
+      <text x="1000" y="372" text-anchor="middle" font-size="16" font-style="italic" fill="#4a90d9">q<tspan font-size="12" dy="4">Kx</tspan></text>
+    </g>
+  </g>
+
+  <!-- ============ Text overlays ============ -->
+  <!-- Box state initial: Pareto efficient ⟹ tangent.  Lower area for visibility. -->
+  <text x="600" y="430" font-size="24" font-weight="bold" fill="#4d3a8c" opacity="1" text-anchor="middle"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    パレート効率的な配分
+    <animate attributeName="opacity"
+      values="1; 1; 0; 0; 1"
+      keyTimes="0; 0.3; 0.35; 0.95; 1"
+      dur="14s" repeatCount="indefinite"/>
+  </text>
+  <text x="600" y="465" font-size="20" fill="#4d3a8c" opacity="1" text-anchor="middle"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    ⟹ 無差別曲線が接する
+    <animate attributeName="opacity"
+      values="1; 1; 0; 0; 1"
+      keyTimes="0; 0.3; 0.35; 0.95; 1"
+      dur="14s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Label appears near the budget line so the arrow points to it -->
+  <text x="430" y="305" font-size="16" font-weight="bold" fill="#c83232" opacity="0"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    ↑ 接点を通る共通接線を引く
+    <animate attributeName="opacity"
+      values="0; 0; 1; 1; 0; 0"
+      keyTimes="0; 0.2; 0.25; 0.3; 0.35; 1"
+      dur="14s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Separated state: each consumer optimizes using the common tangent as budget line -->
+  <text x="600" y="450" font-size="22" font-weight="bold" fill="#4d3a8c" opacity="0" text-anchor="middle"
+        style="font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', sans-serif;">
+    共通接線を予算線として各消費者が効用最大化
+    <animate attributeName="opacity"
+      values="0; 0; 1; 1; 0; 0"
+      keyTimes="0; 0.55; 0.60; 0.80; 0.83; 1"
+      dur="14s" repeatCount="indefinite"/>
+  </text>
+</svg>
