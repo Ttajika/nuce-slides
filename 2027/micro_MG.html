@@ -385,7 +385,9 @@ body.print-mode .tikz-figure.anim {
   border:1px dashed var(--border);
   border-radius:6px;
 }
-body.print-mode .tikz-figure.anim img { display:none; }
+body.print-mode .tikz-figure.anim img,
+body.print-mode .tikz-figure.anim svg,
+body.print-mode .anim-ctrl { display:none; }
 
 /* Print: QR codes always visible */
 body.print-mode .qr-link .qr-img { display:block !important; }
@@ -414,6 +416,21 @@ body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
 @media print {
   body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
+}
+
+/* ═══ ANIMATED SVG SEEK BAR ═══ */
+.anim-ctrl {
+  display:flex; align-items:center; gap:8px; max-width:520px;
+  margin:2px auto 0; padding:2px 8px; cursor:default;
+}
+.anim-ctrl button {
+  border:1px solid var(--border); background:var(--surface); border-radius:5px;
+  cursor:pointer; font-size:12px; padding:2px 8px; line-height:1.4;
+}
+.anim-ctrl input[type=range] { flex:1; min-width:0; accent-color:var(--accent); cursor:pointer; }
+.anim-ctrl .anim-time {
+  font-size:10.5px; color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace; white-space:nowrap;
 }
 
 /* ═══ KEYBOARD HINTS ═══ */
@@ -1307,6 +1324,7 @@ function renderSlide(idx) {
   renderMath(el);
   setupPhantoms(el);
   setupFigureZoom(el);
+  setupAnimFigures(el);
   setupLinks(el);
   updateStatusDot(idx);
 }
@@ -1436,6 +1454,78 @@ document.getElementById('slideArea').addEventListener('wheel', e => {
   zoomStep(wheelAccum < 0 ? 1 : -1);
   wheelAccum = 0;
 }, {passive:false});
+
+// ═══ ANIMATED SVG: inline + seek bar ═══
+// <img src="*.svg"> のままでは SMIL タイムラインに触れないため、.anim の図だけ
+// SVG をインライン展開してシークバーを付ける。fetch 失敗時は <img> のまま（従来動作）。
+const animSvgCache = {};   // src -> svg markup
+async function setupAnimFigures(container) {
+  for (const fig of container.querySelectorAll('.tikz-figure.anim')) {
+    const img = fig.querySelector('img[src$=".svg"]');
+    if (!img) continue;
+    const src = img.getAttribute('src');
+    try {
+      if (!animSvgCache[src]) {
+        const res = await fetch(src);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        animSvgCache[src] = await res.text();
+      }
+    } catch (e) { console.warn('[anim] inline failed:', src, e); continue; }
+    // スライドが切り替わっていたら何もしない
+    if (!fig.isConnected || fig.querySelector('svg')) continue;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = animSvgCache[src];
+    const svg = tmp.querySelector('svg');
+    if (!svg) continue;
+    svg.setAttribute('role', 'img');
+    if (img.alt) svg.setAttribute('aria-label', img.alt);
+    if (!svg.getAttribute('width')) {
+      const vb = (svg.getAttribute('viewBox') || '').split(/[ ,]+/);
+      if (vb.length === 4) { svg.setAttribute('width', vb[2]); svg.setAttribute('height', vb[3]); }
+    }
+    img.replaceWith(svg);
+    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(fig, svg);
+  }
+}
+
+function addAnimControls(fig, svg) {
+  let dur = 0;
+  svg.querySelectorAll('animate, animateTransform, animateMotion').forEach(a => {
+    const v = parseFloat(a.getAttribute('dur'));
+    if (v > dur) dur = v;
+  });
+  if (!dur) return;
+  const bar = document.createElement('div');
+  bar.className = 'anim-ctrl';
+  bar.innerHTML = `
+    <button class="anim-play" title="再生 / 一時停止">⏸</button>
+    <input type="range" min="0" max="${dur}" step="0.05" value="0" title="シーク">
+    <span class="anim-time"></span>`;
+  bar.addEventListener('click', e => e.stopPropagation());  // 図クリック（拡大表示）と分離
+  fig.appendChild(bar);
+  const btn = bar.querySelector('.anim-play');
+  const range = bar.querySelector('input');
+  const time = bar.querySelector('.anim-time');
+  const fmt = t => t.toFixed(1) + ' / ' + dur + 's';
+  let playing = true;
+  function setPlaying(on) {
+    playing = on;
+    btn.textContent = on ? '⏸' : '▶';
+    if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
+  }
+  btn.addEventListener('click', () => setPlaying(!playing));
+  range.addEventListener('input', () => {
+    if (playing) setPlaying(false);        // シーク中は一時停止（動画プレーヤーと同じ）
+    svg.setCurrentTime(parseFloat(range.value));
+    time.textContent = fmt(parseFloat(range.value));
+  });
+  (function tick() {
+    if (!fig.isConnected) return;          // スライドが切り替わったら停止
+    const t = svg.getCurrentTime() % dur;
+    if (playing) { range.value = t; time.textContent = fmt(t); }
+    requestAnimationFrame(tick);
+  })();
+}
 
 function setupFigureZoom(container) {
   container.querySelectorAll('.tikz-figure').forEach(fig => {

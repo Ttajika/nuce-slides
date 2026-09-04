@@ -289,6 +289,21 @@ a:hover { color:#1e40af; }
 .qr-link.qr-open .qr-img { display:block; }
 .qr-link.qr-open { flex-direction:column; }
 
+/* ---- Animated SVG seek bar ---- */
+.anim-wrap { text-align:center; margin:8px auto; max-width:640px; }
+.anim-wrap svg { max-width:100%; height:auto; }
+.anim-ctrl {
+  display:flex; align-items:center; gap:8px; max-width:520px;
+  margin:2px auto 0; padding:2px 8px; cursor:default;
+}
+.anim-ctrl button {
+  border:1px solid var(--border); background:var(--surface); border-radius:5px;
+  cursor:pointer; font-size:12px; padding:2px 8px; line-height:1.4;
+}
+.anim-ctrl input[type=range] { flex:1; min-width:0; accent-color:var(--accent); cursor:pointer; }
+.anim-ctrl .anim-time { font-size:10.5px; color:var(--text-dim); font-family:monospace; white-space:nowrap; }
+body.print-mode .anim-ctrl { display:none; }
+
 /* ---- Phantom ---- */
 .phantom {
   background:var(--phantom-bg); color:transparent;
@@ -1110,6 +1125,78 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== Navigation =====
+// ===== Animated SVG: inline + seek bar =====
+// <img> のままでは SMIL タイムラインに触れないため、アニメ SVG（*_anime.svg）を
+// インライン展開してシークバーを付ける。fetch 失敗時は <img> のまま（従来動作）。
+const animSvgCache = {};
+async function setupAnimFigures(container) {
+  for (const img of container.querySelectorAll('img[src$="_anime.svg"], .tikz-figure.anim img[src$=".svg"]')) {
+    const src = img.getAttribute('src');
+    try {
+      if (!animSvgCache[src]) {
+        const res = await fetch(src);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        animSvgCache[src] = await res.text();
+      }
+    } catch (e) { console.warn('[anim] inline failed:', src, e); continue; }
+    if (!img.isConnected) continue;   // スライドが切り替わっていたら何もしない
+    const tmp = document.createElement('div');
+    tmp.innerHTML = animSvgCache[src];
+    const svg = tmp.querySelector('svg');
+    if (!svg) continue;
+    svg.setAttribute('role', 'img');
+    if (img.alt) svg.setAttribute('aria-label', img.alt);
+    if (!svg.getAttribute('width')) {
+      const vb = (svg.getAttribute('viewBox') || '').split(/[ ,]+/);
+      if (vb.length === 4) { svg.setAttribute('width', vb[2]); svg.setAttribute('height', vb[3]); }
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'anim-wrap';
+    img.replaceWith(wrap);
+    wrap.appendChild(svg);
+    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(wrap, svg);
+  }
+}
+
+function addAnimControls(wrap, svg) {
+  let dur = 0;
+  svg.querySelectorAll('animate, animateTransform, animateMotion').forEach(a => {
+    const v = parseFloat(a.getAttribute('dur'));
+    if (v > dur) dur = v;
+  });
+  if (!dur) return;
+  const bar = document.createElement('div');
+  bar.className = 'anim-ctrl';
+  bar.innerHTML = `
+    <button class="anim-play" title="再生 / 一時停止">⏸</button>
+    <input type="range" min="0" max="${dur}" step="0.05" value="0" title="シーク">
+    <span class="anim-time"></span>`;
+  bar.addEventListener('click', e => e.stopPropagation());
+  wrap.appendChild(bar);
+  const btn = bar.querySelector('.anim-play');
+  const range = bar.querySelector('input');
+  const time = bar.querySelector('.anim-time');
+  const fmt = t => t.toFixed(1) + ' / ' + dur + 's';
+  let playing = true;
+  function setPlaying(on) {
+    playing = on;
+    btn.textContent = on ? '⏸' : '▶';
+    if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
+  }
+  btn.addEventListener('click', () => setPlaying(!playing));
+  range.addEventListener('input', () => {
+    if (playing) setPlaying(false);   // シーク中は一時停止
+    svg.setCurrentTime(parseFloat(range.value));
+    time.textContent = fmt(parseFloat(range.value));
+  });
+  (function tick() {
+    if (!wrap.isConnected) return;    // スライドが切り替わったら停止
+    const t = svg.getCurrentTime() % dur;
+    if (playing) { range.value = t; time.textContent = fmt(t); }
+    requestAnimationFrame(tick);
+  })();
+}
+
 function showSlide(idx) {
   if (idx < 0 || idx >= SLIDES.length) return;
   // Save current note
@@ -1174,6 +1261,7 @@ function showSlide(idx) {
     `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
   content.appendChild(ubar);
   updateStatusDot(idx);
+  setupAnimFigures(content);
 
   // Setup phantoms
   content.querySelectorAll('.phantom').forEach(p => {
