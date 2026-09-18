@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tar tzf:*)",
+      "Bash(tar xzf:*)",
+      "Bash(tar czf:*)",
+      "Bash(zip -r beamer-to-html-skill.zip beamer-to-html-skill/)"
+    ]
+  }
+}
