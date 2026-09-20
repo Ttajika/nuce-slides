@@ -54,9 +54,44 @@
   let sb = null;
   const myId = Math.random().toString(36).slice(2, 10);
 
+  // 配信中の固定レイアウト（スライド幅 / 板書ポップアップの大きさ、CSS px）
+  const FIXED = { slideW: 1100, boardW: 900, boardH: 600 };
+
+  // ── 固定レイアウト：拡大率を「収まる範囲」に丸め、板書の zoom を決める ─────────
+  function fitLayout() {
+    if (!document.body.classList.contains('live-fixed')) return;
+    const layer = document.getElementById('zoomLayer');
+    if (layer) {
+      const area = layer.parentElement;
+      const cs = getComputedStyle(area);
+      const avail = area.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const want = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-zoom')) || 1;
+      const fit = Math.max(0.2, Math.min(want, avail / FIXED.slideW));
+      document.documentElement.style.setProperty('--content-zoom', String(Math.round(fit * 1000) / 1000));
+      const info = document.getElementById('zoomInfo');
+      if (info) info.textContent = Math.round(fit * 100) + '%';
+    }
+    const bz = Math.min(1, innerWidth * 0.92 / FIXED.boardW, innerHeight * 0.85 / FIXED.boardH);
+    document.documentElement.style.setProperty('--live-board-zoom', String(Math.round(bz * 1000) / 1000));
+    if (typeof window.resizeDrawCanvas === 'function') window.resizeDrawCanvas();
+    if (adapter && adapter.isBoardOpen && adapter.isBoardOpen() && typeof window.resizeBoardCanvas === 'function') window.resizeBoardCanvas();
+  }
+  function installFixedLayout() {
+    document.body.classList.add('live-fixed');
+    // ページ側の applyZoom（ユーザーの拡大率変更）の後に必ず丸め直す
+    const orig = window.applyZoom;
+    if (typeof orig === 'function') {
+      window.applyZoom = function () { const r = orig.apply(this, arguments); fitLayout(); return r; };
+    }
+    window.addEventListener('resize', () => setTimeout(fitLayout, 0));
+    fitLayout();
+  }
+
   // ── 共通ユーティリティ ───────────────────────────────────────────────────
   const r4 = v => Math.round(v * 10000) / 10000;
-  function normPt(p, c) { return [r4(p.x / c.width), r4(p.y / c.height)]; }
+  // 座標は「canvas の幅」を 1 とする単位で送る（x も y も幅で割る）。
+  // 高さで割ると、ウィンドウの縦横比や拡大率が違う端末間で縦にずれるため。
+  function normPt(p, c) { return [r4(p.x / c.width), r4(p.y / c.width)]; }
   function normStroke(s, c) {
     return { c: s.color, w: s.size, a: s.alpha || 1, p: s.points.map(pt => normPt(pt, c)) };
   }
@@ -137,6 +172,10 @@
       .sl-meter { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:6px 0 2px; }
       .sl-meter div { height:100%; width:0; background:linear-gradient(90deg,#16a34a,#facc15 70%,#dc2626); transition:width .08s; }
       .live-canvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:11; pointer-events:none; }
+      /* 配信中はスライドと板書のレイアウト幅を固定し、画面に収まらない分は zoom で縮める。
+         こうすると全端末で行の折り返し・座標系が一致し、手書きがずれない。 */
+      body.live-fixed .zoom-layer { width:${FIXED.slideW}px !important; min-width:${FIXED.slideW}px; max-width:${FIXED.slideW}px !important; }
+      body.live-fixed .board-popup-inner { width:${FIXED.boardW}px !important; height:${FIXED.boardH}px !important; zoom:var(--live-board-zoom, 1); }
     `;
     const st = document.createElement('style');
     st.textContent = css;
@@ -455,14 +494,14 @@
     }
   }
 
-  function drawList(ctx, list, W, H) {
+  function drawList(ctx, list, W) {
     (list || []).forEach(s => {
       if (!s.p || s.p.length < 2) return;
       ctx.beginPath();
       ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.globalAlpha = s.a || 1;
-      ctx.moveTo(s.p[0][0] * W, s.p[0][1] * H);
-      for (let k = 1; k < s.p.length; k++) ctx.lineTo(s.p[k][0] * W, s.p[k][1] * H);
+      ctx.moveTo(s.p[0][0] * W, s.p[0][1] * W);
+      for (let k = 1; k < s.p.length; k++) ctx.lineTo(s.p[k][0] * W, s.p[k][1] * W);
       ctx.stroke();
       ctx.globalAlpha = 1;
     });
@@ -478,10 +517,10 @@
     }
     const ctx = liveCanvas.getContext('2d');
     ctx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
-    const W = liveCanvas.width, H = liveCanvas.height;
-    drawList(ctx, L.s[adapter.getCurrent()], W, H);
+    const W = liveCanvas.width;
+    drawList(ctx, L.s[adapter.getCurrent()], W);
     if (L.p && adapter.getCurrent() === L.i) {
-      const x = L.p[0] * W, y = L.p[1] * H;
+      const x = L.p[0] * W, y = L.p[1] * W;
       ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(233,69,96,0.7)'; ctx.fill();
       ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
     }
@@ -496,7 +535,7 @@
     }
     const ctx = liveBoardCanvas.getContext('2d');
     ctx.clearRect(0, 0, liveBoardCanvas.width, liveBoardCanvas.height);
-    drawList(ctx, L.b[adapter.getCurrent()], liveBoardCanvas.width, liveBoardCanvas.height);
+    drawList(ctx, L.b[adapter.getCurrent()], liveBoardCanvas.width);
   }
 
   // 既存の再描画関数の後に live レイヤーも描き直す（canvas のサイズ変更に追従するため）
@@ -812,6 +851,7 @@
     else return;   // 通常の学生表示：何もしない
     if (!window.SlideSync) { console.warn('[slide-live] slide-sync.js が必要です'); return; }
     injectStyles();
+    installFixedLayout();
     if (role === 'presenter') {
       injectPresenterUI();
     } else {

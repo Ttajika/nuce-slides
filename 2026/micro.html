@@ -771,11 +771,22 @@ const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 
 function saveLocal(remoteTs) {
   try {
-    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current,
-                   updatedAt: remoteTs || Date.now() };
+    // updatedAt は「内容が実際に変わったとき」だけ更新する。
+    // スライド移動やページを閉じるだけで時刻が進むと、古い内容の端末が
+    // 「最新」と誤判定され、クラウド経由で他端末の書き込みを消してしまうため。
+    let prev = null;
+    try { const raw = localStorage.getItem(STORAGE_KEY); prev = raw ? JSON.parse(raw) : null; } catch(e) {}
+    const pick = o => JSON.stringify({ notes: o.notes || {}, strokes: o.strokes || {}, boardStrokes: o.boardStrokes || {},
+                                       understanding: o.understanding || {}, bookmarks: o.bookmarks || {} });
+    const cur = { notes, strokes, boardStrokes, understanding, bookmarks };
+    const changed = !prev || pick(cur) !== pick(prev);
+    const updatedAt = remoteTs ? remoteTs
+                    : (changed || !prev.updatedAt) ? Date.now()
+                    : prev.updatedAt;
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current, updatedAt };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    // ローカル変更（引数なし）のときだけクラウドへ push。リモート適用時は echo し返さない。
-    if (!remoteTs && window.SlideSync) SlideSync.scheduleRemoteSave();
+    // 内容が変わったローカル変更のときだけクラウドへ push。リモート適用時（remoteTs あり）は echo し返さない。
+    if (!remoteTs && changed && window.SlideSync) SlideSync.scheduleRemoteSave();
   } catch(e) { /* quota exceeded or unavailable */ }
 }
 

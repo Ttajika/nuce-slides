@@ -11,7 +11,8 @@
        getCanvas,             // () => 手書き用 canvas 要素（座標正規化に使用）
        getState,              // () => { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide }
        applyState,            // (state) => 受け取った state を画面の変数に反映（strokes はピクセル座標）
-       saveLocal,             // (timestamp?) => localStorage へ保存（timestamp 指定時は再アップロードしない）
+       saveLocal,             // (timestamp?) => localStorage へ保存（timestamp 指定時は再アップロードしない。
+                              //   引数なしのときは「内容が変わった場合だけ」updatedAt を更新すること）
        refresh,               // () => メモ欄・スライドを再描画
      });
 
@@ -161,7 +162,7 @@
     document.getElementById('ssSignupBtn').onclick = SS.signup;
     document.getElementById('ssCloseBtn').onclick  = SS.closeModal;
     document.getElementById('ssCloseBtn2').onclick = SS.closeModal;
-    document.getElementById('ssSyncNowBtn').onclick = () => syncFromRemote(true);
+    document.getElementById('ssSyncNowBtn').onclick = () => syncFromRemote(false);
     document.getElementById('ssLogoutBtn').onclick  = SS.logout;
   }
 
@@ -238,6 +239,27 @@
   };
 
   // ── 同期コア ────────────────────────────────────────────────────────────
+  //   ローカルとクラウドを「スライド番号ごと」にマージする。
+  //   ・両方に同じスライドのデータがあれば、更新時刻が新しい側（force 指定時はクラウド）を採用
+  //   ・片方にしか無いスライドのデータは残す（丸ごと上書きで消えないようにする）
+  //   マージ結果がクラウドと異なれば、あらためてクラウドへ push する。
+  const MERGE_KEYS = ['notes', 'understanding', 'bookmarks', 'strokes', 'boardStrokes'];
+
+  function mergeStates(base, over) {
+    const out = {};
+    for (const k of MERGE_KEYS) {
+      out[k] = Object.assign({}, (base && base[k]) || {}, (over && over[k]) || {});
+    }
+    out.lastSlide = (over && typeof over.lastSlide === 'number') ? over.lastSlide
+                  : (base && typeof base.lastSlide === 'number') ? base.lastSlide : undefined;
+    return out;
+  }
+
+  function sameContent(a, b) {
+    const pick = o => { const r = {}; for (const k of MERGE_KEYS) r[k] = (o && o[k]) || {}; return r; };
+    return JSON.stringify(pick(a)) === JSON.stringify(pick(b));
+  }
+
   async function syncFromRemote(force) {
     if (!_supabase || !currentUser || syncing) return;
     syncing = true;
@@ -257,9 +279,9 @@
       const remote = data ? data.payload : null;
       const remoteTime = (remote && remote.updatedAt) || 0;
 
-      if (remote && (force || remoteTime > localTime)) {
-        applyRemote(remote);
-        setSyncStatus('synced');
+      if (remote) {
+        const remoteWins = force || remoteTime > localTime;
+        await applyRemote(remote, remoteWins);
       } else if (local) {
         await pushRemoteNow();
       } else {
@@ -274,19 +296,36 @@
   }
   SS.syncFromRemote = syncFromRemote;
 
-  function applyRemote(remote) {
+  // remoteWins: 同じスライドが両方にあるとき、クラウド側を採用するか
+  async function applyRemote(remote, remoteWins) {
     const { cw, ch } = canvasSize();
+    const st = adapter.getState();
+    const localNorm = {
+      notes: st.notes, understanding: st.understanding, bookmarks: st.bookmarks,
+      strokes: normStrokes(st.strokes, cw, ch),
+      boardStrokes: normStrokes(st.boardStrokes, cw, ch),
+      lastSlide: st.lastSlide,
+    };
+    const merged = remoteWins ? mergeStates(localNorm, remote) : mergeStates(remote, localNorm);
     adapter.applyState({
-      notes: remote.notes,
-      understanding: remote.understanding,
-      bookmarks: remote.bookmarks,
-      strokes: denormStrokes(remote.strokes, cw, ch),
-      boardStrokes: denormStrokes(remote.boardStrokes, cw, ch),
-      lastSlide: remote.lastSlide,
+      notes: merged.notes,
+      understanding: merged.understanding,
+      bookmarks: merged.bookmarks,
+      strokes: denormStrokes(merged.strokes, cw, ch),
+      boardStrokes: denormStrokes(merged.boardStrokes, cw, ch),
+      lastSlide: merged.lastSlide,
     });
-    // クラウドの更新時刻で保存 → すぐに再アップロードされないようにする
-    adapter.saveLocal(remote.updatedAt || Date.now());
     if (adapter.refresh) adapter.refresh();
+    if (sameContent(merged, remote)) {
+      // クラウドと同じ内容 → クラウドの更新時刻で保存し、再アップロードしない
+      adapter.saveLocal(remote.updatedAt || Date.now());
+      setSyncStatus('synced');
+    } else {
+      // ローカルにしか無いものが混ざった → 新しい時刻で保存し、すぐ push
+      adapter.saveLocal();
+      if (remoteSaveTimer) clearTimeout(remoteSaveTimer);
+      await pushRemoteNow();
+    }
   }
 
   SS.scheduleRemoteSave = function () {
