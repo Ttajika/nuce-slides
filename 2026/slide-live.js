@@ -58,6 +58,8 @@
   const FIXED = { slideW: 1100, boardW: 900, boardH: 600 };
 
   // ── 固定レイアウト：拡大率を「収まる範囲」に丸め、板書の zoom を決める ─────────
+  // ユーザーが選んだ拡大率（ページ側の applyZoom が設定した値）。100% = 画面幅に収まる大きさ。
+  let userZoom = 1;
   function fitLayout() {
     if (!document.body.classList.contains('live-fixed')) return;
     const layer = document.getElementById('zoomLayer');
@@ -65,25 +67,30 @@
       const area = layer.parentElement;
       const cs = getComputedStyle(area);
       const avail = area.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const want = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-zoom')) || 1;
-      const fit = Math.max(0.2, Math.min(want, avail / FIXED.slideW));
-      document.documentElement.style.setProperty('--content-zoom', String(Math.round(fit * 1000) / 1000));
-      const info = document.getElementById('zoomInfo');
-      if (info) info.textContent = Math.round(fit * 100) + '%';
+      // 「100%」を画面幅いっぱい（ただし等倍まで）とし、それに ± の拡大率を掛ける。
+      // 100% を超えた分は横スクロールで見る（レイアウトは 1100px 幅のまま崩さない）。
+      const base = Math.max(0.2, Math.min(1, avail / FIXED.slideW));
+      const eff = base * userZoom;
+      document.documentElement.style.setProperty('--content-zoom', String(Math.round(eff * 1000) / 1000));
     }
     const bz = Math.min(1, innerWidth * 0.92 / FIXED.boardW, innerHeight * 0.85 / FIXED.boardH);
     document.documentElement.style.setProperty('--live-board-zoom', String(Math.round(bz * 1000) / 1000));
     if (typeof window.resizeDrawCanvas === 'function') window.resizeDrawCanvas();
     if (adapter && adapter.isBoardOpen && adapter.isBoardOpen() && typeof window.resizeBoardCanvas === 'function') window.resizeBoardCanvas();
   }
+  function readUserZoom() {
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-zoom'));
+    if (v > 0) userZoom = v;
+  }
   function installFixedLayout() {
     document.body.classList.add('live-fixed');
-    // ページ側の applyZoom（ユーザーの拡大率変更）の後に必ず丸め直す
+    // ページ側の applyZoom（ユーザーの拡大率変更）の後に、固定幅に合わせた実効拡大率へ置き換える
     const orig = window.applyZoom;
     if (typeof orig === 'function') {
-      window.applyZoom = function () { const r = orig.apply(this, arguments); fitLayout(); return r; };
+      window.applyZoom = function () { const r = orig.apply(this, arguments); readUserZoom(); fitLayout(); return r; };
     }
     window.addEventListener('resize', () => setTimeout(fitLayout, 0));
+    readUserZoom();
     fitLayout();
   }
 
