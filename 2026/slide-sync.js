@@ -239,17 +239,37 @@
   };
 
   // ── 同期コア ────────────────────────────────────────────────────────────
-  //   ローカルとクラウドを「スライド番号ごと」にマージする。
-  //   ・両方に同じスライドのデータがあれば、更新時刻が新しい側（force 指定時はクラウド）を採用
-  //   ・片方にしか無いスライドのデータは残す（丸ごと上書きで消えないようにする）
+  //   ローカルとクラウドを「項目（notes など）× スライド番号」ごとにマージする。
+  //   各項目×スライドには更新時刻 stamps[k][i] が付いており（削除も更新として時刻が付く）、
+  //   時刻が新しい側の値を採用する。新しい側に値が無ければ「削除」として扱う。
+  //   これにより、丸ごと上書きで消えることも、削除したものが復活することも無くなる。
   //   マージ結果がクラウドと異なれば、あらためてクラウドへ push する。
   const MERGE_KEYS = ['notes', 'understanding', 'bookmarks', 'strokes', 'boardStrokes'];
 
-  function mergeStates(base, over) {
-    const out = {};
+  // stamps が無い古いデータ用: 値があればその側の updatedAt、無ければ 0 とみなす
+  function stampOf(state, k, i, fallback) {
+    const st = state && state.stamps && state.stamps[k];
+    if (st && typeof st[i] === 'number') return st[i];
+    return (state && state[k] && Object.prototype.hasOwnProperty.call(state[k], i)) ? fallback : 0;
+  }
+
+  function mergeStates(local, remote, remoteWinsTies) {
+    const out = { stamps: {} };
+    const lt0 = (local && local.updatedAt) || 0, rt0 = (remote && remote.updatedAt) || 0;
     for (const k of MERGE_KEYS) {
-      out[k] = Object.assign({}, (base && base[k]) || {}, (over && over[k]) || {});
+      const L = (local && local[k]) || {}, R = (remote && remote[k]) || {};
+      const LS = (local && local.stamps && local.stamps[k]) || {}, RS = (remote && remote.stamps && remote.stamps[k]) || {};
+      out[k] = {}; out.stamps[k] = {};
+      const ids = new Set([...Object.keys(L), ...Object.keys(R), ...Object.keys(LS), ...Object.keys(RS)]);
+      for (const i of ids) {
+        const lt = stampOf(local, k, i, lt0), rt = stampOf(remote, k, i, rt0);
+        const useRemote = rt > lt || (rt === lt && remoteWinsTies);
+        const src = useRemote ? R : L;
+        if (Object.prototype.hasOwnProperty.call(src, i)) out[k][i] = src[i];
+        out.stamps[k][i] = Math.max(lt, rt);
+      }
     }
+    const over = remoteWinsTies ? remote : local, base = remoteWinsTies ? local : remote;
     out.lastSlide = (over && typeof over.lastSlide === 'number') ? over.lastSlide
                   : (base && typeof base.lastSlide === 'number') ? base.lastSlide : undefined;
     return out;
@@ -258,6 +278,17 @@
   function sameContent(a, b) {
     const pick = o => { const r = {}; for (const k of MERGE_KEYS) r[k] = (o && o[k]) || {}; return r; };
     return JSON.stringify(pick(a)) === JSON.stringify(pick(b));
+  }
+
+  // localStorage 内の保存データに、マージ後の stamps を書き込む
+  function writeStamps(stamps) {
+    try {
+      const raw = localStorage.getItem(adapter.storageKey);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      d.stamps = stamps;
+      localStorage.setItem(adapter.storageKey, JSON.stringify(d));
+    } catch (e) { console.warn('[slide-sync] writeStamps', e); }
   }
 
   async function syncFromRemote(force) {
@@ -281,7 +312,7 @@
 
       if (remote) {
         const remoteWins = force || remoteTime > localTime;
-        await applyRemote(remote, remoteWins);
+        await applyRemote(remote, local, remoteWins);
       } else if (local) {
         await pushRemoteNow();
       } else {
@@ -296,8 +327,8 @@
   }
   SS.syncFromRemote = syncFromRemote;
 
-  // remoteWins: 同じスライドが両方にあるとき、クラウド側を採用するか
-  async function applyRemote(remote, remoteWins) {
+  // remoteWins: 更新時刻が同じ項目について、クラウド側を採用するか
+  async function applyRemote(remote, local, remoteWins) {
     const { cw, ch } = canvasSize();
     const st = adapter.getState();
     const localNorm = {
@@ -305,8 +336,10 @@
       strokes: normStrokes(st.strokes, cw, ch),
       boardStrokes: normStrokes(st.boardStrokes, cw, ch),
       lastSlide: st.lastSlide,
+      stamps: (local && local.stamps) || {},
+      updatedAt: (local && local.updatedAt) || 0,
     };
-    const merged = remoteWins ? mergeStates(localNorm, remote) : mergeStates(remote, localNorm);
+    const merged = mergeStates(localNorm, remote, remoteWins);
     adapter.applyState({
       notes: merged.notes,
       understanding: merged.understanding,
@@ -319,10 +352,12 @@
     if (sameContent(merged, remote)) {
       // クラウドと同じ内容 → クラウドの更新時刻で保存し、再アップロードしない
       adapter.saveLocal(remote.updatedAt || Date.now());
+      writeStamps(merged.stamps);
       setSyncStatus('synced');
     } else {
-      // ローカルにしか無いものが混ざった → 新しい時刻で保存し、すぐ push
+      // ローカル側が採用された項目がある → 新しい時刻で保存し、すぐ push
       adapter.saveLocal();
+      writeStamps(merged.stamps);
       if (remoteSaveTimer) clearTimeout(remoteSaveTimer);
       await pushRemoteNow();
     }
@@ -349,6 +384,7 @@
         strokes: normStrokes(st.strokes, cw, ch),
         boardStrokes: normStrokes(st.boardStrokes, cw, ch),
         lastSlide: st.lastSlide,
+        stamps: local.stamps || {},
         updatedAt: local.updatedAt || Date.now(),
       };
       const { error } = await _supabase.from('slide_data').upsert({

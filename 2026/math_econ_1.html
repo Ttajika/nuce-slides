@@ -712,19 +712,27 @@ const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 
 function saveLocal(remoteTs) {
   try {
-    // updatedAt は「内容が実際に変わったとき」だけ更新する。
-    // スライド移動やページを閉じるだけで時刻が進むと、古い内容の端末が
-    // 「最新」と誤判定され、クラウド経由で他端末の書き込みを消してしまうため。
+    // 項目（notes など）× スライド番号ごとに更新時刻 stamps を持つ。
+    // 前回保存時と比べて変わった箇所（削除も含む）だけ時刻を更新する。
+    // クラウド同期はこの時刻で「どちらが新しいか」を判定するので、
+    // スライド移動やページを閉じるだけでは時刻が進まず、削除も他端末へ伝わる。
     let prev = null;
     try { const raw = localStorage.getItem(STORAGE_KEY); prev = raw ? JSON.parse(raw) : null; } catch(e) {}
-    const pick = o => JSON.stringify({ notes: o.notes || {}, strokes: o.strokes || {}, boardStrokes: o.boardStrokes || {},
-                                       understanding: o.understanding || {}, bookmarks: o.bookmarks || {} });
+    const now = remoteTs || Date.now();
     const cur = { notes, strokes, boardStrokes, understanding, bookmarks };
-    const changed = !prev || pick(cur) !== pick(prev);
+    const stamps = Object.assign({}, (prev && prev.stamps) || {});
+    let changed = !prev;
+    for (const k of Object.keys(cur)) {
+      const a = (prev && prev[k]) || {}, b = cur[k] || {};
+      const st = stamps[k] = Object.assign({}, stamps[k] || {});
+      for (const i of new Set([...Object.keys(a), ...Object.keys(b)])) {
+        if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) { st[i] = now; changed = true; }
+      }
+    }
     const updatedAt = remoteTs ? remoteTs
-                    : (changed || !prev.updatedAt) ? Date.now()
+                    : (changed || !prev.updatedAt) ? now
                     : prev.updatedAt;
-    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current, updatedAt };
+    const data = { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: current, stamps, updatedAt };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     // 内容が変わったローカル変更のときだけクラウドへ push。リモート適用時（remoteTs あり）は echo し返さない。
     if (!remoteTs && changed && window.SlideSync) SlideSync.scheduleRemoteSave();
@@ -747,13 +755,14 @@ function loadLocal() {
 
 function clearLocal() {
   if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
-    localStorage.removeItem(STORAGE_KEY);
     notes = {};
     strokes = {};
     boardStrokes = {};
     understanding = {};
     bookmarks = {};
     document.getElementById('noteArea').value = '';
+    // removeItem ではなく「空の状態」を保存する → 全項目に削除時刻が付き、クラウド側も消える
+    saveLocal();
     redrawStrokes();
     showSlide(current);
   }
