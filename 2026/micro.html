@@ -812,6 +812,24 @@ function loadLocal() {
   } catch(e) { /* parse error */ }
 }
 
+// 他のタブが localStorage を更新したら、このタブのメモリ上の状態も合わせる。
+// これが無いと、古い状態のままのタブが保存・クラウド同期したときに、
+// 他タブの書き込みが「削除された」と記録されて消えてしまう。
+window.addEventListener('storage', (e) => {
+  if (e.key !== STORAGE_KEY || !e.newValue) return;
+  try {
+    const data = JSON.parse(e.newValue);
+    notes = data.notes || {};
+    strokes = data.strokes || {};
+    boardStrokes = data.boardStrokes || {};
+    understanding = data.understanding || {};
+    bookmarks = data.bookmarks || {};
+    const ta = document.getElementById('noteArea');
+    if (ta) ta.value = notes[current] || '';
+    showSlide(current);
+  } catch(err) { /* parse error */ }
+});
+
 function clearLocal() {
   if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
     notes = {};

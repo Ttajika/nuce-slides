@@ -304,6 +304,9 @@
         .maybeSingle();
       if (error) throw error;
 
+      // 保存待ち（デバウンス中）の変更を先に localStorage へ書き出し、
+      // メモリ上の状態と stamps を一致させてからマージする
+      adapter.saveLocal();
       const localRaw = localStorage.getItem(adapter.storageKey);
       const local = localRaw ? JSON.parse(localRaw) : null;
       const localTime = (local && local.updatedAt) || 0;
@@ -353,6 +356,7 @@
       // クラウドと同じ内容 → クラウドの更新時刻で保存し、再アップロードしない
       adapter.saveLocal(remote.updatedAt || Date.now());
       writeStamps(merged.stamps);
+      if (remoteSaveTimer) clearTimeout(remoteSaveTimer);
       setSyncStatus('synced');
     } else {
       // ローカル側が採用された項目がある → 新しい時刻で保存し、すぐ push
