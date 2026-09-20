@@ -8,7 +8,7 @@
      ...
      SlideSync.init({
        storageKey,            // localStorage と同じ、ページ固有のキー
-       getCanvas,             // () => 手書き用 canvas 要素（座標正規化に使用）
+       getCanvas,             // () => 手書き用 canvas 要素（旧形式データの座標変換にのみ使用）
        getState,              // () => { notes, strokes, boardStrokes, understanding, bookmarks, lastSlide }
        applyState,            // (state) => 受け取った state を画面の変数に反映（strokes はピクセル座標）
        saveLocal,             // (timestamp?) => localStorage へ保存（timestamp 指定時は再アップロードしない。
@@ -50,14 +50,12 @@
     return v.includes('@') ? v : (v + '@' + CONFIG.idDomain);
   }
 
-  // ── 手書き座標の正規化（端末ごとの画面差を吸収するため 0–1 で保存）──────────
-  function normStrokes(src, cw, ch) {
-    const out = {};
-    for (const [k, arr] of Object.entries(src || {})) {
-      out[k] = arr.map(s => ({ ...s, points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch })) }));
-    }
-    return out;
-  }
+  // ── 手書き座標 ────────────────────────────────────────────────────────
+  //   クラウドにはローカルと同じピクセル座標をそのまま保存する（payload.coords === 'px'）。
+  //   以前は同期時点の canvas サイズで 0–1 に正規化していたが、canvas の高さは
+  //   スライドごと・拡大率ごとに違うため、別スライドの線が壊れて（1.5 超の値が
+  //   「ピクセル」と誤判定され）消えていた。denormStrokes は
+  //   coords の無い旧形式データを読むためだけに残している。
   function denormStrokes(src, cw, ch) {
     const out = {};
     for (const [k, arr] of Object.entries(src || {})) {
@@ -332,23 +330,29 @@
 
   // remoteWins: 更新時刻が同じ項目について、クラウド側を採用するか
   async function applyRemote(remote, local, remoteWins) {
-    const { cw, ch } = canvasSize();
     const st = adapter.getState();
-    const localNorm = {
+    const localState = {
       notes: st.notes, understanding: st.understanding, bookmarks: st.bookmarks,
-      strokes: normStrokes(st.strokes, cw, ch),
-      boardStrokes: normStrokes(st.boardStrokes, cw, ch),
+      strokes: st.strokes, boardStrokes: st.boardStrokes,
       lastSlide: st.lastSlide,
       stamps: (local && local.stamps) || {},
       updatedAt: (local && local.updatedAt) || 0,
     };
-    const merged = mergeStates(localNorm, remote, remoteWins);
+    // 旧形式（0–1 正規化）のクラウドデータは、従来どおり現在の canvas サイズで戻す
+    if (remote.coords !== 'px') {
+      const { cw, ch } = canvasSize();
+      remote = Object.assign({}, remote, {
+        strokes: denormStrokes(remote.strokes, cw, ch),
+        boardStrokes: denormStrokes(remote.boardStrokes, cw, ch),
+      });
+    }
+    const merged = mergeStates(localState, remote, remoteWins);
     adapter.applyState({
       notes: merged.notes,
       understanding: merged.understanding,
       bookmarks: merged.bookmarks,
-      strokes: denormStrokes(merged.strokes, cw, ch),
-      boardStrokes: denormStrokes(merged.boardStrokes, cw, ch),
+      strokes: merged.strokes,
+      boardStrokes: merged.boardStrokes,
       lastSlide: merged.lastSlide,
     });
     if (adapter.refresh) adapter.refresh();
@@ -377,16 +381,16 @@
     if (!_supabase || !currentUser) return;
     setSyncStatus('saving');
     try {
-      const { cw, ch } = canvasSize();
       const st = adapter.getState();
       const localRaw = localStorage.getItem(adapter.storageKey);
       const local = localRaw ? JSON.parse(localRaw) : {};
       const payload = {
+        coords: 'px',                 // 手書き座標はローカルと同じピクセル座標
         notes: st.notes,
         understanding: st.understanding,
         bookmarks: st.bookmarks,
-        strokes: normStrokes(st.strokes, cw, ch),
-        boardStrokes: normStrokes(st.boardStrokes, cw, ch),
+        strokes: st.strokes,
+        boardStrokes: st.boardStrokes,
         lastSlide: st.lastSlide,
         stamps: local.stamps || {},
         updatedAt: local.updatedAt || Date.now(),
