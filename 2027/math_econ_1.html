@@ -163,6 +163,10 @@ ul, ol { padding-left:1.5em; margin:0.3em 0; }
 li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
+/* 入れ子の ul（第2レベル）は白丸ではなく » で統一（sub-item と同じ見た目・位置） */
+ul ul { padding-left:0.5em; }
+ul ul > li { list-style:none; }
+ul ul > li:not(.sub-item):not(.spacer):not(.jarm-item):not(.custom-label)::before { content:'»\00a0\00a0'; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; }
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
@@ -3872,10 +3876,17 @@ $f(x)=h(g(x))$ のとき,
  <ul>
  
  
- <li> $g'>0$とする．このとき，$g\circ f$の最大化解が$x^*$ $\Leftrightarrow$ $f$の最大化解が$x^*$
+ <li> $g'>0$とする
   <ul>
-  <li>$g'>0$ となるような $g$ をかませることを単調変換と呼ぶ</li>
+  <li>$g'>0$ となるような $g$ をかませることを<strong class="keyword">単調変換</strong>と呼ぶ</li>
+  <li> このとき，$x>y$ ならば $g(x)>g(y)$ が成り立つ</li>
+
   </ul>
+ <li> $g\circ f$の最大化解が$x^*$ $\Leftrightarrow$ $f$の最大化解が$x^*$ </li>
+ <ul>
+  <li>なぜならば...</li>
+</ul>
+
    <li class="spacer">
  <li class="spacer">
  <li class="spacer">
