@@ -844,8 +844,7 @@ function redrawStrokes() {
   const c = getCanvas(); const ctx = getCtx();
   if (!c || !ctx) return;
   ctx.clearRect(0, 0, c.width, c.height);
-  const ss = strokes[current];
-  if (!ss) return;
+  const ss = strokes[current] || [];
   ss.forEach(s => {
     if (s.points.length < 2) return;
     ctx.beginPath();
