@@ -113,15 +113,17 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
+/* Content-only zoom: scales the slide and its annotation canvas together,
+   leaving the topbar and toolbars at their original size. */
+.zoom-layer { position:relative; display:flex; align-items:stretch; align-self:stretch; width:100%; max-width:1100px; margin:0 auto; zoom:var(--content-zoom,1); }
 .slide-content {
-  max-width:1100px; width:100%;
+  width:100%;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
   padding:28px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
   overflow:auto;
-  zoom:var(--slide-zoom,1);
 }
 
 .slide-content .frame-title {
@@ -644,8 +646,10 @@ body.print-mode .fab-pen { display: none !important; }
 
 <div class="main" id="mainArea">
   <div class="slide-area" id="slideArea">
-    <div class="slide-content" id="slideContent"></div>
-    <canvas class="draw-canvas" id="drawCanvas"></canvas>
+    <div class="zoom-layer" id="zoomLayer">
+      <div class="slide-content" id="slideContent"></div>
+      <canvas class="draw-canvas" id="drawCanvas"></canvas>
+    </div>
   </div>
   <div class="notes-panel collapsed" id="notesPanel">
     <div class="notes-header">
@@ -834,11 +838,11 @@ function setDrawColor(c, el) {
 }
 
 function resizeDrawCanvas() {
-  const area = document.getElementById('slideArea');
+  const layer = document.getElementById('zoomLayer') || document.getElementById('slideArea');
   const c = getCanvas();
-  if (!c) return;
-  c.width = area.scrollWidth;
-  c.height = area.scrollHeight;
+  if (!c || !layer) return;
+  c.width = layer.scrollWidth;
+  c.height = layer.scrollHeight;
   redrawStrokes();
 }
 
@@ -1551,27 +1555,37 @@ function enterSlideMode() {
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
   
   const area = document.getElementById('slideArea');
-  area.innerHTML = '<div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas>';
+  area.innerHTML = '<div class="zoom-layer" id="zoomLayer"><div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas></div>';
   bindCanvasEvents();
   bindBoardCanvasEvents();
   showSlide(current);
 }
 
 // Keyboard shortcuts
-// Slide-only zoom (topbar stays fixed)
+// ═══ CONTENT ZOOM (slide + annotation canvas together; topbar stays fixed) ═══
+// slide-live.js は window.applyZoom と --content-zoom を前提にしているので名前を合わせる。
 const ZOOM_KEY = STORAGE_KEY + '_zoom';
-let slideZoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1;
-function zoomSlide(dir) {
-  slideZoom = dir === 0 ? 1 : Math.min(2, Math.max(0.6, Math.round((slideZoom + dir * 0.1) * 10) / 10));
-  applySlideZoom();
+const ZOOM_LEVELS = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+let zoomIdx = ZOOM_LEVELS.indexOf(1);
+function applyZoom() {
+  const z = ZOOM_LEVELS[zoomIdx];
+  document.documentElement.style.setProperty('--content-zoom', z);
+  const info = document.getElementById('zoomInfo');
+  if (info) info.textContent = Math.round(z * 100) + '%';
+  try { localStorage.setItem(ZOOM_KEY, String(z)); } catch (err) {}
+  resizeDrawCanvas();
 }
-function applySlideZoom() {
-  document.documentElement.style.setProperty('--slide-zoom', slideZoom);
-  const z = document.getElementById('zoomInfo');
-  if (z) z.textContent = Math.round(slideZoom * 100) + '%';
-  localStorage.setItem(ZOOM_KEY, slideZoom);
+function zoomStep(d) {
+  zoomIdx = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomIdx + d));
+  applyZoom();
 }
-applySlideZoom();
+function zoomReset() { zoomIdx = ZOOM_LEVELS.indexOf(1); applyZoom(); }
+function zoomSlide(dir) { dir === 0 ? zoomReset() : zoomStep(dir); }
+(function initZoom() {
+  const i = ZOOM_LEVELS.indexOf(parseFloat(localStorage.getItem(ZOOM_KEY)));
+  if (i >= 0) zoomIdx = i;
+  applyZoom();
+})();
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && boardMode) { toggleBoard(); return; }
