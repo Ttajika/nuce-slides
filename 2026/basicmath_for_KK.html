@@ -240,15 +240,13 @@ strong.keyword { font-weight:700; }
 .tikz-figure {
   text-align: center;
   margin: 10px 0;
-  cursor: zoom-in;
   transition: opacity 0.15s;
 }
-.tikz-figure:hover { opacity:0.85; }
 .tikz-figure svg {
   max-height:260px;
 }
 body.print-mode .tikz-figure svg {
-  max-height:180px;
+  max-height:340px;
 }
 body.print-mode .tikz-figure { cursor:default; }
 .tikz-placeholder {
@@ -452,7 +450,7 @@ body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
 
 /* Print: figures get proper spacing */
 .print-slide .tikz-figure { margin:8px 0 12px; }
-.print-slide .tikz-figure svg { max-height:160px; }
+.print-slide .tikz-figure svg { max-height:340px; }
 
 /* Print: QR codes always visible */
 body.print-mode .qr-link .qr-img { display:block !important; }

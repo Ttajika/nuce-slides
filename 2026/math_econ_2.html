@@ -122,8 +122,7 @@ body.print-mode .qr-link .qr-toggle { display:none; }
 .phantom { background:var(--phantom-bg); color:transparent; padding:2px 8px; border-radius:3px; border:1px dashed #818cf8; user-select:none; cursor:pointer; transition:color 0.3s; }
 .phantom.revealed { color:var(--accent); background:#c7d2fe; }
 .tikz-placeholder { background:var(--tikz-bg); border:2px dashed var(--tikz-border); border-radius:8px; padding:20px; text-align:center; margin:12px 0; color:#166534; font-size:14px; }
-.tikz-figure { margin:10px 0; text-align:center; cursor:zoom-in; transition:opacity 0.15s; }
-.tikz-figure:hover { opacity:0.85; }
+.tikz-figure { margin:10px 0; text-align:center; transition:opacity 0.15s; }
 .tikz-figure svg { max-height:400px; }
 .tikz-figure[data-scale] svg { max-height:none; }
 
@@ -153,7 +152,7 @@ body.print-mode .slide-area { display:block; overflow:visible; padding:0; }
 .print-slide .section-badge { font-size:10px; color:#999; margin-bottom:2px; }
 body.print-mode .qr-link .qr-img { display:block !important; }
 body.print-mode .qr-link { flex-direction:column; }
-body.print-mode .tikz-figure svg, body.print-mode .tikz-figure img { max-height:180px; }
+body.print-mode .tikz-figure svg, body.print-mode .tikz-figure img { max-height:340px; }
 body.print-mode .tikz-figure { cursor:default; }
 .print-header { text-align:center; padding:20px 0 10px; border-bottom:2px solid var(--accent); margin:0 auto 20px; max-width:780px; }
 .print-header h1 { font-size:22px; color:var(--accent); }
@@ -792,7 +791,6 @@ function renderSlide(idx) {
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
-  setupFigureZoom(el);
   setupSaddle3D(el);
   setupPartial3D(el);
   setupLinks(el);

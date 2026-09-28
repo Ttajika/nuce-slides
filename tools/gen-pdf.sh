@@ -34,8 +34,14 @@ fi
 
 mkdir -p "$DIR/pdf"
 
+if lsof -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "エラー: ポート $PORT が使用中です（前回のサーバーが残っている可能性）" >&2; exit 1
+fi
+
 # ローカルサーバーを起動し、終了時（エラー時含む）に必ず止める
-(cd "$DIR" && python3 -m http.server "$PORT" >/dev/null 2>&1) &
+# exec で python 自体を置き換え、$! がサーバー本体の PID になるようにする
+# （サブシェルのままだと kill してもサーバーが残り、次の実行が古いサーバーに繋がる）
+(cd "$DIR" && exec python3 -m http.server "$PORT" >/dev/null 2>&1) &
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 sleep 1

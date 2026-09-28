@@ -236,15 +236,14 @@ a:hover { color:#1e40af; }
 .tikz-icon { font-size:24px; display:block; margin-bottom:4px; }
 
 .tikz-figure {
-  margin:10px 0; text-align:center; cursor:zoom-in;
+  margin:10px 0; text-align:center;
   transition:opacity 0.15s;
 }
-.tikz-figure:hover { opacity:0.85; }
 .tikz-figure svg {
   max-height:260px;
 }
 body.print-mode .tikz-figure svg {
-  max-height:180px;
+  max-height:340px;
 }
 body.print-mode .tikz-figure { cursor:default; }
 
@@ -345,7 +344,7 @@ body.print-mode .slide-area {
 
 /* Print: figures get proper spacing */
 .print-slide .tikz-figure { margin:8px 0 12px; }
-.print-slide .tikz-figure svg { max-height:160px; }
+.print-slide .tikz-figure svg { max-height:340px; }
 
 /* Print: QR codes always visible */
 body.print-mode .qr-link .qr-img { display:block !important; }
@@ -1260,7 +1259,6 @@ function renderSlide(idx) {
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
-  setupFigureZoom(el);
   setupLinks(el);
   updateStatusDot(idx);
 }

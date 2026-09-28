@@ -237,10 +237,9 @@ a:hover { color:#1e40af; }
 .tikz-icon { font-size:24px; display:block; margin-bottom:4px; }
 
 .tikz-figure {
-  margin:10px 0; text-align:center; cursor:zoom-in;
+  margin:10px 0; text-align:center;
   transition:opacity 0.15s;
 }
-.tikz-figure:hover { opacity:0.85; }
 /* Figures track the window height so they stay as large as the slide allows.
    vh scales with the content zoom exactly as px does, so this is zoom-safe. */
 .tikz-figure svg,
@@ -255,7 +254,7 @@ a:hover { color:#1e40af; }
 .tikz-figure.wide img { max-height:clamp(240px, 48vh, 640px); }
 body.print-mode .tikz-figure svg,
 body.print-mode .tikz-figure img {
-  max-height:180px;
+  max-height:340px;
 }
 body.print-mode .tikz-figure { cursor:default; }
 
@@ -370,7 +369,7 @@ body:not(.page-break-on) .print-part-head { page-break-before:auto; break-before
 /* Print: figures get proper spacing */
 .print-slide .tikz-figure { margin:8px 0 12px; }
 .print-slide .tikz-figure svg,
-.print-slide .tikz-figure img { max-height:160px; }
+.print-slide .tikz-figure img { max-height:340px; }
 
 /* Print: animated figures become an empty box of the same shape, giving the
    handout room to sketch the animation by hand.
@@ -1322,7 +1321,6 @@ function renderSlide(idx) {
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
-  setupFigureZoom(el);
   setupAnimFigures(el);
   setupLinks(el);
   updateStatusDot(idx);
