@@ -251,6 +251,11 @@ a:hover { color:#1e40af; }
 }
 /* Slides carrying a single figure and almost no text can go bigger. */
 .tikz-figure.wide img { max-height:clamp(240px, 48vh, 640px); }
+/* Live broadcast: vh differs between devices and would shift everything below
+   the figure, so the annotations no longer line up. Use a fixed height instead. */
+body.live-fixed .tikz-figure svg,
+body.live-fixed .tikz-figure img { max-height:400px; }
+body.live-fixed .tikz-figure.wide img { max-height:480px; }
 body.print-mode .tikz-figure svg,
 body.print-mode .tikz-figure img {
   max-height:340px;

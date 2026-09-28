@@ -82,8 +82,26 @@
     const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-zoom'));
     if (v > 0) userZoom = v;
   }
+  // スマホ用メディアクエリ（max-width:…）は実際の画面幅で効くため、固定幅の中でも
+  // 余白・見出し・2 段組みが変わり、手書きがずれる。スライド本文に効くルールだけ取り除き、
+  // どの端末でもそのページの PC 表示にそろえる（トップバー等の調整は残す）。
+  const CONTENT_SEL = /\.slide-content|\.columns|\.frame-title/;
+  function dropMobileContentRules() {
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; }   // 別オリジンのシートは読めない
+      for (const r of rules) {
+        if (!(r instanceof CSSMediaRule) || !/max-width/.test(r.conditionText || r.media.mediaText)) continue;
+        for (let i = r.cssRules.length - 1; i >= 0; i--) {
+          const s = r.cssRules[i];
+          if (s.selectorText && CONTENT_SEL.test(s.selectorText)) r.deleteRule(i);
+        }
+      }
+    }
+  }
   function installFixedLayout() {
     document.body.classList.add('live-fixed');
+    dropMobileContentRules();
     // ページ側の applyZoom（ユーザーの拡大率変更）の後に、固定幅に合わせた実効拡大率へ置き換える
     const orig = window.applyZoom;
     if (typeof orig === 'function') {
