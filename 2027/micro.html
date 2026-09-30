@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>基礎ミクロ経済学 — 2026年度</title>
+<title>基礎ミクロ経済学 — 2027年度</title>
 <script>
 window.MathJax = {
   tex: {
@@ -170,6 +170,12 @@ ul, ol { padding-left:1.5em; margin:0.3em 0; }
 li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
+/* 入れ子の ul も sub-item と同じ「»」で表示 */
+ul ul > li:not(.sub-item):not(.spacer):not(:empty) { list-style:none; margin-left:0.5em; }
+ul ul > li:not(.sub-item):not(.spacer):not(:empty)::before { content:'» '; }
+ul ul > li:empty { list-style:none; }
+/* 通常項目の直後の入れ子 ul は sub-item と同じ字下げに揃える */
+ul > li:not(.sub-item) + ul { padding-left:0; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; }
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
@@ -244,19 +250,19 @@ a:hover { color:#1e40af; }
    vh scales with the content zoom exactly as px does, so this is zoom-safe. */
 .tikz-figure svg,
 .tikz-figure img {
-  max-height:clamp(200px, 40vh, 520px);
+  max-height:clamp(240px, 48vh, 620px);
   max-width:100%;
   height:auto;
   display:block;
   margin:8px auto;
 }
 /* Slides carrying a single figure and almost no text can go bigger. */
-.tikz-figure.wide img { max-height:clamp(240px, 48vh, 640px); }
+.tikz-figure.wide img { max-height:clamp(280px, 56vh, 760px); }
 /* Live broadcast: vh differs between devices and would shift everything below
    the figure, so the annotations no longer line up. Use a fixed height instead. */
 body.live-fixed .tikz-figure svg,
-body.live-fixed .tikz-figure img { max-height:400px; }
-body.live-fixed .tikz-figure.wide img { max-height:480px; }
+body.live-fixed .tikz-figure img { max-height:480px; }
+body.live-fixed .tikz-figure.wide img { max-height:560px; }
 body.print-mode .tikz-figure svg,
 body.print-mode .tikz-figure img {
   max-height:340px;
@@ -301,6 +307,13 @@ body.print-mode .tikz-figure { cursor:default; }
 .slide-table td, .slide-table th {
   border:1px solid var(--border); padding:4px 12px; text-align:center;
 }
+/* マッチング表：列（買手と売手のペア）ごとに太線で囲む */
+.match-table td { border-left:3px solid var(--text); border-right:3px solid var(--text); }
+.match-table tr:first-child td { border-top:3px solid var(--text); }
+.match-table tr:last-child td { border-bottom:3px solid var(--text); }
+.match-table tr.match-gap td { height:2em; border-top:none; border-bottom:none; }
+.match-table tr.match-gap th { border:none; }
+.match-table tr.match-surplus td { height:2em; background:var(--keyword-bg); }
 
 .multicols { column-count:2; column-gap:24px; }
 
@@ -1362,10 +1375,18 @@ function renderSlide(idx) {
   html += `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>`;
   html += `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
   html += '</div>';
+  // 同じスライドの再描画（同期・理解度ボタン等）ではアニメーションの再生位置を引き継ぐ
+  const animState = (el.dataset.idx === String(idx))
+    ? [...el.querySelectorAll('.tikz-figure.anim')].map(f => {
+        const v = f.querySelector('svg');
+        return v ? { t: v.getCurrentTime(), paused: v.animationsPaused() } : null;
+      })
+    : [];
+  el.dataset.idx = idx;
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
-  setupAnimFigures(el);
+  setupAnimFigures(el, animState);
   setupLinks(el);
   updateStatusDot(idx);
 }
@@ -1500,8 +1521,9 @@ document.getElementById('slideArea').addEventListener('wheel', e => {
 // <img src="*.svg"> のままでは SMIL タイムラインに触れないため、.anim の図だけ
 // SVG をインライン展開してシークバーを付ける。fetch 失敗時は <img> のまま（従来動作）。
 const animSvgCache = {};   // src -> svg markup
-async function setupAnimFigures(container) {
-  for (const fig of container.querySelectorAll('.tikz-figure.anim')) {
+async function setupAnimFigures(container, animState = []) {
+  const figs = [...container.querySelectorAll('.tikz-figure.anim')];
+  for (const [k, fig] of figs.entries()) {
     const img = fig.querySelector('img[src$=".svg"]');
     if (!img) continue;
     const src = img.getAttribute('src');
@@ -1525,11 +1547,11 @@ async function setupAnimFigures(container) {
       if (vb.length === 4) { svg.setAttribute('width', vb[2]); svg.setAttribute('height', vb[3]); }
     }
     img.replaceWith(svg);
-    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(fig, svg);
+    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(fig, svg, animState[k]);
   }
 }
 
-function addAnimControls(fig, svg) {
+function addAnimControls(fig, svg, state) {
   let dur = 0;
   svg.querySelectorAll('animate, animateTransform, animateMotion').forEach(a => {
     const v = parseFloat(a.getAttribute('dur'));
@@ -1555,6 +1577,10 @@ function addAnimControls(fig, svg) {
     if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
   }
   btn.addEventListener('click', () => setPlaying(!playing));
+  if (state) {
+    svg.setCurrentTime(state.t);
+    if (state.paused) setPlaying(false);
+  }
   range.addEventListener('input', () => {
     if (playing) setPlaying(false);        // シーク中は一時停止（動画プレーヤーと同じ）
     svg.setCurrentTime(parseFloat(range.value));
@@ -2408,14 +2434,45 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="columns">
 <div class="column">
 <ul>
-<li>合理的であること</li>
+<li>合理的であるとは以下の二条件が満たされること</li>
 <li class="sub-item">» どんな選択肢でも比較できる（完備性）</li>
+<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
 <li class="sub-item">» 好みがサイクルしない（非循環性）</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>完備性は現実的か（完備性を満たさない現実の例があるか）？</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li>非循環性は現実的か（サイクルする現実の例があるか）？</li>
+
 </ul>
 </div>
 </div>
@@ -2542,10 +2599,10 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </template>
 
 <template class="slide-data" data-title="適当なマッチングを考える..." data-section="需要と供給" data-note="false" data-print-margin="0">
-<table class="slide-table">
+<table class="slide-table match-table">
 <tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
 <tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
-<tr><td colspan="6" style="height:2em;"></td></tr>
+<tr class="match-gap"><th></th><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
 <tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
 </table>
@@ -2598,11 +2655,74 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <ul>
 <li>需要量と供給量が一致するときの価格を<span class="keyword">（市場）均衡価格</span>と呼ぶ</li>
 <li class="sub-item">» 「均衡」は選択の次に経済学にとって大事な要素</li>
+
+<table class="slide-table">
+<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+
+<li>市場均衡で取引できるのは？</li>
+
+
 <li>均衡価格では"ある意味"不満がない</li>
+<ul>
+<li>誰も既に成立した取引を壊すことができない</li>
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+<li class="spacer">
+
+</li>
+</ul>
 </ul>
 </div>
 </div>
 </template>
+
+
+<template class="slide-data" data-title="市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="市場均衡と余剰"></div>
+</div>
+<div class="column">
+<ul>
+<table class="slide-table">
+<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+
+<li>取引できたことによる「利益」の総額を考える</li>
+<ul>
+<li>市場均衡での余剰は？</li>
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+<li class="spacer"> 
+
+<li>テキトーなマッチングと比較してみる</li>
+</ul>
+<table class="slide-table match-table">
+<tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr class="match-surplus"><th>取引による<span class="keyword">余剰</span>（万円）</th><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+</table>
+</ul>
+</div>
+</div>
+</template>
+
+
+
 <!-- 
 <template class="slide-data" data-title="市場経済での取引の実験" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
@@ -2687,7 +2807,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="tikz-figure anim" style="--ar:620/400"><img src="img_micro/discrete_to_continuous_anime.svg" alt="階段状の需要・供給曲線から滑らかな需要・供給曲線へ"></div>
 </template>
 
-<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="50">
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="250">
 <div class="columns">
 <div class="column">
 <ul>
@@ -2695,6 +2815,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <li class="sub-item">» 需要曲線：$P=21-3Q$</li>
 <li class="sub-item">» 供給曲線：$P=2Q+1$</li>
 </ul>
+
 </div>
 <div class="column"></div>
 </div>

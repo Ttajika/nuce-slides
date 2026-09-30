@@ -80,6 +80,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   padding:6px 16px;
   background: var(--header-bg); color:#fff;
   flex-shrink:0; z-index:100;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
 }
 .topbar-title { font-weight:700; font-size:14px; letter-spacing:0.3px; }
 .topbar-nav { display:flex; align-items:center; gap:6px; }
@@ -1403,6 +1404,18 @@ function getDrawPosFromPointer(e) {
 function initPencilDetection() {
   const area = document.getElementById('slideArea');
   if (!area) return;
+
+  // iPadOS: pointerdown の preventDefault だけでは文字選択・長押しメニュー・スクリブルが
+  // 止まらない．キャンバス外（スライド上端の余白など）からペンで書き始めた場合も含め，
+  // スタイラスの touchstart をここで止める．
+  area.addEventListener('touchstart', function(e) {
+    if (mode !== 'slide') return;
+    const t = e.touches[0];
+    if (!t || t.touchType !== 'stylus') return;
+    // リンクやボタンはペンでもタップできるように残す
+    if (e.target.closest('a, button, input, select, textarea, label, summary, [onclick]')) return;
+    e.preventDefault();
+  }, {passive:false});
 
   area.addEventListener('pointerdown', function(e) {
     if (e.pointerType !== 'pen' || mode !== 'slide') return;
