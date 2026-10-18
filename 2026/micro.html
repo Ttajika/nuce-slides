@@ -110,14 +110,14 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .main { display:flex; flex:1; overflow:hidden; }
 
 .slide-area {
-  flex:1; display:flex; align-items:stretch;
+  flex:1; display:flex; align-items:flex-start;
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
 /* Content-only zoom: scales the slide and its annotation canvas together,
    leaving the topbar and toolbars at their original size. */
 .zoom-layer {
-  position:relative; display:flex; align-items:stretch; align-self:stretch;
+  position:relative; display:flex; align-items:stretch; align-self:flex-start; min-height:100%;
   width:100%; max-width:1100px; margin:0 auto;
   zoom:var(--content-zoom, 1);
 }
@@ -128,7 +128,6 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   border-radius:8px;
   padding:28px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  overflow:auto;
 }
 
 .slide-content .frame-title {
@@ -171,7 +170,7 @@ li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-li.spacer { list-style:none; height:0.8em; }
+li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }

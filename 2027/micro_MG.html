@@ -110,14 +110,14 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .main { display:flex; flex:1; overflow:hidden; }
 
 .slide-area {
-  flex:1; display:flex; align-items:stretch;
+  flex:1; display:flex; align-items:flex-start;
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
 /* Content-only zoom: scales the slide and its annotation canvas together,
    leaving the topbar and toolbars at their original size. */
 .zoom-layer {
-  position:relative; display:flex; align-items:stretch; align-self:stretch;
+  position:relative; display:flex; align-items:stretch; align-self:flex-start; min-height:100%;
   width:100%; max-width:1100px; margin:0 auto;
   zoom:var(--content-zoom, 1);
 }
@@ -128,7 +128,6 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   border-radius:8px;
   padding:28px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  overflow:auto;
 }
 
 .slide-content .frame-title {
@@ -172,7 +171,7 @@ li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-li.spacer { list-style:none; height:0.8em; }
+li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
@@ -2204,21 +2203,20 @@ document.addEventListener('DOMContentLoaded', () => {
 <li>市場均衡・余剰の図解</li>
 <li>パレート効率性</li>
 <li>価格弾力性・曲線のシフト</li>
-<li>応用例（1，2）</li>
+<li>市場均衡分析の応用例（1，2）</li>
 <li>課税</li>
 <li>市場の失敗（外部性，コース交渉，公共財）</li>
-<li>市場の失敗（情報の非対称性）</li>
-<li>市場の失敗（カルテル）</li>
+<li>市場の失敗（情報の非対称性・カルテル）</li>
 <li>ゲーム理論（逐次手番）</li>
 <li>ゲーム理論（同時手番）</li>
 <li>ゲーム理論（提携形ゲーム）</li>
+<li>試験</li>
 </ol>
 </div>
 <div class="column">
 初級ミクロ経済学2の予定
 <ol>
-<li>オリエンテーション</li>
-<li>消費者の問題</li>
+<li>オリエンテーション・消費者の問題</li>
 <li>予算制約と無差別曲線</li>
 <li>効用最大化条件</li>
 <li>所得の影響・価格の影響</li>
@@ -2227,10 +2225,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <li>純粋交換経済・厚生定理</li>
 <li>企業の行動・費用と利潤最大化条件</li>
 <li>損益分岐点・操業停止点</li>
-<li>売り方の設計：独占</li>
+<li>費用曲線を作る生産関数</li>
+<li>売り方の設計：独占価格</li>
 <li>売り方の設計：価格差別</li>
 <li>売り方の設計：オークション</li>
-<li>分野案内</li>
+<li>試験</li>
 </ol>
 </div>
 </div>
@@ -2262,9 +2261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li class="sub-item">» スライドに板書や理解したことなどを書き込むこと</li>
 <li class="sub-item">» タブレット派用に電子でも配布する</li>
 <li class="sub-item">» 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．</li>
-<li>この講義は対面授業です．</li>
-<li class="sub-item">» 授業に出ずに単位が取れるはずもなく</li>
-<li class="sub-item">» もちろん授業にいるだけでは取れない</li>
+<li>この講義はオンデマンド授業です．</li>
 </ul>
 </div>
 </div>
@@ -2327,7 +2324,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li class="sub-item">» メカニズムデザイン・マーケットデザイン：人がどのように行動するかを読んだ上で，制度を設計する．</li>
 <li>他にもたくさん</li>
 <li>この講義で学ぶのは「価格理論」と「ゲーム理論」</li>
-<li class="sub-item">» 上記を学ぶためのエッセンスが詰まっている．<br>（※当たり前の話が多いので少しつまらない・技を磨く場所と思え）</li>
+<li class="sub-item">» 上記を学ぶためのエッセンスが詰まっている．</li>
 </ul>
 </div>
 </div>

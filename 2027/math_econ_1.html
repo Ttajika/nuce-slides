@@ -110,13 +110,13 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .main { display:flex; flex:1; overflow:hidden; }
 
 .slide-area {
-  flex:1; display:flex; align-items:stretch; justify-content:center;
+  flex:1; display:flex; align-items:flex-start; justify-content:center;
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
 /* Content-only zoom: scales the slide and its annotation canvas together,
    leaving the topbar and toolbars at their original size. */
-.zoom-layer { position:relative; display:flex; align-items:stretch; align-self:stretch; width:100%; max-width:1100px; margin:0 auto; zoom:var(--content-zoom,1); }
+.zoom-layer { position:relative; display:flex; align-items:stretch; align-self:flex-start; min-height:100%; width:100%; max-width:1100px; margin:0 auto; zoom:var(--content-zoom,1); }
 .slide-content {
   width:100%;
   background:var(--surface);
@@ -124,7 +124,6 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   border-radius:8px;
   padding:28px 36px;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  overflow:auto;
 }
 
 .slide-content .frame-title {
@@ -171,7 +170,7 @@ ul ul { padding-left:0.5em; }
 ul ul > li { list-style:none; }
 ul ul > li:not(.sub-item):not(.spacer):not(.jarm-item):not(.custom-label)::before { content:'»\00a0\00a0'; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-li.spacer { list-style:none; height:0.8em; }
+li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
@@ -1493,7 +1492,7 @@ function enterPrintMode() {
   const main = document.getElementById('mainArea');
   const area = document.getElementById('slideArea');
   
-  let html = '<div class="print-header"><h1>経済数学 I — 2026年度版</h1><p>多鹿 智哉 ｜ 配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
+  let html = '<div class="print-header"><h1>経済数学 I — 2027年度版</h1><p>多鹿 智哉 ｜ 配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
   
   SLIDES.forEach((s, i) => {
     // Skip Note frames and title slide (first slide) in print mode
@@ -2091,15 +2090,19 @@ document.addEventListener('DOMContentLoaded', () => {
  <ol>
 <li> 妥当な論証
  <li> 集合
- <li> 関数と連続性
+ <li> 関数
  <li> 微分の意味と計算公式
+ <li> 問題演習
  <li> テイラー展開
  <li> 最大化・最小化
  <li> 凹関数・凸関数
  <li> 応用：単一財市場の分析
+ <li> 問題演習
  <li> 積分
- <li> 積分の計算
  <li> 応用：確率分布
+ <li> 問題演習
+ <li> 試験1
+ <li> 試験2
  </ol>  
  </div> 
 <ul>
@@ -2218,7 +2221,7 @@ document.addEventListener('DOMContentLoaded', () => {
  </ul>  </div></div>
 </template>
 
-<!-- ===== Slide 12: 妥当な論証 / 専門用語と定義 ===== -->
+<!-- ===== Slide 12: 妥当な論証 / 専門用語と定義 =====
 <template class="slide-data" data-title="専門用語と定義" data-section="妥当な論証" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
@@ -2246,7 +2249,7 @@ document.addEventListener('DOMContentLoaded', () => {
  </ul> 
   </div> 
  </div>
-</template>
+</template> -->
 
 <!-- ===== Slide 13: 妥当な論証 / モーダス・ポネンス ===== -->
 <template class="slide-data" data-title="モーダス・ポネンス" data-section="妥当な論証" data-note="false" data-print-margin="80">
@@ -2570,13 +2573,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-<!-- ===== Slide 26: 関数と連続性 ===== -->
-<template class="slide-data" data-title="" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="section-title-big">関数と連続性</div>
+<!-- ===== Slide 26: 関数 ===== -->
+<template class="slide-data" data-title="" data-section="関数" data-note="false" data-print-margin="80">
+<div class="section-title-big">関数</div>
 </template>
 
-<!-- ===== Slide 27: 関数と連続性 / a. 関数と連続性：関数 ===== -->
-<template class="slide-data" data-title="a. 関数と連続性：関数" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<!-- ===== Slide 27: 関数 / a. 関数：関数 ===== -->
+<template class="slide-data" data-title="関数" data-section="関数" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -2603,8 +2606,8 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </template>
 
-<!-- ===== Slide 28: 関数と連続性 / 定義域と終域 ===== -->
-<template class="slide-data" data-title="定義域と終域" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<!-- ===== Slide 28: 関数 / 定義域と終域 ===== -->
+<template class="slide-data" data-title="定義域と終域" data-section="関数" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2618,8 +2621,8 @@ document.addEventListener('DOMContentLoaded', () => {
  </div>
 </template>
 
-<!-- ===== Slide 29: 関数と連続性 / 経済学で出てくる関数の例 ===== -->
-<template class="slide-data" data-title="経済学で出てくる関数の例" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<!-- ===== Slide 29: 関数 / 経済学で出てくる関数の例 ===== -->
+<template class="slide-data" data-title="経済学で出てくる関数の例" data-section="関数" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
 <ul> 
@@ -2644,8 +2647,8 @@ document.addEventListener('DOMContentLoaded', () => {
  </div>
 </template>
 
-<!-- ===== Slide 30: 関数と連続性 / 合成関数 ===== -->
-<template class="slide-data" data-title="合成関数" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<!-- ===== Slide 30: 関数 / 合成関数 ===== -->
+<template class="slide-data" data-title="合成関数" data-section="関数" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2665,8 +2668,8 @@ document.addEventListener('DOMContentLoaded', () => {
  </div>
 </template>
 
-<!-- ===== Slide 31: 関数と連続性 / 逆関数 ===== -->
-<template class="slide-data" data-title="逆関数" data-section="関数と連続性" data-note="false" data-print-margin="80">
+<!-- ===== Slide 31: 関数 / 逆関数 ===== -->
+<template class="slide-data" data-title="逆関数" data-section="関数" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
  <ul> 
@@ -2688,8 +2691,8 @@ document.addEventListener('DOMContentLoaded', () => {
  </div>
 </template>
 
-<!-- ===== Slide 32: 関数と連続性 / 関数のグラフ ===== -->
-<template class="slide-data" data-title="関数のグラフ" data-section="関数と連続性" data-note="false" data-print-margin="180">
+<!-- ===== Slide 32: 関数 / 関数のグラフ ===== -->
+<template class="slide-data" data-title="関数のグラフ" data-section="関数" data-note="false" data-print-margin="180">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -2708,177 +2711,6 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </template>
 
-<!-- ===== Slide 33: 関数と連続性 / b. 関数と連続性：連続性 ===== -->
-<template class="slide-data" data-title="b. 関数と連続性：連続性" data-section="関数と連続性" data-note="false" data-print-margin="180">
-<div class="columns"> 
- <div class="column"> 
-  <ul> 
-  <li> 関数が<strong class="keyword">連続</strong>であるとは？  
-  <li class="sub-item">»  グラフが定義域上で切れ目なくつながっていること
-    <li> 関数が<strong class="keyword">連続でない</strong>とは？  
-  <li class="sub-item">»  定義域上でグラフの切れ目があること
-
-  
-  </ul> 
-  </div> 
- <div class="column"> 
- <ul> 
-  <li>  （図示）
-  </ul>  
-  </div> 
-  </div>
-</template>
-
-<!-- ===== Slide 34: 関数と連続性 / 連続性：極限を使った定義 ===== -->
-<template class="slide-data" data-title="連続性：極限を使った定義" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
-  <ul> 
-  <li> 関数が<strong class="keyword">連続</strong>であるとは？  
-  <li class="sub-item">»  $x_{n}\to x^{*}$ ならば $f(x_{n})\to f(x^{*})$. 
-  
-  <li class="spacer">
-  <li> $x_{n}\to x^{*}$ とは?
-  <li class="sub-item">»  $x_{n}$ が $x^{*}$ に<strong class="keyword">収束する</strong>と読む
-  <li class="sub-item">»  「$ x_n$ が $ x^*$ に近い」ならば「$ f(x_n)$ も $ f(x^*)$ に近い」
-  
-  </ul> 
-  </div> 
- <div class="column"> 
- <ul> 
-  <li>  （図示）連続なものと連続でないもの
-  
-  <li class="spacer">
-  <li class="spacer">
- 
-  </ul>  
-  </div> 
-  </div>
-</template>
-
-<!-- ===== Slide 35: 関数と連続性 / 極限についてもう少し ===== -->
-<template class="slide-data" data-title="極限についてもう少し" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
-  <ul> 
-  <li> 収束と極限の例
-  <li class="sub-item">»  $x_{n}=\frac{1}{n}$
-  <li class="spacer">
-    <li class="sub-item">»   $x_{n}=n$
- <li class="spacer">
-  <li class="sub-item">»  $ x_{n}=(\frac{1}{2})^{n}$
-  </ul> 
-  </div> 
- <div class="column"> 
- <ul> 
-   <li class="sub-item">»  $x_{n}=\frac{n-1}{n}$
-  <li class="spacer">
-  <li class="sub-item">»  $x_{n}=(-1)^{n}$
-  <li class="spacer">
-  
-  <li> 極限のことを $\displaystyle\lim_{n\to \infty}x_{n}$ と書く。<br>
-  （$n$ を無限大にする場合）
-  <li class="sub-item">»  $\infty$ 以外（例えば $b$）に飛ばす場合は $\displaystyle\lim_{n\to b}x_{n}$ などと書く。
-  
-  </ul>  
-  </div> 
-  </div>
-</template>
-
-<!-- ===== Slide 36: 関数と連続性 / 極限についてもう少し② ===== -->
-<template class="slide-data" data-title="極限についてもう少し②" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
-  <ul> 
-  <li> <strong class="keyword">はさみうちの定理</strong>
-  <li class="sub-item">»  $ a_t\to x$ かつ $ b_t\to x$ であり，また $ a_t\le c_t\le b_t$ がすべての $ t$ について成り立つならば $ c_t\to x$
-  </ul> 
-  </div> 
- <div class="column"> 
- <ul> 
-   <li class="spacer">
-  </ul>  
-  </div> 
-  </div>
-</template>
-
-<!-- ===== Slide 37: 関数と連続性 / 連続関数の性質 ===== -->
-<template class="slide-data" data-title="連続関数の性質" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
- <ul> 
- <li> $ f,g$ が連続なら 定数 $ \alpha$ について以下のように作った関数 $ h$ は連続
- <ol>
- <li> $ h(x)=\alpha\cdot f(x)	$
- <li> $h(x)= f(x)+g(x)$
- <li> $h(x)= f(x)g(x)$
- <li> $ h(x)=(f(x))^\alpha	$
- <li>  $h(x)=|f(x)|$
- <li>  $h(x)=\max\{f(x),g(x)\}$
- <li>  $h(x)=\min\{f(x),g(x)\}$  
- </ol>
-</div>
- <div class="column"> 
-
- <li> 経済学部の学部レベルで出るようなものはだいたい連続関数
- <li class="sub-item">»  不連続な関数は実用上はある<br>（e.g., 限界税率；〇〇万円の壁）
- </ul> 
-  </div> 
- </div>
-</template>
-
-<!-- ===== Slide 38: 関数と連続性 / 連続関数の性質（中間値の定理） ===== -->
-<template class="slide-data" data-title="連続関数の性質（中間値の定理）" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"> 
- <div class="column"> 
-  <ul> 
-  <li> （<strong class="keyword">中間値の定理</strong>）$f$ が連続関数なら次が言える. 
- $c$ が $f(a)$ と $f(b)$ の間にあるならば,  どんな $c$ についても $f(x_{c})=c$ となる $x_{c}$ を $ a$ と $ b$ の間に見つけることができる. 
-  </ul> 
-  </div> 
- <div class="column"> 
- <ul> 
-  <li>（図示）
-  </ul>  
-  </div> 
-  </div>
-</template>
-
-<!-- ===== Slide 39: 関数と連続性 / ※連続性と連結性 ===== -->
-<template class="slide-data" data-title="※連続性と連結性" data-section="関数と連続性" data-note="false" data-print-margin="80">
-<div class="columns"><div class="column">
-<ul>
-<li> 中間値の定理には定義域の連結性（定義域が分離してないこと）も必要
-<li class="sub-item">»  定義域が連結でなければ連続関数でも中間値の定理のような主張は成り立たない
-</ul>
-</div><div class="column"></div></div>
-</template>
-
-<!-- ===== Slide 40: 関数と連続性 / 応用：市場均衡の存在（単一財） ===== -->
-<template class="slide-data" data-title="応用：市場均衡の存在（単一財）" data-section="関数と連続性" data-note="false" data-print-margin="280">
-<div class="columns"> 
- <div class="column"> 
- <ul> 
- <li> 需要関数 $ D(p)$ と供給関数 $ S(p)$ がある．
- <li class="sub-item">»  それぞれ連続とする．
- <li class="sub-item">»  次のような $ \underline{p},\overline{p}$ がある
- <ol>
- <li> $ D(\underline{p})>S(\underline{p})$
- <li> $ D(\overline{p})&lt;S(\overline{p})$
- 
- </ol>
- 
- </ul> 
- </div> 
- <div class="column"> 
-<ul> 
- <li> <strong class="keyword">市場均衡価格</strong>とは $ D(p^*)=S(p^*)$ となる価格 $ p^*$
- <li class="sub-item">»  市場均衡価格は存在するか？
- 
- <li> 超過需要関数： $Z(p)=D(p)-S(p)$ を用いる </ul> 
-  </div> 
- </div>
-</template>
 
 
 
@@ -5202,10 +5034,21 @@ $f(x)=h(g(x))$ のとき,
 <div class="column">
   <ul>
     <li> 広義積分は定義できないときもある
-    <li>例： $\int_{-\infty}^{\infty}dx$を
+    <li>例： $\int_{-\infty}^{\infty}x dx$を次のうちどれで定義するのかによって答えが変わる
       <ol>
-      <li>$\displaystyle\lim_{a\to-\infty}\lim_{b\to\infty}\int_b^a dx$で定義するときと，
-      <li>$\displaystyle\lim_{b\to\infty}\lim_{a\to-\infty}\int_b^a dx$で定義するときの違い．
+      <li>$\displaystyle\lim_{a\to-\infty}\lim_{b\to\infty}\int_a^b x dx$
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      <li>$\displaystyle\lim_{b\to\infty}\lim_{a\to-\infty}\int_a^b x dx$
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      <li>$\displaystyle\lim_{b\to\infty}\int^b_{-2b} x dx$
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      <li class="spacer"></li>
+      
       </ol>
   </ul>
 </div>
@@ -5295,15 +5138,34 @@ $[a,b]$上の分布関数は以下の性質を満たす
   <ul> 
   
   <li> 例:
-  <li class="sub-item">»  <strong class="keyword">正規分布</strong>: $a=-\infty$, $a=\infty$
+  <li class="sub-item">»  <strong class="keyword">正規分布</strong>: $a=-\infty$, $b=\infty$
   <div class="math-display">\[\begin{aligned}f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp(-(x-\mu)^2/\sigma^2)\end{aligned}\]</div> 
   
   </ul> 
   </div> 
  <div class="column"> 
  <ul> 
-  <li> 一般に，期待値は定義できるとは限らない（例：コーシー分布） 
+  <li> 標準正規分布
+    <div class="math-display">\[\begin{aligned}\varphi(z)=\frac{1}{\sqrt{2\pi}}\exp(-z^2)\end{aligned}\]</div> 
+
+  <ul>
+    <li>$\int_{-\infty}^\infty z\phi(z)dz=0$</li>
+    <li> 正規分布を変数変換すると標準正規分布になることを利用すると正規分布の期待値を求めることができる</li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+    <li class="spacer"></li>
+
+  </ul>
   </ul>  
+
+
   </div> 
   </div>
 </template>

@@ -79,11 +79,11 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .section-select { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; font-family:inherit; cursor:pointer; max-width:200px; }
 .section-select option { background:#1e293b; color:#fff; }
 .main { display:flex; flex:1; overflow:hidden; }
-.slide-area { flex:1; display:flex; align-items:stretch; justify-content:center; overflow:auto; background:var(--bg); padding:24px 32px; position:relative; }
+.slide-area { flex:1; display:flex; align-items:flex-start; justify-content:center; overflow:auto; background:var(--bg); padding:24px 32px; position:relative; }
 /* Content-only zoom: scales the slide and its annotation canvas together,
    leaving the topbar and toolbars at their original size. */
-.zoom-layer { position:relative; display:flex; align-items:stretch; align-self:stretch; width:100%; max-width:860px; margin:0 auto; zoom:var(--content-zoom,1); }
-.slide-content { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px 36px; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:auto; }
+.zoom-layer { position:relative; display:flex; align-items:stretch; align-self:flex-start; min-height:100%; width:100%; max-width:860px; margin:0 auto; zoom:var(--content-zoom,1); }
+.slide-content { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px 36px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
 .slide-content .frame-title { font-size:20px; font-weight:700; color:var(--accent); border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:16px; }
 .slide-content .section-badge { font-size:11px; color:var(--text-dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
 .notes-panel { width:300px; background:var(--note-bg); border-left:3px solid var(--note-border); display:flex; flex-direction:column; flex-shrink:0; transition:width 0.2s; }
@@ -99,7 +99,7 @@ li { margin:0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-li.spacer { list-style:none; height:0.8em; }
+li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
 .keyword { color:var(--keyword); background:var(--keyword-bg); padding:1px 4px; border-radius:3px; font-weight:700; }

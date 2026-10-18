@@ -214,7 +214,7 @@ ul, ol { padding-left: 1.5em; margin:0.3em 0; }
 li { margin: 0.4em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
-li.spacer { list-style:none; height:0.8em; }
+li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
