@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>板書レイヤー テスト</title>
+<!-- ログイン＋クラウド同期（本番と同じ。slide-sync.js がなければ何もしない） -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="slide-sync.js"></script>
 <!--
   板書レイヤー＆再生モードのテスト（PLAN_board_replay.md 段階1〜3の最小版）
   - 学生モード:  board_test.html
@@ -73,6 +76,7 @@ body.tool-none #inputCanvas{pointer-events:none}
   <span class="sep"></span>
   <button id="toolPen" title="ペン (P)">✏️</button>
   <button id="toolEraser" title="消しゴム (E)">🧽</button>
+  <button id="toolPointer" title="ポインター (L)。録音中は動きも記録">🔴</button>
   <button id="toolNone" title="操作のみ (V)">👆</button>
   <button class="sw" data-c="#e94560" style="background:#e94560"></button>
   <button class="sw" data-c="#2563eb" style="background:#2563eb"></button>
@@ -85,13 +89,16 @@ body.tool-none #inputCanvas{pointer-events:none}
   <label class="btn" title="線と線の間が3秒以上なら1秒に詰める"><input type="checkbox" id="compress" checked> 空白を詰める</label>
   <span class="sep authorOnly"></span>
   <input type="text" id="topicName" class="authorOnly" placeholder="トピック名">
-  <button id="recStart" class="authorOnly" title="このスライドからトピック録音を開始">● 録音</button>
-  <button id="recPause" class="authorOnly" disabled title="録音の一時停止／再開。停止中に書いた線は再生時に一瞬で現れる">⏸</button>
-  <button id="recStop" class="authorOnly" disabled title="録音を終了">■</button>
+  <label class="btn authorOnly" title="オフにすると音声なしで、板書・ポインター・ページ送りだけを記録"><input type="checkbox" id="recMic" checked> 🎤音声も</label>
+  <button id="recStart" class="authorOnly" title="このスライドから記録を開始（板書・ポインター・ページ送り＋音声）">● 記録</button>
+  <button id="recPause" class="authorOnly" disabled title="記録の一時停止／再開。停止中に書いた線は再生時に一瞬で現れる">⏸</button>
+  <button id="recStop" class="authorOnly" disabled title="記録を停止">■ 停止</button>
   <span id="recTime" class="authorOnly">0:00</span>
   <span class="sep"></span>
   <button id="exportBtn" class="authorOnly" title="板書JSONと録音した音声を書き出し">⬇ 書き出し</button>
-  <label class="btn" title="板書JSON・音声ファイルを読み込み（複数選択可）">⬆ 読み込み<input type="file" id="importInput" multiple accept=".json,application/json,audio/*" hidden></label>
+  <label class="btn" title="先生の板書JSON・音声ファイルを読み込み（複数選択可）">⬆ 板書読込<input type="file" id="importInput" multiple accept=".json,application/json,audio/*" hidden></label>
+  <button id="stExport" class="studentOnly" title="自分の書き込みを書き出し（本番と同じ形式）">💾</button>
+  <label class="btn studentOnly" title="自分の書き込みを読み込み">📂<input type="file" id="stImport" accept=".json,application/json" hidden></label>
   <button id="resetBtn" class="authorOnly" title="作成中の板書をすべて消去">リセット</button>
   <a id="modeLink" href="#" style="font-size:12px"></a>
   <span id="status"></span>
@@ -145,7 +152,9 @@ const $ = s => document.querySelector(s);
 const REF = { w: 1100, h: 619 };            // 基準レイアウト（座標はこの単位で保存）
 const DECK = 'board_test';
 const AUTHOR = new URLSearchParams(location.search).get('author') === '1';
-const LS_STUDENT = DECK + ':student', LS_AUTHOR = DECK + ':author-board', LS_SHOW = DECK + ':showTeacher';
+const LS_AUTHOR = DECK + ':author-board', LS_SHOW = DECK + ':showTeacher';
+// 学生データは本番（micro_MG.html）と同じキー・同じ形
+const STORAGE_KEY = 'beamer_' + location.pathname.replace(/[^a-zA-Z0-9]/g, '_');
 const ls = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
@@ -164,9 +173,53 @@ const indexOfId = id => slides.findIndex(s => s.dataset.id === id);
 const emptyBoard = () => ({ version: 1, deck: DECK, ref: { ...REF }, slides: {}, topics: [] });
 let board = emptyBoard();
 const slideData = id => board.slides[id] || (board.slides[id] = { strokes: [], erases: [] });
-let student = {};
-try { student = JSON.parse(ls.get(LS_STUDENT) || '{}'); } catch (e) {}
 const audioURLs = {}, audioBlobs = {};
+
+/* ---------- 学生データ（本番と同形式：スライド番号→[{color,size,alpha,points:[{x,y}]}]） ---------- */
+// 本番の canvas ピクセル座標の代わりに、ここでは基準レイアウト座標(1100×619)。正規化(0–1)すれば相互に読める。
+let notes = {}, strokes = {}, boardStrokes = {}, understanding = {}, bookmarks = {};
+let saveTimer = null;
+function saveLocal(remoteTs) {
+  if (AUTHOR) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, strokes, boardStrokes, understanding, bookmarks,
+      lastSlide: cur, updatedAt: remoteTs || Date.now() }));
+    if (!remoteTs && window.SlideSync) SlideSync.scheduleRemoteSave();
+  } catch (e) {}
+}
+const scheduleSave = () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => saveLocal(), 1000); };
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); if (!d) return;
+    if (d.notes) notes = d.notes; if (d.strokes) strokes = d.strokes; if (d.boardStrokes) boardStrokes = d.boardStrokes;
+    if (d.understanding) understanding = d.understanding; if (d.bookmarks) bookmarks = d.bookmarks;
+    if (typeof d.lastSlide === 'number') cur = Math.max(0, Math.min(slides.length - 1, d.lastSlide));
+  } catch (e) {}
+}
+const normStrokes = (src, f) => Object.fromEntries(Object.entries(src || {}).map(([k, arr]) =>
+  [k, arr.map(s => ({ ...s, points: s.points.map(p => f(p)) }))]));
+function exportStudent() {
+  const data = { version: 1, title: document.title, exportDate: new Date().toISOString(), slideCount: slides.length,
+    canvasSize: { w: REF.w, h: REF.h }, notes, understanding, bookmarks,
+    strokes: normStrokes(strokes, p => ({ x: p.x / REF.w, y: p.y / REF.h })),
+    boardStrokes: normStrokes(boardStrokes, p => ({ x: p.x / REF.w, y: p.y / REF.h })), lastSlide: cur };
+  download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+    `${DECK}_study_${new Date().toISOString().slice(0, 10)}.json`);
+}
+async function importStudent(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data.version) throw new Error('形式が不正です');
+    if (!confirm('既存のデータに上書き（マージ）します。よろしいですか？')) return;
+    const den = p => ({ x: p.x <= 1.5 ? p.x * REF.w : p.x, y: p.y <= 1.5 ? p.y * REF.h : p.y });
+    if (data.notes) Object.assign(notes, data.notes);
+    if (data.understanding) Object.assign(understanding, data.understanding);
+    if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
+    if (data.strokes) Object.assign(strokes, normStrokes(data.strokes, den));
+    if (data.boardStrokes) Object.assign(boardStrokes, normStrokes(data.boardStrokes, den));
+    saveLocal(); redraw(); status('読み込み完了 (' + (data.exportDate || '') + ')');
+  } catch (err) { status('読み込めませんでした：' + err.message); }
+}
 let showTeacher = ls.get(LS_SHOW) !== '0';
 
 function visibleStrokes(id) {
@@ -174,7 +227,6 @@ function visibleStrokes(id) {
   const gone = new Set(d.erases.flatMap(e => e.ids));
   return d.strokes.filter(s => !gone.has(s.id));
 }
-const saveStudent = () => ls.set(LS_STUDENT, JSON.stringify(student));
 const saveAuthor = () => { if (AUTHOR) ls.set(LS_AUTHOR, JSON.stringify(board)); };
 const newId = () => 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -197,14 +249,30 @@ function layout() {
   redraw();
 }
 function clearCtx(ctx) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore(); }
-function setStyle(ctx, st) { ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+function setStyle(ctx, st) { ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = st.alpha ?? 1; }
+// 先生の線：pts [[x,y,dt],...]（dt=書き始めからのms）／学生の線：points [{x,y},...]（本番と同形式）
 function drawStroke(ctx, st, uptoMs = Infinity) {
-  const p = st.pts; if (!p || !p.length) return;
+  const p = st.pts || (st.points || []).map(q => [q.x, q.y, 0]); if (!p.length) return;
   setStyle(ctx, st); ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
   let n = 0;
   for (let i = 1; i < p.length; i++) { if (p[i][2] > uptoMs) break; ctx.lineTo(p[i][0], p[i][1]); n++; }
   if (!n) ctx.lineTo(p[0][0] + 0.01, p[0][1]);
-  ctx.stroke();
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+function drawDot(ctx, pt) {   // 本番のポインターと同じ見た目
+  if (!pt) return;
+  ctx.beginPath(); ctx.arc(pt.x, pt.y, 12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(233,69,96,0.7)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+}
+// 時刻tのポインター位置（直前の記録点。次の点が近ければ補間）
+function pointerAt(list, t) {
+  if (!list || !list.length || list[0].t > t) return null;
+  let lo = 0, hi = list.length - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (list[m].t <= t) lo = m; else hi = m - 1; }
+  const a = list[lo], b = list[lo + 1];
+  if (a.x == null) return null;
+  if (b && b.x != null && b.t - a.t < 0.3) { const r = (t - a.t) / (b.t - a.t); return { x: a.x + (b.x - a.x) * r, y: a.y + (b.y - a.y) * r }; }
+  return a;
 }
 // items: [{t, stroke, instant} | {t, erase:[ids]}]（t昇順, 秒）を時刻tの状態で描く
 function renderItems(ctx, items, t) {
@@ -218,21 +286,28 @@ function renderItems(ctx, items, t) {
 function redrawTeacher() {
   clearCtx(tctx);
   if (play && play.mode === 'topic' && play.follow) {
-    renderItems(tctx, play.itemsBySlide[curId()] || [], play.audio.currentTime); return;
+    const t = play.audio.currentTime;
+    renderItems(tctx, play.itemsBySlide[curId()] || [], t);
+    drawDot(tctx, pointerAt(play.pointerBySlide[curId()], t)); return;
   }
   if (play && play.mode === 'slide' && play.slide === curId()) { renderItems(tctx, play.items, play.t); return; }
   if (AUTHOR || showTeacher) visibleStrokes(curId()).forEach(s => drawStroke(tctx, s));
 }
 function redrawInput() {
   clearCtx(ictx);
-  if (!AUTHOR) (student[curId()] || []).forEach(s => drawStroke(ictx, s));
+  if (!AUTHOR) (strokes[cur] || []).forEach(s => drawStroke(ictx, s));
+  drawDot(ictx, livePointer);
 }
 function redraw() { redrawTeacher(); redrawInput(); }
 
 /* ---------- 入力 ---------- */
 let tool = 'pen', color = '#e94560';
 const SIZE = 3;
-let drawing = null;
+let drawing = null, livePointer = null;
+function setPointer(pt) {
+  livePointer = pt; redrawInput();
+  if (AUTHOR) logPointer(pt);
+}
 function toRef(e) {
   const r = ic.getBoundingClientRect();
   return { x: Math.round((e.clientX - r.left) / r.width * REF.w * 10) / 10,
@@ -243,31 +318,55 @@ ic.addEventListener('pointerdown', e => {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   e.preventDefault(); ic.setPointerCapture(e.pointerId);
   const pt = toRef(e);
+  if (tool === 'pointer') { setPointer(pt); return; }
   if (tool === 'eraser') { drawing = { eraser: true }; eraseAt(pt); return; }
-  const st = { id: newId(), color, size: SIZE, t0: Date.now(), pts: [[pt.x, pt.y, 0]] };
-  drawing = { st, ts0: e.timeStamp, ctx: AUTHOR ? tctx : ictx };
-  if (AUTHOR) { slideData(curId()).strokes.push(st); logTopic('stroke', { slide: curId(), id: st.id }); }
-  else (student[curId()] || (student[curId()] = [])).push(st);
-  drawStroke(drawing.ctx, st);
+  if (AUTHOR) {
+    const st = { id: newId(), color, size: SIZE, t0: Date.now(), pts: [[pt.x, pt.y, 0]] };
+    drawing = { st, ts0: e.timeStamp, ctx: tctx };
+    slideData(curId()).strokes.push(st); logTopic('stroke', { slide: curId(), id: st.id });
+  } else {
+    const st = { color, size: SIZE, alpha: 1, points: [{ x: pt.x, y: pt.y }] };
+    drawing = { st, ctx: ictx };
+    (strokes[cur] || (strokes[cur] = [])).push(st);
+  }
+  drawStroke(drawing.ctx, drawing.st);
 });
 ic.addEventListener('pointermove', e => {
+  if (tool === 'pointer') {
+    if (e.pointerType === 'mouse' || e.buttons || e.pointerType === 'pen') setPointer(toRef(e));
+    return;
+  }
   if (!drawing) return;
   const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
   for (const ev of (evs.length ? evs : [e])) {
     const pt = toRef(ev);
     if (drawing.eraser) { eraseAt(pt); continue; }
-    const p = drawing.st.pts, last = p[p.length - 1];
-    if (Math.hypot(pt.x - last[0], pt.y - last[1]) < 0.8) continue;
-    p.push([pt.x, pt.y, Math.max(0, Math.round(ev.timeStamp - drawing.ts0))]);
+    let last;
+    if (AUTHOR) {
+      const p = drawing.st.pts; last = { x: p[p.length - 1][0], y: p[p.length - 1][1] };
+      if (Math.hypot(pt.x - last.x, pt.y - last.y) < 0.8) continue;
+      p.push([pt.x, pt.y, Math.max(0, Math.round(ev.timeStamp - drawing.ts0))]);
+    } else {
+      const p = drawing.st.points; last = p[p.length - 1];
+      if (Math.hypot(pt.x - last.x, pt.y - last.y) < 0.8) continue;
+      p.push({ x: pt.x, y: pt.y });
+    }
     const ctx = drawing.ctx; setStyle(ctx, drawing.st);
-    ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(pt.x, pt.y); ctx.stroke(); ctx.globalAlpha = 1;
   }
 });
-const endDraw = () => { if (!drawing) return; drawing = null; AUTHOR ? saveAuthor() : saveStudent(); updateButtons(); };
+const endDraw = e => {
+  if (tool === 'pointer' && e && e.pointerType !== 'mouse') setPointer(null);
+  if (!drawing) return; drawing = null; AUTHOR ? saveAuthor() : scheduleSave(); updateButtons();
+};
 ic.addEventListener('pointerup', endDraw);
 ic.addEventListener('pointercancel', endDraw);
+ic.addEventListener('pointerleave', () => { if (tool === 'pointer' && livePointer) setPointer(null); });
 
-function hits(st, pt, r = 10) { return st.pts.some(p => Math.hypot(p[0] - pt.x, p[1] - pt.y) < r); }
+function hits(st, pt, r = 10) {
+  return st.pts ? st.pts.some(p => Math.hypot(p[0] - pt.x, p[1] - pt.y) < r)
+                : st.points.some(p => Math.hypot(p.x - pt.x, p.y - pt.y) < r);
+}
 function authorErase(ids) {
   if (!ids.length) return;
   slideData(curId()).erases.push({ t0: Date.now(), ids });
@@ -277,23 +376,25 @@ function authorErase(ids) {
 function eraseAt(pt) {
   if (AUTHOR) authorErase(visibleStrokes(curId()).filter(s => hits(s, pt)).map(s => s.id));
   else {
-    const arr = student[curId()] || [], keep = arr.filter(s => !hits(s, pt));
-    if (keep.length !== arr.length) { student[curId()] = keep; redrawInput(); }
+    const arr = strokes[cur] || [], keep = arr.filter(s => !hits(s, pt));
+    if (keep.length !== arr.length) { strokes[cur] = keep; redrawInput(); scheduleSave(); }
   }
 }
 function undo() {
   if (AUTHOR) { const v = visibleStrokes(curId()); if (v.length) authorErase([v[v.length - 1].id]); }
-  else { (student[curId()] || []).pop(); saveStudent(); redrawInput(); }
+  else { (strokes[cur] || []).pop(); scheduleSave(); redrawInput(); }
 }
 function clearSlide() {
   if (AUTHOR) authorErase(visibleStrokes(curId()).map(s => s.id));
-  else { delete student[curId()]; saveStudent(); redrawInput(); }
+  else { delete strokes[cur]; scheduleSave(); redrawInput(); }
 }
 function setTool(t) {
+  if (tool === 'pointer' && t !== 'pointer' && livePointer) setPointer(null);
   tool = t;
   document.body.classList.toggle('tool-none', t === 'none');
   $('#toolPen').classList.toggle('on', t === 'pen');
   $('#toolEraser').classList.toggle('on', t === 'eraser');
+  $('#toolPointer').classList.toggle('on', t === 'pointer');
   $('#toolNone').classList.toggle('on', t === 'none');
 }
 function setColor(c) { color = c; document.querySelectorAll('.sw').forEach(b => b.classList.toggle('on', b.dataset.c === c)); }
@@ -309,7 +410,9 @@ function go(i, byUser = true) {
   cur = i;
   slides.forEach((s, j) => s.classList.toggle('active', j === cur));
   $('#pageNo').textContent = `${cur + 1}/${slides.length}`;
+  livePointer = null;
   logTopic('slide', { id: curId() });
+  if (!AUTHOR) scheduleSave();          // 本番同様 lastSlide も保存
   redraw(); updateButtons();
 }
 
@@ -326,51 +429,85 @@ function logTopic(type, obj) {
   if (type === 'stroke' && rec.pausedAt != null) ev.instant = true;   // 一時停止中に書いた線は一瞬で出す
   rec.topic.events.push(ev);
 }
+// ポインター：約25fpsに間引いて記録。null は「ポインターを消した」
+let lastPtrLog = { t: -1, x: null, y: null };
+function logPointer(pt) {
+  if (!rec || rec.pausedAt != null) return;
+  const t = recClock();
+  if (pt) {
+    if (t - lastPtrLog.t < 0.04) return;
+    if (lastPtrLog.x != null && Math.hypot(pt.x - lastPtrLog.x, pt.y - lastPtrLog.y) < 1) return;
+    lastPtrLog = { t, x: pt.x, y: pt.y };
+    logTopic('pointer', { slide: curId(), x: Math.round(pt.x * 10) / 10, y: Math.round(pt.y * 10) / 10 });
+  } else {
+    if (lastPtrLog.x == null) return;
+    lastPtrLog = { t, x: null, y: null };
+    logTopic('pointer', { slide: curId(), x: null, y: null });
+  }
+}
 async function recStart() {
   if (rec) return;
-  if (!navigator.mediaDevices || !window.MediaRecorder) { status('このブラウザは録音に対応していません'); return; }
-  let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch (e) { status('マイクを使えませんでした（許可を確認してください）'); return; }
-  const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
-  const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
-  const type = mr.mimeType || mime || 'audio/webm';
-  const ext = type.includes('mp4') ? 'm4a' : 'webm';
+  const useMic = $('#recMic').checked;
+  let stream = null, mr = null, type = null, ext = null;
+  if (useMic) {
+    if (!navigator.mediaDevices || !window.MediaRecorder) { status('このブラウザは録音に対応していません（🎤をオフにすると音声なしで記録できます）'); return; }
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { status('マイクを使えませんでした（許可を確認するか、🎤をオフに）'); return; }
+    const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+    mr = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+    type = mr.mimeType || mime || 'audio/webm';
+    ext = type.includes('mp4') ? 'm4a' : 'webm';
+  }
   const name = $('#topicName').value.trim() || slides[cur].dataset.section || 'トピック';
   const d = new Date(), pad = n => String(n).padStart(2, '0');
   const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-  const topic = { name, startSlide: curId(), audio: `${DECK}-${curId()}-${stamp}.${ext}`, mime: type, duration: 0,
+  const topic = { name, startSlide: curId(), audio: mr ? `${DECK}-${curId()}-${stamp}.${ext}` : null, mime: type, duration: 0,
                   events: [{ t: 0, type: 'slide', id: curId() }] };
   rec = { mr, stream, chunks: [], startPerf: performance.now(), pausedAt: null, pausedTotal: 0, topic };
-  mr.ondataavailable = e => { if (e.data && e.data.size) rec && rec.chunks.push(e.data); };
-  mr.start(1000);
+  lastPtrLog = { t: -1, x: null, y: null };
+  if (mr) { mr.ondataavailable = e => { if (e.data && e.data.size) rec && rec.chunks.push(e.data); }; mr.start(1000); }
+  if (livePointer) logPointer(livePointer);
   document.body.classList.add('recording');
-  $('#recStart').disabled = true; $('#recPause').disabled = false; $('#recStop').disabled = false;
-  status(`録音中：「${name}」（${ext}）`); tickRec();
+  $('#recStart').disabled = true; $('#recPause').disabled = false; $('#recStop').disabled = false; $('#recMic').disabled = true;
+  status(`記録中：「${name}」` + (mr ? `（音声 ${ext}）` : '（音声なし）')); tickRec();
 }
 function recPause() {
   if (!rec) return;
-  if (rec.pausedAt == null) { rec.mr.pause(); rec.pausedAt = performance.now(); $('#recPause').textContent = '▶'; status('一時停止中（書いた線は再生時に一瞬で現れます）'); }
-  else { rec.pausedTotal += performance.now() - rec.pausedAt; rec.pausedAt = null; rec.mr.resume(); $('#recPause').textContent = '⏸'; status(`録音中：「${rec.topic.name}」`); }
+  if (rec.pausedAt == null) {
+    if (livePointer) logPointer(null);
+    if (rec.mr) rec.mr.pause(); rec.pausedAt = performance.now(); $('#recPause').textContent = '▶';
+    status('一時停止中（書いた線は再生時に一瞬で現れます）');
+  } else {
+    rec.pausedTotal += performance.now() - rec.pausedAt; rec.pausedAt = null; if (rec.mr) rec.mr.resume();
+    $('#recPause').textContent = '⏸'; status(`記録中：「${rec.topic.name}」`);
+    if (livePointer) logPointer(livePointer);
+  }
 }
 function recStop() {
   if (!rec) return;
+  if (livePointer) logPointer(null);
   const r = rec;
   r.topic.duration = Math.round(recClock() * 1000) / 1000;
   rec = null;
-  r.mr.onstop = () => {
-    const blob = new Blob(r.chunks, { type: r.topic.mime });
-    audioBlobs[r.topic.audio] = blob;
-    audioURLs[r.topic.audio] = URL.createObjectURL(blob);
+  const finish = () => {
     board.topics.push(r.topic); saveAuthor();
-    r.stream.getTracks().forEach(t => t.stop());
-    status(`「${r.topic.name}」を保存（${fmt(r.topic.duration)}）。音声はメモリ上のみなので「書き出し」してください`);
+    status(`「${r.topic.name}」を保存（${fmt(r.topic.duration)}）` + (r.mr ? '。音声はメモリ上のみなので「書き出し」してください' : '（音声なし）'));
     updateButtons();
   };
-  if (r.mr.state === 'paused') r.mr.resume();
-  r.mr.stop();
+  if (r.mr) {
+    r.mr.onstop = () => {
+      const blob = new Blob(r.chunks, { type: r.topic.mime });
+      audioBlobs[r.topic.audio] = blob;
+      audioURLs[r.topic.audio] = URL.createObjectURL(blob);
+      r.stream.getTracks().forEach(t => t.stop());
+      finish();
+    };
+    if (r.mr.state === 'paused') r.mr.resume();
+    r.mr.stop();
+  } else finish();
   document.body.classList.remove('recording');
-  $('#recStart').disabled = false; $('#recPause').disabled = true; $('#recStop').disabled = true; $('#recPause').textContent = '⏸';
+  $('#recStart').disabled = false; $('#recPause').disabled = true; $('#recStop').disabled = true; $('#recMic').disabled = false;
+  $('#recPause').textContent = '⏸';
 }
 function tickRec() { if (!rec) return; $('#recTime').textContent = fmt(recClock()); setTimeout(tickRec, 250); }
 
@@ -407,7 +544,25 @@ function playSlide() {
   showPlayer('板書の再生'); loop();
 }
 
-// 段階3：トピック再生（音声が時計）
+// 音声なしの記録用の時計（<audio> と同じ使い方ができるようにする）
+class Clock {
+  constructor(duration) { this.duration = duration; this._t = 0; this._last = 0; this.paused = true; this.playbackRate = 1; }
+  get currentTime() {
+    if (!this.paused) {
+      const now = performance.now();
+      this._t = Math.min(this.duration, this._t + (now - this._last) / 1000 * this.playbackRate); this._last = now;
+      if (this._t >= this.duration) this.paused = true;
+    }
+    return this._t;
+  }
+  set currentTime(v) { this._t = Math.max(0, Math.min(this.duration, v)); this._last = performance.now(); }
+  get ended() { return this._t >= this.duration; }
+  play() { if (this._t >= this.duration) this._t = 0; this.paused = false; this._last = performance.now(); return Promise.resolve(); }
+  pause() { void this.currentTime; this.paused = true; }
+  addEventListener() {}
+}
+
+// 段階3：トピック再生（音声、または音声なしなら Clock が時計）
 function playTopic(ti) {
   stopPlayback();
   const topic = board.topics[ti];
@@ -418,9 +573,16 @@ function playTopic(ti) {
     if (ev.type === 'stroke' && byId[ev.id]) (itemsBySlide[ev.slide] || (itemsBySlide[ev.slide] = [])).push({ t: ev.t, stroke: byId[ev.id], instant: !!ev.instant });
     if (ev.type === 'erase') (itemsBySlide[ev.slide] || (itemsBySlide[ev.slide] = [])).push({ t: ev.t, erase: ev.ids });
   }
-  const audio = new Audio(audioURLs[topic.audio] || ('board/' + topic.audio));
+  const pointerBySlide = {};
+  for (const ev of topic.events) {
+    if (ev.type === 'pointer') (pointerBySlide[ev.slide] || (pointerBySlide[ev.slide] = [])).push({ t: ev.t, x: ev.x, y: ev.y });
+    if (ev.type === 'slide') for (const arr of Object.values(pointerBySlide)) {   // ページを移ったら前のページのポインターは消す
+      if (arr.length && arr[arr.length - 1].x != null) arr.push({ t: ev.t, x: null, y: null });
+    }
+  }
+  const audio = topic.audio ? new Audio(audioURLs[topic.audio] || ('board/' + topic.audio)) : new Clock(topic.duration);
   audio.playbackRate = speed();
-  play = { mode: 'topic', topic, audio, itemsBySlide, follow: true, duration: topic.duration };
+  play = { mode: 'topic', topic, audio, itemsBySlide, pointerBySlide, follow: true, duration: topic.duration };
   audio.addEventListener('loadedmetadata', () => {
     if (isFinite(audio.duration)) play && (play.duration = audio.duration);
     else { // Chrome の MediaRecorder製 webm は長さ不明になるため、末尾へシークして長さを確定させる
@@ -526,7 +688,7 @@ function updateButtons() {
   board.topics.forEach((tp, i) => {
     if (tp.startSlide !== curId()) return;
     const b = document.createElement('button');
-    b.textContent = `▶ このトピックを再生：${tp.name}（${fmt(tp.duration)}）`;
+    b.textContent = `▶ このトピックを再生：${tp.name}（${fmt(tp.duration)}${tp.audio ? '' : '・音声なし'}）`;
     b.onclick = () => playTopic(i);
     box.appendChild(b);
   });
@@ -536,6 +698,9 @@ $('#next').onclick = () => go(cur + 1);
 $('#toolPen').onclick = () => setTool('pen');
 $('#toolEraser').onclick = () => setTool('eraser');
 $('#toolNone').onclick = () => setTool('none');
+$('#toolPointer').onclick = () => setTool('pointer');
+$('#stExport').onclick = exportStudent;
+$('#stImport').addEventListener('change', e => { const f = e.target.files[0]; if (f) importStudent(f); e.target.value = ''; });
 document.querySelectorAll('.sw').forEach(b => b.onclick = () => setColor(b.dataset.c));
 $('#undo').onclick = undo;
 $('#clear').onclick = clearSlide;
@@ -556,6 +721,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'p') setTool('pen');
   else if (e.key === 'e') setTool('eraser');
   else if (e.key === 'v') setTool('none');
+  else if (e.key === 'l') setTool('pointer');
 });
 window.addEventListener('resize', layout);
 
@@ -578,10 +744,24 @@ window.addEventListener('resize', layout);
     status(src ? `板書：${src}` : '先生の板書はまだありません');
   }
   board.topics = board.topics || [];
+  if (!AUTHOR) loadLocal();
   setTool('pen'); setColor(AUTHOR ? '#1d2433' : '#e94560');
-  slides.forEach((s, j) => s.classList.toggle('active', j === 0));
-  $('#pageNo').textContent = `1/${slides.length}`;
+  slides.forEach((s, j) => s.classList.toggle('active', j === cur));
+  $('#pageNo').textContent = `${cur + 1}/${slides.length}`;
   layout(); updateButtons();
+  // 本番と同じアダプタでクラウド同期（作成モードでは使わない）
+  if (!AUTHOR && window.SlideSync) SlideSync.init({
+    storageKey: STORAGE_KEY,
+    getCanvas: () => ({ width: REF.w, height: REF.h }),   // 座標は基準レイアウト単位なのでこれで正規化
+    getState: () => ({ notes, strokes, boardStrokes, understanding, bookmarks, lastSlide: cur }),
+    applyState: s => {
+      if (s.notes) notes = s.notes; if (s.understanding) understanding = s.understanding;
+      if (s.bookmarks) bookmarks = s.bookmarks; if (s.strokes) strokes = s.strokes;
+      if (s.boardStrokes) boardStrokes = s.boardStrokes;
+    },
+    saveLocal: ts => saveLocal(ts),
+    refresh: () => redraw(),
+  });
 })();
 </script>
 </body>
