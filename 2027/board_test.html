@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>板書レイヤー テスト</title>
+<!--
+  板書レイヤー＆再生モードのテスト（PLAN_board_replay.md 段階1〜3の最小版）
+  - 学生モード:  board_test.html
+  - 作成モード:  board_test.html?author=1
+  同じブラウザなら、作成モードで書いた板書は学生モードでもそのまま見えます（localStorage経由）。
+  別の端末で見るときは「書き出し」したJSON（と音声）を board/ に置くか、「読み込み」で選びます。
+-->
+<style>
+:root{--bg:#f4f1ea;--ink:#1d2433;--muted:#6b7280;--accent:#e94560;--bar:#fff;--line:#d8d3c7}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+#bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;
+  background:var(--bar);border-bottom:1px solid var(--line);font-size:14px}
+#bar button,#bar select,#bar input[type=text],#bar label.btn{font:inherit;padding:4px 10px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer}
+#bar input[type=text]{cursor:text;width:9em}
+#bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#bar button:disabled{opacity:.4;cursor:default}
+.sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid #fff;outline:1px solid var(--line);cursor:pointer;padding:0!important}
+.sw.on{outline:2px solid var(--ink)}
+#mode{font-weight:700;padding:2px 8px;border-radius:4px;background:#e8f0ff;color:#1e3a8a}
+body.author #mode{background:#ffe3e8;color:#a3122e}
+.authorOnly{display:none!important}
+body.author .authorOnly{display:inline-flex!important}
+body.author .studentOnly{display:none!important}
+#recTime{font-variant-numeric:tabular-nums;min-width:3.5em}
+body.recording #recTime{color:var(--accent);font-weight:700}
+#status{color:var(--muted);font-size:12px;margin-left:auto}
+#viewport{flex:1;position:relative;overflow:hidden}
+#stageWrap{position:absolute;left:50%;top:50%}
+#stage{position:absolute;left:0;top:0;width:1100px;height:619px;transform-origin:0 0;background:#fff;
+  box-shadow:0 2px 14px rgba(0,0,0,.12);border-radius:4px;overflow:hidden}
+.slide{position:absolute;inset:0;padding:48px 64px;display:none;font-size:26px;line-height:1.6}
+.slide.active{display:block}
+.slide h1{font-size:54px;margin:150px 0 10px}
+.slide h2{font-size:36px;margin:0 0 18px;border-bottom:3px solid var(--accent);display:inline-block}
+.slide .sub{color:var(--muted)}
+.slide .box{border:2px dashed #cfc8b8;border-radius:8px;height:300px;margin-top:20px;color:#b7ae9a;
+  display:flex;align-items:center;justify-content:center;font-size:18px}
+canvas{position:absolute;left:0;top:0;width:1100px;height:619px}
+#teacherCanvas{pointer-events:none}
+#inputCanvas{touch-action:none}
+body.tool-none #inputCanvas{pointer-events:none}
+#topicBtns{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:6px}
+#topicBtns button{font:inherit;font-size:15px;padding:8px 14px;border:none;border-radius:8px;
+  background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#player{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;
+  background:rgba(29,36,51,.94);color:#fff;border-radius:10px;padding:6px 12px;font-size:14px;max-width:calc(100% - 24px)}
+#player.show{display:flex}
+#player button,#player select{font:inherit;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);
+  border-radius:6px;padding:3px 9px;cursor:pointer}
+#player select option{color:#000}
+#seek{width:min(360px,40vw)}
+#pTime{font-variant-numeric:tabular-nums;white-space:nowrap}
+#pBack{display:none;background:var(--accent)!important;border-color:var(--accent)!important}
+#pBack.show{display:inline-block}
+#pTitle{max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+</style>
+</head>
+<body>
+<div id="bar">
+  <span id="mode">学生</span>
+  <button id="prev" title="前へ (←)">◀</button><span id="pageNo">1/1</span><button id="next" title="次へ (→)">▶</button>
+  <span class="sep"></span>
+  <button id="toolPen" title="ペン (P)">✏️</button>
+  <button id="toolEraser" title="消しゴム (E)">🧽</button>
+  <button id="toolNone" title="操作のみ (V)">👆</button>
+  <button class="sw" data-c="#e94560" style="background:#e94560"></button>
+  <button class="sw" data-c="#2563eb" style="background:#2563eb"></button>
+  <button class="sw" data-c="#1d2433" style="background:#1d2433"></button>
+  <button id="undo" title="取り消し (Ctrl/⌘+Z)">↶</button>
+  <button id="clear" title="このスライドを全消去">🗑</button>
+  <span class="sep"></span>
+  <button id="toggleTeacher" class="studentOnly" title="先生の板書を表示 (T)">👁 板書</button>
+  <button id="replaySlide" title="このスライドの板書を書き順どおりに再生">▶ 板書を再生</button>
+  <label class="btn" title="線と線の間が3秒以上なら1秒に詰める"><input type="checkbox" id="compress" checked> 空白を詰める</label>
+  <span class="sep authorOnly"></span>
+  <input type="text" id="topicName" class="authorOnly" placeholder="トピック名">
+  <button id="recStart" class="authorOnly" title="このスライドからトピック録音を開始">● 録音</button>
+  <button id="recPause" class="authorOnly" disabled title="録音の一時停止／再開。停止中に書いた線は再生時に一瞬で現れる">⏸</button>
+  <button id="recStop" class="authorOnly" disabled title="録音を終了">■</button>
+  <span id="recTime" class="authorOnly">0:00</span>
+  <span class="sep"></span>
+  <button id="exportBtn" class="authorOnly" title="板書JSONと録音した音声を書き出し">⬇ 書き出し</button>
+  <label class="btn" title="板書JSON・音声ファイルを読み込み（複数選択可）">⬆ 読み込み<input type="file" id="importInput" multiple accept=".json,application/json,audio/*" hidden></label>
+  <button id="resetBtn" class="authorOnly" title="作成中の板書をすべて消去">リセット</button>
+  <a id="modeLink" href="#" style="font-size:12px"></a>
+  <span id="status"></span>
+</div>
+
+<div id="viewport">
+  <div id="stageWrap">
+    <div id="stage">
+      <section class="slide" data-id="sd-title" data-section="需要と供給">
+        <h1>需要と供給</h1>
+        <div class="sub">トピック扉スライド（ここから録音すると、左下に再生ボタンが出ます）</div>
+      </section>
+      <section class="slide" data-id="sd-eq" data-section="需要と供給">
+        <h2>均衡を求める</h2>
+        <div>需要：D(p) = 100 − 2p　　供給：S(p) = 10 + p</div>
+        <div>D(p) = S(p) を解いて，均衡価格 p* と均衡数量 q* を求めよ。</div>
+        <div class="box">ここに式変形を書く</div>
+      </section>
+      <section class="slide" data-id="sd-graph" data-section="需要と供給">
+        <h2>グラフで確認</h2>
+        <svg width="520" height="420" viewBox="0 0 520 420" style="display:block;margin-left:120px">
+          <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d2433"/></marker></defs>
+          <line x1="40" y1="390" x2="500" y2="390" stroke="#1d2433" stroke-width="2" marker-end="url(#ar)"/>
+          <line x1="40" y1="390" x2="40" y2="20" stroke="#1d2433" stroke-width="2" marker-end="url(#ar)"/>
+          <text x="495" y="412" font-size="20">q</text><text x="14" y="30" font-size="20">p</text>
+        </svg>
+      </section>
+      <section class="slide" data-id="tax-title" data-section="課税の効果">
+        <h1>課税の効果</h1>
+        <div class="sub">2つ目のトピック扉</div>
+      </section>
+    </div>
+    <canvas id="teacherCanvas"></canvas>
+    <canvas id="inputCanvas"></canvas>
+  </div>
+  <div id="topicBtns"></div>
+  <div id="player">
+    <button id="pPlay">⏸</button>
+    <span id="pTitle"></span>
+    <input type="range" id="seek" min="0" max="1000" value="0">
+    <span id="pTime">0:00 / 0:00</span>
+    <select id="pSpeed"><option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+    <button id="pBack" title="再生中の位置（スライド）に戻って再開">⏎ 再生位置に戻る</button>
+    <button id="pClose" title="再生を終了">✕</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const REF = { w: 1100, h: 619 };            // 基準レイアウト（座標はこの単位で保存）
+const DECK = 'board_test';
+const AUTHOR = new URLSearchParams(location.search).get('author') === '1';
+const LS_STUDENT = DECK + ':student', LS_AUTHOR = DECK + ':author-board', LS_SHOW = DECK + ':showTeacher';
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const status = msg => { $('#status').textContent = msg; };
+
+/* ---------- スライド ---------- */
+const slides = [...document.querySelectorAll('.slide')];
+slides.forEach((s, i) => { if (!s.dataset.id) console.warn(`スライド${i + 1}に data-id がありません`, s); });
+let cur = 0;
+const curId = () => slides[cur].dataset.id;
+const indexOfId = id => slides.findIndex(s => s.dataset.id === id);
+
+/* ---------- データ ---------- */
+const emptyBoard = () => ({ version: 1, deck: DECK, ref: { ...REF }, slides: {}, topics: [] });
+let board = emptyBoard();
+const slideData = id => board.slides[id] || (board.slides[id] = { strokes: [], erases: [] });
+let student = {};
+try { student = JSON.parse(ls.get(LS_STUDENT) || '{}'); } catch (e) {}
+const audioURLs = {}, audioBlobs = {};
+let showTeacher = ls.get(LS_SHOW) !== '0';
+
+function visibleStrokes(id) {
+  const d = board.slides[id]; if (!d) return [];
+  const gone = new Set(d.erases.flatMap(e => e.ids));
+  return d.strokes.filter(s => !gone.has(s.id));
+}
+const saveStudent = () => ls.set(LS_STUDENT, JSON.stringify(student));
+const saveAuthor = () => { if (AUTHOR) ls.set(LS_AUTHOR, JSON.stringify(board)); };
+const newId = () => 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ---------- キャンバス ---------- */
+const tc = $('#teacherCanvas'), ic = $('#inputCanvas');
+const tctx = tc.getContext('2d'), ictx = ic.getContext('2d');
+let scale = 1;
+function layout() {
+  const vp = $('#viewport').getBoundingClientRect();
+  scale = Math.max(0.1, Math.min((vp.width - 16) / REF.w, (vp.height - 16) / REF.h));
+  const wrap = $('#stageWrap');
+  wrap.style.width = REF.w * scale + 'px'; wrap.style.height = REF.h * scale + 'px';
+  wrap.style.marginLeft = -REF.w * scale / 2 + 'px'; wrap.style.marginTop = -REF.h * scale / 2 + 'px';
+  const k = Math.min(4, Math.max(1, (window.devicePixelRatio || 1) * scale));
+  for (const el of [$('#stage'), tc, ic]) { el.style.transformOrigin = '0 0'; el.style.transform = `scale(${scale})`; }
+  for (const c of [tc, ic]) {
+    c.width = Math.round(REF.w * k); c.height = Math.round(REF.h * k);
+    c.getContext('2d').setTransform(k, 0, 0, k, 0, 0);
+  }
+  redraw();
+}
+function clearCtx(ctx) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore(); }
+function setStyle(ctx, st) { ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+function drawStroke(ctx, st, uptoMs = Infinity) {
+  const p = st.pts; if (!p || !p.length) return;
+  setStyle(ctx, st); ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
+  let n = 0;
+  for (let i = 1; i < p.length; i++) { if (p[i][2] > uptoMs) break; ctx.lineTo(p[i][0], p[i][1]); n++; }
+  if (!n) ctx.lineTo(p[0][0] + 0.01, p[0][1]);
+  ctx.stroke();
+}
+// items: [{t, stroke, instant} | {t, erase:[ids]}]（t昇順, 秒）を時刻tの状態で描く
+function renderItems(ctx, items, t) {
+  const gone = new Set();
+  for (const it of items) { if (it.t > t) break; if (it.erase) it.erase.forEach(id => gone.add(id)); }
+  for (const it of items) {
+    if (it.t > t) break;
+    if (it.stroke && !gone.has(it.stroke.id)) drawStroke(ctx, it.stroke, it.instant ? Infinity : (t - it.t) * 1000);
+  }
+}
+function redrawTeacher() {
+  clearCtx(tctx);
+  if (play && play.mode === 'topic' && play.follow) {
+    renderItems(tctx, play.itemsBySlide[curId()] || [], play.audio.currentTime); return;
+  }
+  if (play && play.mode === 'slide' && play.slide === curId()) { renderItems(tctx, play.items, play.t); return; }
+  if (AUTHOR || showTeacher) visibleStrokes(curId()).forEach(s => drawStroke(tctx, s));
+}
+function redrawInput() {
+  clearCtx(ictx);
+  if (!AUTHOR) (student[curId()] || []).forEach(s => drawStroke(ictx, s));
+}
+function redraw() { redrawTeacher(); redrawInput(); }
+
+/* ---------- 入力 ---------- */
+let tool = 'pen', color = '#e94560';
+const SIZE = 3;
+let drawing = null;
+function toRef(e) {
+  const r = ic.getBoundingClientRect();
+  return { x: Math.round((e.clientX - r.left) / r.width * REF.w * 10) / 10,
+           y: Math.round((e.clientY - r.top) / r.height * REF.h * 10) / 10 };
+}
+ic.addEventListener('pointerdown', e => {
+  if (tool === 'none') return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault(); ic.setPointerCapture(e.pointerId);
+  const pt = toRef(e);
+  if (tool === 'eraser') { drawing = { eraser: true }; eraseAt(pt); return; }
+  const st = { id: newId(), color, size: SIZE, t0: Date.now(), pts: [[pt.x, pt.y, 0]] };
+  drawing = { st, ts0: e.timeStamp, ctx: AUTHOR ? tctx : ictx };
+  if (AUTHOR) { slideData(curId()).strokes.push(st); logTopic('stroke', { slide: curId(), id: st.id }); }
+  else (student[curId()] || (student[curId()] = [])).push(st);
+  drawStroke(drawing.ctx, st);
+});
+ic.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of (evs.length ? evs : [e])) {
+    const pt = toRef(ev);
+    if (drawing.eraser) { eraseAt(pt); continue; }
+    const p = drawing.st.pts, last = p[p.length - 1];
+    if (Math.hypot(pt.x - last[0], pt.y - last[1]) < 0.8) continue;
+    p.push([pt.x, pt.y, Math.max(0, Math.round(ev.timeStamp - drawing.ts0))]);
+    const ctx = drawing.ctx; setStyle(ctx, drawing.st);
+    ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+  }
+});
+const endDraw = () => { if (!drawing) return; drawing = null; AUTHOR ? saveAuthor() : saveStudent(); updateButtons(); };
+ic.addEventListener('pointerup', endDraw);
+ic.addEventListener('pointercancel', endDraw);
+
+function hits(st, pt, r = 10) { return st.pts.some(p => Math.hypot(p[0] - pt.x, p[1] - pt.y) < r); }
+function authorErase(ids) {
+  if (!ids.length) return;
+  slideData(curId()).erases.push({ t0: Date.now(), ids });
+  logTopic('erase', { slide: curId(), ids });
+  saveAuthor(); redraw(); updateButtons();
+}
+function eraseAt(pt) {
+  if (AUTHOR) authorErase(visibleStrokes(curId()).filter(s => hits(s, pt)).map(s => s.id));
+  else {
+    const arr = student[curId()] || [], keep = arr.filter(s => !hits(s, pt));
+    if (keep.length !== arr.length) { student[curId()] = keep; redrawInput(); }
+  }
+}
+function undo() {
+  if (AUTHOR) { const v = visibleStrokes(curId()); if (v.length) authorErase([v[v.length - 1].id]); }
+  else { (student[curId()] || []).pop(); saveStudent(); redrawInput(); }
+}
+function clearSlide() {
+  if (AUTHOR) authorErase(visibleStrokes(curId()).map(s => s.id));
+  else { delete student[curId()]; saveStudent(); redrawInput(); }
+}
+function setTool(t) {
+  tool = t;
+  document.body.classList.toggle('tool-none', t === 'none');
+  $('#toolPen').classList.toggle('on', t === 'pen');
+  $('#toolEraser').classList.toggle('on', t === 'eraser');
+  $('#toolNone').classList.toggle('on', t === 'none');
+}
+function setColor(c) { color = c; document.querySelectorAll('.sw').forEach(b => b.classList.toggle('on', b.dataset.c === c)); }
+
+/* ---------- ページ移動 ---------- */
+function go(i, byUser = true) {
+  i = Math.max(0, Math.min(slides.length - 1, i));
+  if (byUser && play) {
+    if (play.mode === 'topic') { play.audio.pause(); play.follow = false; $('#pBack').classList.add('show'); }
+    else stopPlayback();
+  }
+  if (i === cur && !byUser) return;
+  cur = i;
+  slides.forEach((s, j) => s.classList.toggle('active', j === cur));
+  $('#pageNo').textContent = `${cur + 1}/${slides.length}`;
+  logTopic('slide', { id: curId() });
+  redraw(); updateButtons();
+}
+
+/* ---------- トピック録音（作成モード） ---------- */
+let rec = null;
+function recClock() {
+  if (!rec) return 0;
+  const now = rec.pausedAt != null ? rec.pausedAt : performance.now();
+  return (now - rec.startPerf - rec.pausedTotal) / 1000;
+}
+function logTopic(type, obj) {
+  if (!rec) return;
+  const ev = { t: Math.round(recClock() * 1000) / 1000, type, ...obj };
+  if (type === 'stroke' && rec.pausedAt != null) ev.instant = true;   // 一時停止中に書いた線は一瞬で出す
+  rec.topic.events.push(ev);
+}
+async function recStart() {
+  if (rec) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { status('このブラウザは録音に対応していません'); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { status('マイクを使えませんでした（許可を確認してください）'); return; }
+  const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+  const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+  const type = mr.mimeType || mime || 'audio/webm';
+  const ext = type.includes('mp4') ? 'm4a' : 'webm';
+  const name = $('#topicName').value.trim() || slides[cur].dataset.section || 'トピック';
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  const topic = { name, startSlide: curId(), audio: `${DECK}-${curId()}-${stamp}.${ext}`, mime: type, duration: 0,
+                  events: [{ t: 0, type: 'slide', id: curId() }] };
+  rec = { mr, stream, chunks: [], startPerf: performance.now(), pausedAt: null, pausedTotal: 0, topic };
+  mr.ondataavailable = e => { if (e.data && e.data.size) rec && rec.chunks.push(e.data); };
+  mr.start(1000);
+  document.body.classList.add('recording');
+  $('#recStart').disabled = true; $('#recPause').disabled = false; $('#recStop').disabled = false;
+  status(`録音中：「${name}」（${ext}）`); tickRec();
+}
+function recPause() {
+  if (!rec) return;
+  if (rec.pausedAt == null) { rec.mr.pause(); rec.pausedAt = performance.now(); $('#recPause').textContent = '▶'; status('一時停止中（書いた線は再生時に一瞬で現れます）'); }
+  else { rec.pausedTotal += performance.now() - rec.pausedAt; rec.pausedAt = null; rec.mr.resume(); $('#recPause').textContent = '⏸'; status(`録音中：「${rec.topic.name}」`); }
+}
+function recStop() {
+  if (!rec) return;
+  const r = rec;
+  r.topic.duration = Math.round(recClock() * 1000) / 1000;
+  rec = null;
+  r.mr.onstop = () => {
+    const blob = new Blob(r.chunks, { type: r.topic.mime });
+    audioBlobs[r.topic.audio] = blob;
+    audioURLs[r.topic.audio] = URL.createObjectURL(blob);
+    board.topics.push(r.topic); saveAuthor();
+    r.stream.getTracks().forEach(t => t.stop());
+    status(`「${r.topic.name}」を保存（${fmt(r.topic.duration)}）。音声はメモリ上のみなので「書き出し」してください`);
+    updateButtons();
+  };
+  if (r.mr.state === 'paused') r.mr.resume();
+  r.mr.stop();
+  document.body.classList.remove('recording');
+  $('#recStart').disabled = false; $('#recPause').disabled = true; $('#recStop').disabled = true; $('#recPause').textContent = '⏸';
+}
+function tickRec() { if (!rec) return; $('#recTime').textContent = fmt(recClock()); setTimeout(tickRec, 250); }
+
+/* ---------- 再生 ---------- */
+let play = null;
+const fmt = s => { s = Math.max(0, s || 0); return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`; };
+const speed = () => parseFloat($('#pSpeed').value) || 1;
+
+// 段階2：スライド単位の再生（音声なし）
+function buildSlideItems(id) {
+  const d = board.slides[id]; if (!d) return null;
+  const raw = [
+    ...d.strokes.map(s => ({ real: s.t0, end: s.t0 + (s.pts[s.pts.length - 1][2] || 0), stroke: s })),
+    ...d.erases.map(e => ({ real: e.t0, end: e.t0, erase: e.ids })),
+  ].sort((a, b) => a.real - b.real);
+  if (!raw.length) return null;
+  const compress = $('#compress').checked;
+  let vEnd = 0.3, prevEnd = raw[0].real; const items = [];
+  for (const r of raw) {
+    let gap = Math.max(0, (r.real - prevEnd) / 1000);
+    if (compress && gap > 3) gap = 1;
+    const start = vEnd + gap;
+    items.push(r.stroke ? { t: start, stroke: r.stroke } : { t: start, erase: r.erase });
+    vEnd = start + (r.end - r.real) / 1000;
+    prevEnd = Math.max(prevEnd, r.end);
+  }
+  return { items, duration: vEnd + 0.5 };
+}
+function playSlide() {
+  stopPlayback();
+  const b = buildSlideItems(curId());
+  if (!b) { status('このスライドには先生の板書がありません'); return; }
+  play = { mode: 'slide', slide: curId(), items: b.items, duration: b.duration, t: 0, paused: false, last: performance.now() };
+  showPlayer('板書の再生'); loop();
+}
+
+// 段階3：トピック再生（音声が時計）
+function playTopic(ti) {
+  stopPlayback();
+  const topic = board.topics[ti];
+  const byId = {};
+  for (const d of Object.values(board.slides)) for (const s of d.strokes) byId[s.id] = s;
+  const itemsBySlide = {};
+  for (const ev of topic.events) {
+    if (ev.type === 'stroke' && byId[ev.id]) (itemsBySlide[ev.slide] || (itemsBySlide[ev.slide] = [])).push({ t: ev.t, stroke: byId[ev.id], instant: !!ev.instant });
+    if (ev.type === 'erase') (itemsBySlide[ev.slide] || (itemsBySlide[ev.slide] = [])).push({ t: ev.t, erase: ev.ids });
+  }
+  const audio = new Audio(audioURLs[topic.audio] || ('board/' + topic.audio));
+  audio.playbackRate = speed();
+  play = { mode: 'topic', topic, audio, itemsBySlide, follow: true, duration: topic.duration };
+  audio.addEventListener('loadedmetadata', () => {
+    if (isFinite(audio.duration)) play && (play.duration = audio.duration);
+    else { // Chrome の MediaRecorder製 webm は長さ不明になるため、末尾へシークして長さを確定させる
+      audio.currentTime = 1e101;
+      audio.addEventListener('timeupdate', function fix() { audio.removeEventListener('timeupdate', fix); audio.currentTime = 0; });
+    }
+  });
+  audio.addEventListener('error', () => status(`音声「${topic.audio}」が見つかりません（「読み込み」で音声ファイルも選んでください）`));
+  audio.play().catch(() => status('再生を開始できませんでした'));
+  showPlayer(topic.name); loop();
+}
+function slideAtTopic(t) {
+  let id = play.topic.startSlide;
+  for (const ev of play.topic.events) { if (ev.t > t) break; if (ev.type === 'slide') id = ev.id; }
+  return id;
+}
+function loop() {
+  if (!play) return;
+  let t;
+  if (play.mode === 'topic') {
+    t = play.audio.currentTime;
+    if (play.follow) { const idx = indexOfId(slideAtTopic(t)); if (idx >= 0 && idx !== cur) go(idx, false); }
+    $('#pPlay').textContent = play.audio.paused ? '▶' : '⏸';
+  } else {
+    const now = performance.now();
+    if (!play.paused) play.t = Math.min(play.duration, play.t + (now - play.last) / 1000 * speed());
+    play.last = now;
+    if (play.t >= play.duration) play.paused = true;
+    t = play.t;
+    $('#pPlay').textContent = play.paused ? '▶' : '⏸';
+  }
+  redrawTeacher();
+  if (!seeking) $('#seek').value = play.duration ? Math.round(t / play.duration * 1000) : 0;
+  $('#pTime').textContent = `${fmt(t)} / ${fmt(play.duration)}`;
+  play.raf = requestAnimationFrame(loop);
+}
+function showPlayer(title) { $('#pTitle').textContent = title; $('#pBack').classList.remove('show'); $('#player').classList.add('show'); }
+function stopPlayback() {
+  if (!play) return;
+  cancelAnimationFrame(play.raf);
+  if (play.audio) play.audio.pause();
+  play = null;
+  $('#player').classList.remove('show');
+  redraw();
+}
+let seeking = false;
+$('#seek').addEventListener('input', () => {
+  if (!play) return; seeking = true;
+  const t = $('#seek').value / 1000 * play.duration;
+  if (play.mode === 'topic') { play.audio.currentTime = t; play.follow = true; $('#pBack').classList.remove('show'); }
+  else { play.t = t; play.last = performance.now(); }
+});
+$('#seek').addEventListener('change', () => { seeking = false; });
+$('#pPlay').onclick = () => {
+  if (!play) return;
+  if (play.mode === 'topic') {
+    if (play.audio.paused) { play.follow = true; $('#pBack').classList.remove('show'); play.audio.play(); } else play.audio.pause();
+  } else {
+    if (play.paused && play.t >= play.duration) play.t = 0;
+    play.paused = !play.paused; play.last = performance.now();
+  }
+};
+$('#pBack').onclick = () => { if (!play) return; play.follow = true; $('#pBack').classList.remove('show'); play.audio.play(); };
+$('#pClose').onclick = stopPlayback;
+$('#pSpeed').onchange = () => { if (play && play.audio) play.audio.playbackRate = speed(); };
+
+/* ---------- 書き出し・読み込み ---------- */
+function download(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function exportBoard() {
+  download(new Blob([JSON.stringify(board, null, 1)], { type: 'application/json' }), `${DECK}.board.json`);
+  Object.entries(audioBlobs).forEach(([n, b], i) => setTimeout(() => download(b, n), 500 * (i + 1)));
+  status(`書き出し：${DECK}.board.json` + (Object.keys(audioBlobs).length ? ` ＋ 音声${Object.keys(audioBlobs).length}件` : ''));
+}
+$('#importInput').addEventListener('change', async e => {
+  const files = [...e.target.files]; let n = 0;
+  for (const f of files) {
+    if (/\.json$/i.test(f.name) || f.type === 'application/json') {
+      try {
+        const b = JSON.parse(await f.text());
+        if (!b || b.version !== 1 || !b.slides) throw new Error('形式が違います');
+        b.topics = b.topics || []; board = b; saveAuthor(); n++;
+      } catch (err) { status(`${f.name} を読めませんでした：${err.message}`); return; }
+    } else { audioURLs[f.name] = URL.createObjectURL(f); n++; }
+  }
+  e.target.value = '';
+  stopPlayback(); redraw(); updateButtons();
+  status(`${n}件を読み込みました`);
+});
+$('#resetBtn').onclick = () => {
+  if (!confirm('作成中の板書とトピックをすべて消去します。よろしいですか？')) return;
+  board = emptyBoard(); ls.del(LS_AUTHOR); stopPlayback(); redraw(); updateButtons(); status('リセットしました');
+};
+
+/* ---------- UI ---------- */
+function updateButtons() {
+  $('#replaySlide').disabled = !(board.slides[curId()] && board.slides[curId()].strokes.length);
+  $('#toggleTeacher').classList.toggle('on', showTeacher);
+  const box = $('#topicBtns'); box.innerHTML = '';
+  if (rec) return;
+  board.topics.forEach((tp, i) => {
+    if (tp.startSlide !== curId()) return;
+    const b = document.createElement('button');
+    b.textContent = `▶ このトピックを再生：${tp.name}（${fmt(tp.duration)}）`;
+    b.onclick = () => playTopic(i);
+    box.appendChild(b);
+  });
+}
+$('#prev').onclick = () => go(cur - 1);
+$('#next').onclick = () => go(cur + 1);
+$('#toolPen').onclick = () => setTool('pen');
+$('#toolEraser').onclick = () => setTool('eraser');
+$('#toolNone').onclick = () => setTool('none');
+document.querySelectorAll('.sw').forEach(b => b.onclick = () => setColor(b.dataset.c));
+$('#undo').onclick = undo;
+$('#clear').onclick = clearSlide;
+const toggleTeacher = () => { showTeacher = !showTeacher; ls.set(LS_SHOW, showTeacher ? '1' : '0'); redraw(); updateButtons(); };
+$('#toggleTeacher').onclick = toggleTeacher;
+$('#replaySlide').onclick = playSlide;
+$('#recStart').onclick = recStart;
+$('#recPause').onclick = recPause;
+$('#recStop').onclick = recStop;
+$('#exportBtn').onclick = exportBoard;
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input[type=text]')) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') go(cur + 1);
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(cur - 1);
+  else if (e.key === 't' || e.key === 'T') { if (!AUTHOR) toggleTeacher(); }
+  else if (e.key === 'p') setTool('pen');
+  else if (e.key === 'e') setTool('eraser');
+  else if (e.key === 'v') setTool('none');
+});
+window.addEventListener('resize', layout);
+
+/* ---------- 起動 ---------- */
+(async function init() {
+  if (AUTHOR) {
+    document.body.classList.add('author');
+    $('#mode').textContent = '作成モード';
+    $('#modeLink').textContent = '学生モードで見る'; $('#modeLink').href = location.pathname;
+    try { const b = JSON.parse(ls.get(LS_AUTHOR) || 'null'); if (b && b.version === 1) board = b; } catch (e) {}
+    status('先生の板書を記録します。録音はトピック扉スライドから');
+  } else {
+    $('#modeLink').textContent = '作成モード'; $('#modeLink').href = location.pathname + '?author=1';
+    let src = '';
+    try {
+      const r = await fetch(`board/${DECK}.board.json`, { cache: 'no-cache' });
+      if (r.ok) { const b = await r.json(); if (b && b.version === 1) { board = b; src = `board/${DECK}.board.json`; } }
+    } catch (e) {}
+    if (!src) { try { const b = JSON.parse(ls.get(LS_AUTHOR) || 'null'); if (b && b.version === 1) { board = b; src = 'このブラウザの作成モードのデータ'; } } catch (e) {} }
+    status(src ? `板書：${src}` : '先生の板書はまだありません');
+  }
+  board.topics = board.topics || [];
+  setTool('pen'); setColor(AUTHOR ? '#1d2433' : '#e94560');
+  slides.forEach((s, j) => s.classList.toggle('active', j === 0));
+  $('#pageNo').textContent = `1/${slides.length}`;
+  layout(); updateButtons();
+})();
+</script>
+</body>
+</html>
