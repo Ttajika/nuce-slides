@@ -528,13 +528,17 @@
     $('sbTime').textContent = `${fmt(t)} / ${fmt(play.duration)}`;
     play.raf = requestAnimationFrame(loop);
   }
-  function showPlayer(title) { $('sbTitle').textContent = title; $('sbBack').classList.remove('show'); $('sbPlayer').classList.add('show'); }
+  function showPlayer(title) {
+    $('sbTitle').textContent = title; $('sbBack').classList.remove('show'); $('sbPlayer').classList.add('show');
+    document.body.classList.add('sb-playing');   // 再生中はトピックボタンを隠す（再生バーと重なるため）
+  }
   function stopPlayback() {
     if (!play) return;
     cancelAnimationFrame(play.raf);
     play.clock.pause();
     play = null;
     $('sbPlayer').classList.remove('show');
+    document.body.classList.remove('sb-playing');
     redrawTeacher();
   }
 
@@ -613,6 +617,7 @@
       #sbShowBtn.on { background:var(--accent, #e94560); color:#fff; }
       #sbTopics { position:fixed; left:16px; bottom:16px; z-index:9000; display:flex; flex-direction:column; gap:6px; max-width:calc(100vw - 100px); }
       #sbTopics .sb-topic { display:flex; gap:4px; }
+      body.sb-playing #sbTopics { display:none; }
       #sbTopics button { font:inherit; font-size:14px; padding:9px 14px; border:none; border-radius:10px; cursor:pointer;
         background:var(--accent, #e94560); color:#fff; box-shadow:0 3px 12px rgba(0,0,0,.25); text-align:left; }
       #sbTopics button.del { background:#6b7280; padding:9px 11px; }

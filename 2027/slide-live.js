@@ -8,6 +8,8 @@
      ?presenter=1[&live=CODE]   配信側（iPad）。要ログイン。CODE 省略時は "1"
      ?live=CODE                 受信側（学生・PC）。presenter と同じ CODE
      ?live=CODE&rec=1           受信側 ＋ 録画ボタン（PC 用）
+                                録画は ⏸ で一時停止できる。配信側（iPad）の「⏸ 録画」ボタンからも
+                                一時停止・再開でき、録画 PC の状態は配信側のボタンに反映される
 
    各スライド HTML からは、SlideSync.init の後に SlideLive.init(adapter) を呼ぶ:
      SlideLive.init({
@@ -172,6 +174,7 @@
       #slPresBtn.live { background:#16a34a; border-color:#16a34a; }
       #slRecBtn.rec { background:#dc2626; border-color:#dc2626; animation: slBlink 1.2s infinite; }
       @keyframes slBlink { 50% { opacity:.55; } }
+      #slRecBtn.paused, #slRecPauseBtn.paused, #slPresRecBtn.paused { background:#d97706; border-color:#d97706; animation:none; }
       .sl-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.5);
         align-items:center; justify-content:center; }
       .sl-overlay.open { display:flex; }
@@ -219,7 +222,7 @@
     ch.on('presence', { event: 'sync' }, () => { if (onPresenceCb) onPresenceCb(presenceSummary()); });
     ch.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        try { await ch.track({ role: myRole }); } catch (e) { console.warn('[slide-live] track', e); }
+        try { await ch.track(presenceMeta(myRole)); } catch (e) { console.warn('[slide-live] track', e); }
         if (onSubscribed) onSubscribed();
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         console.warn('[slide-live] channel', status);
@@ -228,17 +231,26 @@
     });
     return true;
   }
+  // presence に載せる情報。録画 PC は録画中か・一時停止中かも載せる（配信側のボタン表示用）
+  function presenceMeta(myRole) {
+    const m = { role: myRole };
+    if (myRole === 'viewer' && rec) { m.rec = true; m.paused = !!recPausedAt; }
+    return m;
+  }
+  function retrack() {
+    if (ch && role === 'viewer') { try { ch.track(presenceMeta('viewer')); } catch (e) { console.warn('[slide-live] retrack', e); } }
+  }
   function disconnect() {
     if (ch && sb) { try { ch.untrack(); sb.removeChannel(ch); } catch (e) {} }
     ch = null;
   }
   function presenceSummary() {
-    const out = { presenter: false, viewers: 0 };
+    const out = { presenter: false, viewers: 0, recorders: 0, recPaused: 0 };
     if (!ch) return out;
     const st = ch.presenceState();
     Object.values(st).forEach(metas => metas.forEach(m => {
       if (m.role === 'presenter') out.presenter = true;
-      else if (m.role === 'viewer') out.viewers++;
+      else if (m.role === 'viewer') { out.viewers++; if (m.rec) { out.recorders++; if (m.paused) out.recPaused++; } }
     }));
     return out;
   }
@@ -281,6 +293,7 @@
     // 'end' が届くまで少し待ってから切断
     setTimeout(disconnect, 300);
     updatePresBtn();
+    updatePresRecBtn(null);
   }
   SL.presenterStart = presenterStart;
   SL.presenterStop = presenterStop;
@@ -291,6 +304,25 @@
     b.textContent = live ? ('📡 配信中' + (p ? ' (' + p.viewers + ')' : '')) : '📡 配信';
     b.title = live ? 'クリックで配信停止' : '配信を開始（要ログイン）';
   }
+
+  // 録画 PC がいるときだけ出す。全台が一時停止中なら「再開」、そうでなければ「一時停止」
+  function updatePresRecBtn(p) {
+    const b = $('slPresRecBtn'); if (!b) return;
+    if (!live || !p || !p.recorders) { b.style.display = 'none'; return; }
+    const paused = p.recPaused === p.recorders;
+    b.style.display = '';
+    b.classList.toggle('paused', paused);
+    b.textContent = paused ? '▶ 録画再開' : '⏸ 録画';
+    b.title = paused ? '録画は一時停止中 — クリックで再開' : '録画中 — クリックで一時停止（書き写しの間など）';
+  }
+  function presRecToggle() {
+    const p = presenceSummary();
+    if (!p.recorders) return;
+    const pause = p.recPaused !== p.recorders;
+    send({ t: 'rec', pause });
+    const b = $('slPresRecBtn'); if (b) b.textContent = pause ? '⏸ 停止中…' : '▶ 再開中…';
+  }
+  SL.recPause = presRecToggle;
 
   function sendFull() {
     const i = adapter.getCurrent();
@@ -396,10 +428,13 @@
     qr.className = 'nav-btn'; qr.id = 'slQrBtn'; qr.style.fontSize = '11px';
     qr.textContent = '📱'; qr.title = '受信用 URL / QR を表示';
     qr.onclick = showViewerUrl;
-    nav.appendChild(btn); nav.appendChild(qr);
+    const rb = document.createElement('button');
+    rb.className = 'nav-btn'; rb.id = 'slPresRecBtn'; rb.style.fontSize = '11px'; rb.style.display = 'none';
+    rb.onclick = presRecToggle;
+    nav.appendChild(btn); nav.appendChild(rb); nav.appendChild(qr);
     updatePresBtn();
 
-    onPresenceCb = (p) => { if (live) updatePresBtn(p); };
+    onPresenceCb = (p) => { if (live) updatePresBtn(p); updatePresRecBtn(p); };
     SlideSync.onAuth && SlideSync.onAuth(u => {
       if (u && pendingStart) { pendingStart = false; presenterStart(); }
       if (!u && live) presenterStop();
@@ -482,6 +517,9 @@
         L.bo = m.on; applyBoard(); break;
       case 'media':
         L.m = m.u; applyMedia(); break;
+      case 'rec':
+        if (rec) setRecPaused(!!m.pause);
+        break;
       case 'end':
         L.ended = true; L.p = null; redrawLive(); setBadge();
         recOnPresenterGone();
@@ -617,6 +655,7 @@
   // ═══════════════════════════════════════════════════════════════════════
   let rec = null, recChunks = [], recStart = 0, recTimer = null, recWritable = null, recFileHandle = null;
   let recStreams = [], recAudioCtx = null, recAutoTimer = null, recMaxTimer = null, recMicLabel = '';
+  let recPausedAt = 0, recPausedTotal = 0;   // 一時停止の開始時刻 / 一時停止していた合計（ms）
 
   function recFileName() {
     const d = new Date();
@@ -635,7 +674,11 @@
     btn.className = 'nav-btn'; btn.id = 'slRecBtn'; btn.style.fontSize = '11px';
     btn.textContent = '🔴 録画'; btn.title = 'このタブを録画（PC 用）';
     btn.onclick = () => { if (rec) { if (confirm('録画を停止して保存しますか？')) recStop(); } else openRecDialog(); };
-    nav.appendChild(btn);
+    const pb = document.createElement('button');
+    pb.className = 'nav-btn'; pb.id = 'slRecPauseBtn'; pb.style.fontSize = '11px'; pb.style.display = 'none';
+    pb.title = '録画を一時停止 / 再開（配信側の「⏸ 録画」ボタンからも操作できます）';
+    pb.onclick = () => setRecPaused(!recPausedAt);
+    nav.appendChild(btn); nav.appendChild(pb);
 
     const banner = document.createElement('div');
     banner.className = 'sl-banner'; banner.id = 'slRecBanner';
@@ -807,10 +850,24 @@
     display.getVideoTracks()[0].onended = () => { if (rec) recStop(); };  // ブラウザ側の「共有を停止」
     rec.start(1000);
     recMicLabel = mic ? (mic.getAudioTracks()[0].label || 'マイク') : 'マイクなし';
-    recStart = Date.now();
+    recStart = Date.now(); recPausedAt = 0; recPausedTotal = 0;
     recTimer = setInterval(updateRecBtn, 1000);
     recMaxTimer = setTimeout(() => { if (rec) { showBanner('最長録画時間に達したため停止しました。'); recStop(); } }, CONFIG.recMaxMin * 60000);
     updateRecBtn();
+    retrack();
+  }
+
+  // 一時停止 / 再開（録画 PC のボタン、または配信側からの指示）
+  function setRecPaused(on) {
+    if (!rec || rec.state === 'inactive') return;
+    if (on && !recPausedAt) {
+      try { rec.pause(); } catch (e) { console.warn('[slide-live] pause', e); return; }
+      recPausedAt = Date.now();
+    } else if (!on && recPausedAt) {
+      try { rec.resume(); } catch (e) { console.warn('[slide-live] resume', e); return; }
+      recPausedTotal += Date.now() - recPausedAt; recPausedAt = 0;
+    } else return;
+    updateRecBtn(); retrack();
   }
 
   function recStop() {
@@ -825,16 +882,21 @@
     clearInterval(recTimer); recTimer = null;
     clearTimeout(recMaxTimer); recMaxTimer = null;
     rec = null; recChunks = []; recWritable = null; recFileHandle = null;
+    recPausedAt = 0; recPausedTotal = 0;
     updateRecBtn();
+    retrack();
   }
   function updateRecBtn() {
     const b = $('slRecBtn'); if (!b) return;
-    if (!rec) { b.textContent = '🔴 録画'; b.classList.remove('rec'); return; }
-    const sec = Math.floor((Date.now() - recStart) / 1000);
+    const pb = $('slRecPauseBtn');
+    if (!rec) { b.textContent = '🔴 録画'; b.classList.remove('rec', 'paused'); if (pb) pb.style.display = 'none'; return; }
+    // 表示は一時停止していた時間を除いた「動画の長さ」
+    const sec = Math.floor(((recPausedAt || Date.now()) - recStart - recPausedTotal) / 1000);
     const z = n => String(n).padStart(2, '0');
-    b.textContent = '⏹ ' + z(Math.floor(sec / 3600)) + ':' + z(Math.floor(sec / 60) % 60) + ':' + z(sec % 60);
-    b.title = '録画中（音声：' + recMicLabel + '）— クリックで停止';
-    b.classList.add('rec');
+    b.textContent = (recPausedAt ? '⏸ ' : '⏹ ') + z(Math.floor(sec / 3600)) + ':' + z(Math.floor(sec / 60) % 60) + ':' + z(sec % 60);
+    b.title = (recPausedAt ? '一時停止中' : '録画中') + '（音声：' + recMicLabel + '）— クリックで停止して保存';
+    b.classList.toggle('rec', !recPausedAt); b.classList.toggle('paused', !!recPausedAt);
+    if (pb) { pb.style.display = ''; pb.textContent = recPausedAt ? '▶ 再開' : '⏸'; pb.classList.toggle('paused', !!recPausedAt); }
   }
 
   function showBanner(html, withButtons) {
