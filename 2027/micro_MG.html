@@ -1351,9 +1351,13 @@ function renderMath(el) {
   }
 }
 
+// 空欄の開閉は phantomctrl イベントとしても通知する（slide-board.js が記録・再生に使う）
+function emitPhantom(index, revealed) {
+  document.dispatchEvent(new CustomEvent('phantomctrl', { detail: { index, revealed } }));
+}
 function setupPhantoms(el) {
-  el.querySelectorAll('.phantom').forEach(p => {
-    p.addEventListener('click', () => p.classList.toggle('revealed'));
+  el.querySelectorAll('.phantom').forEach((p, i) => {
+    p.addEventListener('click', () => { p.classList.toggle('revealed'); emitPhantom(i, p.classList.contains('revealed')); });
     p.title = 'クリックで表示';
   });
 }
@@ -1419,6 +1423,8 @@ function clearNote() {
 
 function revealAllPhantoms() {
   document.querySelectorAll('.phantom').forEach(p => p.classList.toggle('revealed'));
+  const el = document.getElementById('slideContent');
+  if (el) el.querySelectorAll('.phantom').forEach((p, i) => emitPhantom(i, p.classList.contains('revealed')));
 }
 
 // ═══ LIGHTBOX ═══
@@ -1474,7 +1480,8 @@ document.getElementById('slideArea').addEventListener('wheel', e => {
 // SVG をインライン展開してシークバーを付ける。fetch 失敗時は <img> のまま（従来動作）。
 const animSvgCache = {};   // src -> svg markup
 async function setupAnimFigures(container) {
-  for (const fig of container.querySelectorAll('.tikz-figure.anim')) {
+  const animFigs = Array.from(container.querySelectorAll('.tikz-figure.anim'));
+  for (const [figIdx, fig] of animFigs.entries()) {
     const img = fig.querySelector('img[src$=".svg"]');
     if (!img) continue;
     const src = img.getAttribute('src');
@@ -1498,11 +1505,11 @@ async function setupAnimFigures(container) {
       if (vb.length === 4) { svg.setAttribute('width', vb[2]); svg.setAttribute('height', vb[3]); }
     }
     img.replaceWith(svg);
-    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(fig, svg);
+    if (svg.querySelector('animate, animateTransform, animateMotion')) addAnimControls(fig, svg, figIdx);
   }
 }
 
-function addAnimControls(fig, svg) {
+function addAnimControls(fig, svg, figIdx) {
   let dur = 0;
   svg.querySelectorAll('animate, animateTransform, animateMotion').forEach(a => {
     const v = parseFloat(a.getAttribute('dur'));
@@ -1521,18 +1528,28 @@ function addAnimControls(fig, svg) {
   const range = bar.querySelector('input');
   const time = bar.querySelector('.anim-time');
   const fmt = t => t.toFixed(1) + ' / ' + dur + 's';
-  let playing = true;
+  const loop = !!svg.querySelector('[repeatCount="indefinite"]');
+  const nowT = () => { const t = svg.getCurrentTime(); return loop ? t % dur : Math.min(t, dur); };
+  // 操作は animctrl イベントとしても通知する（slide-board.js が記録・再生に使う）
+  const emit = (action, at) => document.dispatchEvent(new CustomEvent('animctrl',
+    { detail: { fig: figIdx, action, at: Math.round(at * 1000) / 1000, dur } }));
+  let playing = false;                     // 既定は最初のコマで停止（▶ で再生）
   function setPlaying(on) {
     playing = on;
     btn.textContent = on ? '⏸' : '▶';
     if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
   }
-  btn.addEventListener('click', () => setPlaying(!playing));
+  btn.addEventListener('click', () => { setPlaying(!playing); emit(playing ? 'play' : 'pause', nowT()); });
   range.addEventListener('input', () => {
     if (playing) setPlaying(false);        // シーク中は一時停止（動画プレーヤーと同じ）
     svg.setCurrentTime(parseFloat(range.value));
     time.textContent = fmt(parseFloat(range.value));
+    emit('seek', parseFloat(range.value));
   });
+  svg.pauseAnimations(); svg.setCurrentTime(0);
+  btn.textContent = '▶'; time.textContent = fmt(0);
+  // 外部（記録の再生）から指定時刻のコマを表示する
+  fig._anim = { dur, loop, show(t) { if (playing) setPlaying(false); svg.setCurrentTime(t); range.value = t; time.textContent = fmt(t); } };
   (function tick() {
     if (!fig.isConnected) return;          // スライドが切り替わったら停止
     const t = svg.getCurrentTime() % dur;
