@@ -3369,7 +3369,7 @@ $ \|a\| _{\mathsf{max}}= \max _i |a _i|$.
 
 <li class="sub-item"><span style="color:#2563eb">»</span>   $ p$ 乗ノルム
 
-$\|a\|_p=\displaystyle \sum_{i=1}^n |a_i|^p $
+$\|a\|_p=\displaystyle \left(\sum_{i=1}^n |a_i|^p\right)^{1/p} $
 <ul>
 <li class="custom-label"><span class="label">※</span> ユークリッド，マンハッタン，最大値ノルムは $ p$ 乗ノルムの特殊例
 </ul>
@@ -4090,6 +4090,7 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <li class="sub-item"><span style="color:#2563eb">»</span>   こういったことを考える理論を<span class="keyword">一般均衡理論</span>と呼ぶ．
   <li> 一般均衡理論の最も単純な形のひとつは<br><span class="keyword">純粋交換経済</span>と呼ばれる．
   <li class="sub-item"><span style="color:#2563eb">»</span>  この経済では複数の人々が初期に自分自身で財を保有していて，それを市場でお互いに交換する．
+ <li class="sub-item"><span style="color:#2563eb">»</span>  以下では消費者はアダム（ア）とイヴ（イ）の2人とし，消費者 $h$ は $h=\text{ア},\text{イ}$ のどちらかを表す．
  <li class="sub-item"><span style="color:#2563eb">»</span>  初期に持っている財を<span class="keyword">初期保有</span>と呼び，消費者 $h$ が持っている財 $1$ の量を $e_{h1}$, 財 $2$ の量を $e_{h2}$ とかく．
  </ul> 
  </div> 
@@ -4119,8 +4120,8 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <li> 財市場は均衡していなければいけない．
  <div class="math-display">\[\begin{aligned}\Rightarrow \left\{
 \begin{aligned}
- \sum_{h=1}^{m} d_{h1}=\sum_{h=1}^{m}e_{h1}\\
-  \sum_{h=1}^{m} d_{h2}=\sum_{h=1}^{m}e_{h2}
+ d_{\text{ア}1}+d_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\
+ d_{\text{ア}2}+d_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{aligned}\right.\end{aligned}\]</div> 
 
 </ol> 
@@ -4168,15 +4169,15 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
 <template class="slide-data" data-title="ワルラス均衡の一階条件" data-section="一般均衡理論" data-note="false" data-print-margin="180">
 
  <ul>
- <li> 一階条件を使ってワルラス均衡を表現すると，次の条件が成り立つ．
+ <li> 一階条件を使ってワルラス均衡を表現すると，次の条件が成り立つ（$h=\text{ア},\text{イ}$）．
  <div class="math-display">\[\begin{align}\begin{aligned}
 \pdif{1}u_{h}(q_{h1},q_{h2})=\lambda_{h}p_{1}\\
 \pdif{2} u_{h}(q_{h1},q_{h2})=\lambda_{h} p_{2}
 \end{aligned}\tag{{$h$ の効用最大化の一階条件}}  \\
 \\
 \begin{aligned}
- \sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\
-  \sum_{h=1}^{m} q_{h2}=\sum_{h=1}^{m}e_{h2}
+ q_{\text{ア}1}+q_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\
+ q_{\text{ア}2}+q_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{aligned} \tag{ 財市場の均衡条件}\end{align}\]</div>
 <li>
 それでは一般均衡で達成される財配分はどのようなものだろうか？ 
@@ -4192,7 +4193,7 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <li> 社会の状態を判断するひとつの基準として，<span class="keyword">社会厚生関数</span>というものがある．
  <li> その中で最も有名なもののひとつが<span class="keyword">（ウェイト付き）功利主義型社会厚生関数</span>と呼ばれるものである． 
  <li> これは次の形で表現される．
- <div class="math-display">\[\begin{aligned}W(u_{1},\dots,u_{m})= w_{1}u_{1}+\cdots+ w_{m}u_{m}\end{aligned}\]</div> 
+ <div class="math-display">\[\begin{aligned}W(u_{\text{ア}},u_{\text{イ}})= w_{\text{ア}}u_{\text{ア}}+w_{\text{イ}}u_{\text{イ}}\end{aligned}\]</div> 
  <li class="sub-item"><span style="color:#2563eb">»</span>  ここで $w_{h}$ は $h$ をどれだけ重視しているかを表すウェイトである．
  </ul> 
  </div> 
@@ -4212,26 +4213,26 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
  <div class="column"> 
   <ul>
  <li> 次のような制約付きの社会厚生最大化問題を考えてみよう． 
- <div class="math-display">\[\begin{aligned}&\max _{(q _{h1},q _{h2})_{h=1}^m} 
- \sum_{h=1}^mw_{h}u_{h}(q_{h1},q_{h2})\\
+ <div class="math-display">\[\begin{aligned}&\max _{q_{\text{ア}1},q_{\text{ア}2},q_{\text{イ}1},q_{\text{イ}2}} 
+ w_{\text{ア}}u_{\text{ア}}(q_{\text{ア}1},q_{\text{ア}2})+w_{\text{イ}}u_{\text{イ}}(q_{\text{イ}1},q_{\text{イ}2})\\
  &\text{s.t.}\quad \left\{
  \begin{array}{c}
- \sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\\\
-  \sum_{h=1}^{m} q_{h2}=\sum_{h=1}^{m}e_{h2}
+ q_{\text{ア}1}+q_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\\\
+ q_{\text{ア}2}+q_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{array}\right.\end{aligned}\]</div> 
  </ul> 
 
  </div> 
  <div class="column"> 
   <ul>
- <li> この問題の一階条件は次のとおりである．
+ <li> この問題の一階条件は次のとおりである（$h=\text{ア},\text{イ}$）．
  <div class="math-display">\[\begin{aligned}\begin{aligned}
 w_{h}\cdot \pdif{1}u_{h}(q_{h1},q_{h2})= \lambda_{1}\\
 w_{h}\cdot \pdif{2}u_{h}(q_{h1},q_{h2})=\lambda_{2}
 \end{aligned}\\\\
 \begin{aligned}
-\sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\
-  \sum_{h=1}^{m} q_{h2}=\sum_{h=1}^{m}e_{h2}
+ q_{\text{ア}1}+q_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\
+ q_{\text{ア}2}+q_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{aligned}\end{aligned}\]</div>   
 
 
@@ -4252,8 +4253,8 @@ w_{h}\cdot \pdif{2}u_{h}(q_{h1},q_{h2})=\lambda_{2}
 \end{aligned} \\
 \\
 \begin{aligned}
- \sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\
-  \sum_{h=1}^{m} q_{h2}=\sum_{h=1}^{m}e_{h2}
+ q_{\text{ア}1}+q_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\
+ q_{\text{ア}2}+q_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{aligned}\end{aligned}\]</div>
  </ul> 
  </div> 
@@ -4265,8 +4266,8 @@ w_{h} \cdot \pdif{1} u_{h}(q_{h1},q_{h2})= \lambda_{1}\\
 w_{h}\cdot \pdif{2} u_{h}(q_{h1},q_{h2})=\lambda_{2}
 \end{aligned}\\\\
 \begin{aligned}
-\sum_{h=1}^{m} q_{h1}=\sum_{h=1}^{m}e_{h1}\\
-  \sum_{h=1}^{m} q_{h2}=\sum_{h=1}^{m}e_{h2}
+ q_{\text{ア}1}+q_{\text{イ}1}=e_{\text{ア}1}+e_{\text{イ}1}\\
+ q_{\text{ア}2}+q_{\text{イ}2}=e_{\text{ア}2}+e_{\text{イ}2}
 \end{aligned}\end{aligned}\]</div>  
 
  </ul> 
