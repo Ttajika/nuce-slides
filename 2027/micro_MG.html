@@ -3316,6 +3316,425 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </template>
 
 
+<template class="slide-data" data-title="ゲーム理論の視点" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>ミクロ経済学の行動原理は「選べる中でベストなものを選ぶ」だった</li>
+<li>欠けていたのは「<span class="keyword">どんな行動がベストかは他人の行動で変わる</span>」という視点</li>
+<li class="sub-item">» じゃんけん：相手がグーと予想するならパーを出すべき</li>
+<li class="sub-item">» 家事の分担：他の人がやってくれるなら自分はやらなくてよい</li>
+<li class="sub-item">» 待ち合わせ：相手が北口に行くと予想すれば自分も北口へ</li>
+<li>他人の行動を予想する必要があるが，その予想も自分の行動の予想に依存する</li>
+<li class="sub-item">» この予想の立て方と，その結果の行動を分析するのが<span class="keyword">ゲーム理論</span></li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<div class="section-title-big">人生の計画表</div>
+</template>
+
+<template class="slide-data" data-title="最も身近な「他人」" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>自分の行動に影響を与える最も身近な人物は<span class="keyword">将来の自分自身</span></li>
+<li>宿題を明日に先延ばしにするか，我慢して今やるか</li>
+<li class="sub-item">» ギリギリになったらやってくれるタイプと信じているなら，先延ばししてよい</li>
+<li class="sub-item">» ギリギリになったら諦めるタイプなら，今やってしまう方が得</li>
+<li><span class="keyword">将来の自分がどうするかが，今の自分が何をすべきかを決める</span></li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="意思決定の木" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<!-- 図（手書き） -->
+<ul>
+<li>スタート地点が<span class="keyword">根</span>．選択のたびに<span class="keyword">ノード</span>（意思決定ノード・手番）で枝分かれする</li>
+<li>終着点（<span class="keyword">終端ノード</span>）に，最終的に得られる効用＝<span class="keyword">利得</span>が書いてある</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="逆算推論法" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<!-- 図（手書き） -->
+<ul>
+<li>Step 1：各ノードで利得の高い選択肢を選ぶ</li>
+<li>Step 2：得られる利得をノードの直下に書き込む</li>
+<li>Step 3：根で最も利得の高い選択肢を選ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="戦略とは計画である" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>「根では〜を選び，ノードAにいくと〜を選び，ノードBにいくなら〜を選ぶ」</li>
+<li class="sub-item">» この計画を<span class="keyword">戦略</span>と呼ぶ</li>
+<li>ノードBやCは本来なら選ばれないルートだが，戦略は<span class="keyword">いざというときの計画まで</span>含む</li>
+<li class="sub-item">» 逆算推論法を使えば，どのノードからでも利得を最大にする戦略を選べる</li>
+<li class="sub-item">» 想定外のノードにたどり着いてもベストな選択ができる</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="例題：旅の計画" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<!-- 図（手書き） -->
+<ul>
+<li>逆算推論法で解き，最適な旅行ルートとそのときの利得を求めなさい．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<div class="section-title-big">逐次手番ゲーム</div>
+</template>
+
+<template class="slide-data" data-title="ゲームの木" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<!-- 図（手書き） -->
+<ul>
+<li>意思決定ノードにはその番の<span class="keyword">プレイヤー</span>の名前，終端ノードには利得のペア</li>
+<li class="sub-item">» $(3,0)$ は「Aの利得が $3$，Bの利得が $0$」</li>
+<li>順番に選んでいく構造のゲームを<span class="keyword">逐次手番ゲーム</span>と呼ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="何をすべきかは予想次第" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>Bが $x_1$ で上，$x_2$ で下を選ぶなら</li>
+<li class="sub-item">» Aは up で利得3，down で利得2 → up を選ぶべき</li>
+<li>Bが $x_1$ で下を選ぶなら</li>
+<li class="sub-item">» Aは up で利得0 → down を選ぶべき</li>
+<li>「Bが何をするか」の予想は，Bが自分の利得を最大にすると考えれば逆算推論法で立つ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="逆算推論法で解く" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<!-- 図（手書き） -->
+<ul>
+<li>$x_1$：Bは上で $0$，下で $2$ → 下．$x_2$：Bは上を選ぶ</li>
+<li>$x_0$：Aは up なら $(0,2)$，down なら $(1,2)$ → <span class="keyword">down</span></li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="練習1：先に動く強み" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<!-- 図（手書き） -->
+<ul>
+<li>同じ規格ならXで $(3,1)$，Yで $(1,3)$．バラバラなら両者 $0$</li>
+<li>AはXを，BはYを好む．Aが先に決め，Bがそれを見てから決める</li>
+<li>逆算推論法で解きなさい．Bが先に動く場合と比べるとどうなるか？</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="練習2：ムカデゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<!-- 図（手書き） -->
+<ul>
+<li>誰かがDを選ぶとそこで終わり．最後までCが続けば $(5,7)$</li>
+<li>逆算推論法で解きなさい．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="練習3：ホールドアップ問題" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<div class="columns">
+<div class="column">
+<ul>
+<li>部下が仕事をした後，上司が報酬を払うか決める</li>
+<li class="sub-item">» 払う：上司 $5$，部下 $1$</li>
+<li class="sub-item">» 払わない：上司 $10$，部下 $-4$</li>
+<li>逆算推論法で解きなさい．</li>
+</ul>
+</div>
+<div class="column">
+<!-- 図（手書き）：ゲームの木 -->
+</div>
+</div>
+</template>
+
+
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<div class="section-title-big">同時手番のゲーム</div>
+</template>
+
+<template class="slide-data" data-title="戦略形ゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>選択が同時に行われる場合，逆算推論法は使えない</li>
+<li><span class="keyword">戦略形ゲーム</span>：プレイヤー・各自の戦略・戦略の組に対する利得が定まったもの</li>
+<li class="sub-item">» 利得表で表現できる</li>
+</ul>
+<table class="slide-table">
+<tr><th>ジョン ＼ オスカー</th><th>協力する</th><th>しない</th></tr>
+<tr><td>協力する</td><td>5, 5</td><td>3, 3</td></tr>
+<tr><td>しない</td><td>6, 0</td><td>4, 1</td></tr>
+</table>
+<ul>
+<li>左がジョンの利得，右がオスカーの利得</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="支配戦略" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>オスカーが「協力する」なら，ジョンは 協力する $5$ より しない $6$ がよい</li>
+<li>オスカーが「協力しない」なら，ジョンは しない $4$ がよい</li>
+<li class="sub-item">» つまりジョンは<span class="keyword">相手が何をしても「しない」がよい</span></li>
+<li>相手がどんな戦略でも $x$ が $y$ より良いとき，$x$ は $y$ を<span class="keyword">支配する</span>という</li>
+<li class="sub-item">» 他のすべての戦略を支配する戦略を<span class="keyword">支配戦略</span>と呼ぶ</li>
+<li>ジョンの行動が読み切れるので，オスカーも「しない」を選ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="読み切れない場合" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>ジョン ＼ オスカー</th><th>大学</th><th>駅</th></tr>
+<tr><td>大学</td><td>1, 1</td><td>0, 0</td></tr>
+<tr><td>駅</td><td>0, 0</td><td>1, 1</td></tr>
+</table>
+<ul>
+<li>待ち合わせ．場所が同じなら出会えて利得1，違えば0</li>
+<li class="sub-item">» 相手が大学に行くと予想すれば大学へ，駅と予想すれば駅へ</li>
+<li class="sub-item">» お互いにどう予想するかが決定的に大事になる</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="ナッシュ均衡" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>2人とも「相手は大学に行く」と予想したとする</li>
+<li class="sub-item">» その予想に対してベストな行動をとれば，実際に大学に行く</li>
+<li class="sub-item">» つまり<span class="keyword">予想そのものが正当化される</span></li>
+<li>$x_B$ に対してAの利得を最大にする戦略を，$x_B$ への<span class="keyword">最適反応</span>という</li>
+<li>$(x_A,x_B)$ が<span class="keyword">ナッシュ均衡</span>とは，互いに相手の戦略への最適反応になっていること</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="予想の自己正当化" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>予想を前提にすると，各プレイヤーのベストな行動がちょうどその予想どおりになる</li>
+<li class="sub-item">» この性質を「予想が<span class="keyword">自己正当化</span>されている」と呼ぶ</li>
+<li>大事なのは，外から誰かが命令しなくても</li>
+<li class="sub-item">» 各プレイヤーがベストを尽くすだけで予想どおりの結果が保たれる，という点</li>
+<li>待ち合わせゲームでは（大学，大学）と（駅，駅）の<span class="keyword">2つ</span>がナッシュ均衡</li>
+<li class="sub-item">» ナッシュ均衡は複数存在しうる</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="囚人のジレンマ" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>ジョン ＼ オスカー</th><th>協力する</th><th>協力しない</th></tr>
+<tr><td>協力する</td><td>3, 3</td><td>0, 4</td></tr>
+<tr><td>協力しない</td><td>4, 0</td><td>1, 1</td></tr>
+</table>
+<ul>
+<li>両者とも「協力しない」が支配戦略．（協力しない，協力しない）がナッシュ均衡</li>
+<li class="sub-item">» 両者の戦略が支配戦略であるとき，そのナッシュ均衡を<span class="keyword">支配戦略均衡</span>と呼ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="「同時」の解釈 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>何度でも戦略を変えられる状況を考える</li>
+<li class="sub-item">» （協力，協力）を宣言 → ジョンは「やっぱり協力しない」に変えたくなる</li>
+<li class="sub-item">» するとオスカーも変えたくなり，（しない，しない）にたどり着く</li>
+<li class="sub-item">» 宣言の変更が起きなくなったところで実際に行動に移す</li>
+<li>（しない，しない）はナッシュ均衡なので，信憑性のある予想である</li>
+<li class="sub-item">» 宣言どおり行動するのがお互いにベスト</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="「同時」の解釈 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>「同時」とは，<span class="keyword">相手が何を選んだかを見ないまま自分も選ぶ</span>という意味</li>
+<li class="sub-item">» 順番に選んでいても，あとの人が前の選択を知らされなければ同じこと</li>
+<li class="sub-item">» 逆に相手の選択を見てから選べるなら，それは逐次手番</li>
+<li>つまり同時か逐次かを分けているのは，時間の前後ではなく<span class="keyword">情報</span></li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="パレート効率性との関係" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>戦略の組み合わせを「状態」と見て，パレート効率性を当てはめられる</li>
+<li class="sub-item">» 最初の利得表では（協力する，協力する）$=(5,5)$ はパレート効率的</li>
+<li class="sub-item">» （協力しない，協力しない）$=(4,1)$ はそうでない</li>
+<li><span class="keyword">ナッシュ均衡はパレート効率的とは限らない</span></li>
+<li class="sub-item">» 実際，最初の表のナッシュ均衡はパレート効率的でない</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="均衡が複数あるとき 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>先輩 ＼ 後輩</th><th>雑用する</th><th>しない</th></tr>
+<tr><td>雑用する</td><td>4, 4</td><td>2, 6</td></tr>
+<tr><td>しない</td><td>6, 2</td><td>0, 0</td></tr>
+</table>
+<table class="slide-table">
+<tr><th>ジョン ＼ オスカー</th><th>買占めない</th><th>買占める</th></tr>
+<tr><td>買占めない</td><td>4, 4</td><td>0, 3</td></tr>
+<tr><td>買占める</td><td>3, 0</td><td>2, 2</td></tr>
+</table>
+<ul>
+<li>上は（する，しない）と（しない，する）の2つ．下は（買占めない×2）と（買占める×2）</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="均衡が複数あるとき 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>ナッシュ均衡という枠組みだけでは絞り込めない</li>
+<li class="sub-item">» 話し合いをすれば，パレート効率的なものが選ばれるという議論がある</li>
+<li class="sub-item">» <span class="keyword">慣例</span>も役立つ．後輩が雑用をするという慣例があれば，それが均衡にもなり続く</li>
+<li><span class="keyword">予言やうわさ</span>も影響する</li>
+<li class="sub-item">» 品薄のうわさを自分が信じなくても，他人が信じて買占めると実際に品薄になる</li>
+<li class="sub-item">» すると自分も買占めるのが最適反応になる．これを<span class="keyword">予言の自己成就</span>と呼ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="ナッシュ均衡が存在しない例" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>警察 ＼ 犯人</th><th>駅に隠れる</th><th>電車で逃げる</th></tr>
+<tr><td>駅を捜査</td><td>$1, -1$</td><td>$-1, 1$</td></tr>
+<tr><td>電車を捜査</td><td>$-1, 1$</td><td>$1, -1$</td></tr>
+</table>
+<ul>
+<li>「駅に隠れる」→「駅を捜査」→「電車で逃げる」→「電車を捜査」→… と循環する</li>
+<li class="sub-item">» 「相手に手を読まれたら負ける」という構造</li>
+<li class="sub-item">» 自己正当化できる予想が1つも存在しない</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="混合戦略" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>行き詰まった原因は，予想が相手の手を1つに決めつけていたこと</li>
+<li class="sub-item">» そこで「相手がどちらを選ぶかは読み切れない」という予想を許す</li>
+<li class="sub-item">» どれくらい読み切れないかは確率で表す</li>
+<li>相手から見て自分の手が読み切れない状態を作る戦略を<span class="keyword">混合戦略</span>と呼ぶ</li>
+<li class="sub-item">» 1つに決めた戦略は<span class="keyword">純粋戦略</span>と呼ぶ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="確率はどう決まるか 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>警察が確率 $p$ で駅を捜査するとき，犯人の期待利得は</li>
+<li class="sub-item">» 駅に隠れる：$p\times(-1)+(1-p)\times 1=1-2p$</li>
+<li class="sub-item">» 電車で逃げる：$p\times 1+(1-p)\times(-1)=2p-1$</li>
+<li>一方の期待利得が高ければ犯人はそちらに偏り，警察に読まれてしまう</li>
+<li class="sub-item">» 犯人が読み切れない手を保つには，両方が同じだけ良くなければならない</li>
+<li class="sub-item">» $1-2p=2p-1$ より $p=0.5$</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="確率はどう決まるか 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>犯人の手が読まれない条件を考えていたのに，決まったのは<span class="keyword">警察の確率</span>だった</li>
+<li class="sub-item">» 自分がどう混ぜるかは，<span class="keyword">相手を無差別に保つように</span>決まる</li>
+<li class="sub-item">» つまり相手の利得によって定まる</li>
+<li>同様に，犯人が駅に隠れる確率も $0.5$</li>
+<li>ナッシュ均衡：警察は $0.5$ ずつ，犯人も $0.5$ ずつ</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="無差別条件とナッシュの定理" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>ある混合戦略がナッシュ均衡のとき，正の確率をふっている純粋戦略が2つあれば</li>
+<li class="sub-item">» それぞれの期待利得は互いに等しい．これを<span class="keyword">無差別条件</span>と呼ぶ</li>
+<li>プレイヤーの数も純粋戦略の数も有限なら， 混合戦略まで含めれば<span class="keyword">戦略形ゲームは必ずナッシュ均衡を持つ</span></li>
+<li class="sub-item">» <span class="keyword">ナッシュの定理</span>（Nash, 1951）</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="$2\times2$ ゲームの公式" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>ジョン ＼ オスカー</th><th>L</th><th>R</th></tr>
+<tr><td>T</td><td>$a, e$</td><td>$d, f$</td></tr>
+<tr><td>B</td><td>$b, h$</td><td>$c, g$</td></tr>
+</table>
+<ul>
+<li>$a&gt;b,\ c&gt;d,\ e&gt;f,\ g&gt;h$ とすると，無差別条件から $$q = \frac{c-d}{a-b+c-d},\qquad p = \frac{g-h}{e-f+g-h}$$</li>
+<li>選択肢や人数が増えると，こうした公式を作るのは難しくなる</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="例題：キーパーとキッカー" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<table class="slide-table">
+<tr><th>キッカー ＼ キーパー</th><th>左</th><th>右</th></tr>
+<tr><td>左</td><td>0, 100</td><td>60, 40</td></tr>
+<tr><td>右</td><td>100, 0</td><td>20, 80</td></tr>
+</table>
+<ul>
+<li>混合戦略のナッシュ均衡を求めなさい．</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<div class="section-title-big">提携形ゲーム</div>
+</template>
+
+<template class="slide-data" data-title="協力ゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>分配を研究する分野：<span class="keyword">協力ゲーム</span></li>
+<li class="sub-item">» 例：共同プロジェクトの儲け，破産時の残った資産</li>
+<li>これまでのゲーム：<span class="keyword">非協力ゲーム</span>（区別のための名称）</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="提携形ゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li><span class="keyword">提携</span>：プレイヤーの集合 $N$ の一部</li>
+<li class="sub-item">» <span class="keyword">1人提携</span>，<span class="keyword">全体提携</span></li>
+<li class="sub-item">» $n$ 人なら $2^n-1$ 通り</li>
+<li><span class="keyword">提携値</span> $v(S)$：提携が協力して生み出せる総利益</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="例：秘伝のレシピ" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>ノアだけがレシピを知る．アダムとイヴは手伝い</li>
+</ul>
+<div class="math-display">$$v(\{\text{ア}\})=v(\{\text{イ}\})=v(\{\text{ア},\text{イ}\})=0,\quad v(\{\text{ノ}\})=120$$ $$v(\{\text{ア},\text{ノ}\})=v(\{\text{イ},\text{ノ}\})=600,\quad v(N)=720$$</div>
+</template>
+
+<template class="slide-data" data-title="配分と解概念" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li><span class="keyword">配分</span>：$v(N)$ を分けた $(x_1,\dots,x_n)$ $$x_1+x_2+\dots+x_n=v(N)$$</li>
+<li><span class="keyword">解概念</span>：配分の決め方</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="コア" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>提携 $S$ の裏取引 $y$</li>
+<li class="sub-item">» すべての $i\in S$ について $y_i&gt;x_i$</li>
+<li class="sub-item">» $\sum_{i\in S} y_i = v(S)$</li>
+<li>このとき $S$ は配分 $x$ を<span class="keyword">ブロックする</span></li>
+<li>ブロックされない配分：<span class="keyword">コア配分</span>，その集まり：<span class="keyword">コア</span></li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="コア：例1" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<ul>
+<li>$v(\{i\})=0$，2人提携はどれも $10$，$v(\{1,2,3\})=20$</li>
+<li class="sub-item">» $x=(15,3,2)$ はコア配分か？</li>
+<li class="sub-item">» $x=(10,5,5)$ はコア配分か？</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="コア：例2" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<ul>
+<li>$v(\{i\})=0$，2人提携はどれも $10$，$v(\{1,2,3\})=10$</li>
+<li class="sub-item">» コア配分は存在するか？</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="シャプレイ値" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<ul>
+<li>コアは複数あることも，存在しないこともある</li>
+<li><span class="keyword">シャプレイ値</span>：ただ1つに決まり，必ず定義できる</li>
+<li>メンバーが1人ずつ参加して全体提携になる（$n!$ 通り）</li>
+<li>参加による利益の増分：<span class="keyword">追加的貢献量</span></li>
+<li>シャプレイ値＝追加的貢献量の平均</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="シャプレイ値：秘伝のレシピ" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table">
+<tr><th>順番</th><th>ア</th><th>イ</th><th>ノ</th></tr>
+<tr><td>ア→イ→ノ</td><td></td><td></td><td></td></tr>
+<tr><td>ア→ノ→イ</td><td></td><td></td><td></td></tr>
+<tr><td>イ→ア→ノ</td><td></td><td></td><td></td></tr>
+<tr><td>イ→ノ→ア</td><td></td><td></td><td></td></tr>
+<tr><td>ノ→ア→イ</td><td></td><td></td><td></td></tr>
+<tr><td>ノ→イ→ア</td><td></td><td></td><td></td></tr>
+<tr><td><span class="keyword">シャプレイ値</span></td><td></td><td></td><td></td></tr>
+</table>
+</template>
+
+
 
 <!-- 初級ミクロ経済学2 -->
 
@@ -3994,6 +4413,198 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </template>
 
 
+<template class="slide-data" data-title="生産関数" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>総費用関数は謎のブラックボックスであった．</li>
+<li class="sub-item">» 100万個作りたいと言ったら「200億円かかります」とだけ言われるようなもの</li>
+<li class="sub-item">» この総費用関数はどこから出てくるのか？</li>
+<li><span class="keyword">生産関数</span></li>
+<li class="sub-item">» 生産要素なるものを投入したら生産物が出てくる関数</li>
+<li class="sub-item">→ 生産関数から総費用関数を作る</li>
+<li class="sub-item">» ex. 100万個作るには，作業員を60人雇って，工場を一箇所作って，材料を3トン購入して,...その諸々の費用が200億円かかります．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数と生産要素" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>生産要素</li>
+<li class="sub-item">» 二つの要素$K,L$によって財が生産できると想定</li>
+<ol>
+<li>$K$: 資本<br>使用するには$r\cdot K$だけの費用がかかる<br>$r$を<span class="keyword">レンタル率</span>と呼ぶ.</li>
+<li>$L$: 労働<br>使用するには$w\cdot L$だけの費用がかかる<br>$w$を<span class="keyword">賃金率</span>と呼ぶ.</li>
+</ol>
+<li>生産関数：$f(K,L)$</li>
+<li class="sub-item">» $(K,L)$の組み合わせを投入すると$f(K,L)$だけの量の財ができる.</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：$f(2,3)=8$は</li>
+<li class="sub-item">» 「工場を2つ建て，工場作業員を3千人雇うと駄菓子を8万個製造可能」くらいの意味</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数の性質" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>規模に関する収穫（スケールメリット/デメリット）</li>
+<ol>
+<li>$f(aK,aL)>a f(K,L)$となるとき，<span class="keyword">規模に関して収穫逓増</span>という</li>
+<li>$f(aK,aL)=a f(K,L)$となるとき，<span class="keyword">規模に関して収穫一定</span>という</li>
+<li>$f(aK,aL)&lt;a f(K,L)$となるとき，<span class="keyword">規模に関して収穫逓減</span>という</li>
+</ol>
+<li class="small">例：お菓子の生産：「規模に関して収穫___」<br>小麦粉と卵の量を3倍にすると，できるケーキの数は3倍になる</li>
+<li class="small">例：店舗の売上：「規模に関して収穫___」<br>店舗数と雇用者数を二倍にしたら，売り上げが1.5倍になった．</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>他にも例を考えてみよう</li></ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="経済学における短期と長期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">長期</span>：すべての生産要素が調整可能</li>
+<li class="sub-item">» <span class="keyword">可変的生産要素</span>: 調整可能な生産要素</li>
+<li><span class="keyword">短期</span>：一部の生産要素が固定されている．</li>
+<li class="sub-item">» <span class="keyword">固定的生産要素</span>:（すぐには）調整できない生産要素．</li>
+<li class="sub-item">→ たいていは$K=\bar K$の水準で固定されていると想定する．</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="短期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>短期の最適化問題: $q$だけ作る費用は?</li>
+<li class="sub-item">» $K=\bar K$で固定されているとき，$f(\bar K,L)=q$となるような$L$を$L^*(q, \bar K)$とする．</li>
+<li class="sub-item">» このときの総費用は</li>
+$$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
+<li class="sub-item">» $r\bar K$は固定費用</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例：ケーキ工場の機械の数は5個，一個あたり300万円，普段2千個/日作るためには7人雇わないといけない，繁忙期に１万個/日作るためには40人雇わないといけない．一人当たりの日給は8000円</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="長期" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>長期の生産問題:</li>
+<li class="sub-item">» $K$と$L$の両方を調整する.</li>
+<li class="sub-item">» 生産量$q$を達成するような$K,L$の中で費用が最小になるような組み合わせを考える．</li>
+<li class="sub-item">» 短期の決定より自由度が高い</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>例:</li>
+<li class="sub-item">» ガラケーは時代遅れなので，工場を減らす</li>
+<li class="sub-item">» 半導体は需要が高まりそうなので，工場を増やす</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="等量曲線と等費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
+<p class="small">※縦軸・横軸に注意</p>
+<div class="columns">
+<div class="column">
+<ul><li><span class="keyword">等産出量曲線</span>: 同じ生産量を達成する点$(K,L)$を結んだ曲線</li></ul>
+
+<a href="https://ttajika.github.io/micro-contents/anime_gallery.html#anime-isoquant" target="_blank" class="qr-link">アニメーション解説</a>
+
+<ul><li> 等産出量曲線の傾きは<span class="keyword">技術的限界代替率</span></li>
+</ul>
+</div>
+<div class="column">
+<ul><li><span class="keyword">等費用曲線</span>: 同じ費用がかかる点$(K,L)$を結んだもの</li></ul>
+<div class="tikz-figure"><img src="img_micro/iso_cost_curve.svg" alt="等費用曲線"></div>
+<ul><li class="sub-item">» 等費用曲線の傾きは</li></ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="限界生産物" data-section="企業の行動" data-note="false" data-print-margin="0">
+<ul>
+<li>$f(K,L)$: $(K,L)$という生産計画のときの生産量</li>
+<li class="sub-item">» $MP_L$: 労働の<span class="keyword">限界生産物</span></li>
+<li class="sub-item">» $MP_K$: 資本の<span class="keyword">限界生産物</span></li>
+<li>ある生産要素の限界生産物：その生産要素の投入量をほんの少し増やしたときの生産量の増分</li>
+<li class="sub-item">» ex. おおざっぱに言えば $MP_L=3$ ならば「$L$の投入量を$1\%$増やしたとき，生産量は$3\%$増える」</li>
+<li>限界変形率との関係</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="費用最小化問題" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul><li>生産量を固定（例えば$f(K,L)=q$）した上で費用が最小になるように$K,L$を選ぶ.</li></ul>
+<div class="tikz-figure anim" style="--ar:600/540"><img src="img_micro/cost_min_anime.svg" alt="費用最小化"></div>
+</div>
+<div class="column">
+<ul>
+<li>費用最小化点の求め方は効用最大化問題とほぼ同じ!</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="限界変形率と要素価格比" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>1個生産量を増やすために必要な労働量は$\frac{1}{MP_L}$であり，1個生産量を増やすために必要な資本の量は$\frac{1}{MP_K}$であることに注意する.</li>
+<li>もし$\frac{w}{MP_L}> \frac{r}{MP_K}$ならば...</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>費用最小化する生産計画では</li>
+</ul>
+$$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="長期と短期の費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li><span class="keyword">費用</span>とは，ある生産量を達成するための最小の費用</li>
+<li class="sub-item">» 長期と短期で費用にどのような差があるか？</li>
+</ul>
+</div>
+<div class="column">
+<ul><li>図解</li></ul>
+</div>
+</div>
+</template>
+
+
+
+
 <!-- ============ SECTION: 独占市場 ============ -->
 
 <template class="slide-data" data-title="" data-section="売り方の設計" data-note="false" data-print-margin="80">
@@ -4025,6 +4636,32 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </div>
 </template>
+
+<template class="slide-data" data-title="独占均衡" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li> 数字の上で解いてみよう
+<ul>
+<li> $P(q)$を生産量が$q$のときに決まる価格とする
+<li> 一つあたりの生産には費用$c$がかかるとする
+</ul>
+<li> このときの企業の利潤は
+</ul>
+</div>
+<div class="column">
+<ul>
+<li> 具体例
+  <ul>
+    <li> $P(q)=10-2q$, $c=3$
+  </ul>
+<li>
+</ul>
+</div>
+</div>
+</template>
+
+
 
 
 <template class="slide-data" data-title="売り方の工夫---価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
@@ -4107,6 +4744,52 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="オークション" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<ul>
+<li>例：美術品，電波の使用権，検索サイトの広告枠</li>
+<li>目的：誰が最も高く評価し，いくらまで払うかを発見する</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="2位価格オークション" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<ul>
+<li>入札額を書いて出す（他の人の額は見えない）</li>
+<li>いちばん高い額の人が<span class="keyword">落札</span></li>
+<li>落札者は<span class="keyword">2番目に高い入札額</span>を払う</li>
+<li>本当の評価値をそのまま入札するのがベスト</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="2位価格オークション：数値例" data-section="売り方の設計" data-note="false" data-print-margin="300">
+<table class="slide-table">
+<tr><th>入札者</th><th>A</th><th>B</th><th>C</th></tr>
+<tr><td>本当の価値（万円）</td><td>30</td><td>24</td><td>18</td></tr>
+</table>
+<ul>
+<li>全員が正直に入札するとき，誰がいくらで落札し，もうけはいくらか？</li>
+<li>次のように嘘をつくと，もうけはどうなるか？</li>
+<li class="sub-item">» Aが35と書く</li>
+<li class="sub-item">» Aが23と書く</li>
+<li class="sub-item">» Cが31と書く</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="1位価格オークションとの違い" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<ul>
+<li>1位価格：自分の入札額を払う</li>
+<li class="sub-item">» 正直に30で落札するともうけ $0$</li>
+<li class="sub-item">» 低めに入札したくなるが，読み違えれば落札を逃す</li>
+<li>2位価格：駆け引きが要らず，正直に書けばよい</li>
+</ul>
+</template>
+
+<template class="slide-data" data-title="留保価格の効果" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<ul>
+<li><span class="keyword">留保価格</span>：これ以下では売らない価格</li>
+<li class="sub-item">» 安売りを防げるが，高すぎると売れ残る</li>
+</ul>
 </template>
 
 <!-- ============ SECTION: Final Remark ============ -->
