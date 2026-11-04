@@ -165,10 +165,13 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 /* ═══ CONTENT STYLES ═══ */
 .columns { display:flex; gap:24px; }
 .column { flex:1; min-width:0; }
+/* columns の間に薄い区切り線 */
+.columns > .column + .column { border-left:1px solid var(--border); padding-left:24px; }
 
 ul, ol { padding-left:1.5em; margin:0.3em 0; }
-li { margin:0.4em 0; }
-li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
+li { margin:0.9em 0; }
+li.sub-item { list-style-type:circle; margin-left:1.5em; color:var(--text); }
+li.sub-item.arrow { list-style:none; }
 li.sub-item::before { content:''; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
@@ -236,6 +239,8 @@ a:hover { color:#1e40af; }
 }
 .tikz-icon { font-size:24px; display:block; margin-bottom:4px; }
 
+/* iPad: ペンで図の上に書くとき，画像のドラッグや長押しメニューを出さない */
+img { -webkit-user-drag:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 .tikz-figure {
   margin:10px 0; text-align:center;
   transition:opacity 0.15s;
@@ -312,6 +317,12 @@ body.print-mode .tikz-figure { cursor:default; }
 
 .framed { border:1px solid var(--border); padding:8px; border-radius:4px; margin:8px 0; }
 
+.fill-table { width:100%; table-layout:fixed; }
+.fill-table td { height:2.2em; }
+.fill-table.tall td { height:5em; }
+.game-table td.corner, .game-table th.player { border:none; }
+.game-table th.player { font-weight:700; color:var(--accent); }
+hr.divider { border:none; border-top:1px solid var(--border); margin:0.8em 0; }
 .small { font-size:0.85em; }
 .tiny { font-size:0.75em; }
 
@@ -329,13 +340,15 @@ body.print-mode .main {
 }
 body.print-mode .slide-area {
   display:block; overflow:visible; padding:0;
+  background:#fff;
 }
+html:has(body.print-mode), body.print-mode .main { background:#fff; }
 
 .print-slide {
   page-break-inside:auto;
   border:none;
   padding:0px 28px;
-  margin:-30px auto;
+  margin:0 auto 12px;
   max-width:870px;
   background:#fff;
   position:relative;
@@ -361,7 +374,7 @@ body.print-mode .slide-area {
   border-top:2px solid var(--accent);
   page-break-before:always; break-before:page;
 }
-.print-part-head:first-of-type { page-break-before:auto; break-before:auto; margin-top:0; }
+.print-part-head.first-part { page-break-before:auto; break-before:auto; margin-top:0; }
 body:not(.page-break-on) .print-part-head { page-break-before:auto; break-before:auto; }
 
 .print-slide-title {
@@ -394,8 +407,18 @@ body.print-mode .tikz-figure.anim svg,
 body.print-mode .anim-ctrl { display:none; }
 
 /* Print: QR codes always visible */
+/* Print: スライド本体（タイトル〜内容）はページをまたがせない．書き込み欄は分割可 */
+.print-body { break-inside:avoid; page-break-inside:avoid; }
 body.print-mode .qr-link .qr-img { display:block !important; }
 body.print-mode .qr-link { flex-direction:column; }
+/* Print: 長いURLでも枠からはみ出さない．📱ボタンは印刷しない */
+body.print-mode .qr-link { max-width:100%; box-sizing:border-box; overflow-wrap:anywhere; word-break:break-all; }
+body.print-mode .qr-link .qr-btn { display:none; }
+body.print-mode .qr-link .qr-img svg { max-width:100%; height:auto; }
+/* Print: QRは小さめ・ラベルの横に置き，ページをまたいで分割しない */
+body.print-mode .qr-link { flex-direction:row; flex-wrap:nowrap; align-items:center; break-inside:avoid; page-break-inside:avoid; }
+body.print-mode .qr-link .qr-img { width:auto; margin-top:0; padding:2px; }
+body.print-mode .qr-link .qr-img svg { width:64px; height:64px; display:block; }
 
 .print-note-area {
   margin-top:8px;
@@ -415,11 +438,14 @@ body.print-mode .qr-link { flex-direction:column; }
   background:#f5f5f5; color:#333;
 }
 .print-header .page-break-toggle:hover { background:#e8e8e8; }
-body.print-mode.page-break-on .print-slide { page-break-inside:avoid; }
+body.print-mode.page-break-on .print-slide { page-break-inside:avoid; break-inside:avoid; }
+body.print-mode.page-break-on .print-slide.print-slide-tall { page-break-inside:auto; break-inside:auto; }
 
 @media print {
   body.print-mode .print-slide { border:none; box-shadow:none; }
   .print-note-area { min-height:60px; }
+  .print-header .page-break-toggle { display:none; }
+  .mode-toggle { display:none !important; }
 }
 
 /* ═══ ANIMATED SVG SEEK BAR ═══ */
@@ -604,7 +630,7 @@ body.print-mode .geogebra-embed .print-label {
 body.print-mode .fab-pen { display: none !important; }
 
 /* ═══ MOBILE (≤768px) ═══ */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .sp-hide { display: none !important; }
 
   .topbar { padding: 4px 8px; }
@@ -1265,6 +1291,7 @@ function initPencilDetection() {
   });
 }
 initPencilDetection();
+document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('img, svg')) e.preventDefault(); });
 
 // Show floating pen button on touch-capable devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -1560,7 +1587,11 @@ function addAnimControls(fig, svg, figIdx) {
 
 function setupFigureZoom(container) {
   container.querySelectorAll('.tikz-figure').forEach(fig => {
+    // ペン（Apple Pencil）で触れたときは書き込みとみなし，拡大表示しない
+    let lastPointerType = '';
+    fig.addEventListener('pointerdown', e => { lastPointerType = e.pointerType; });
     fig.addEventListener('click', () => {
+      if (lastPointerType === 'pen' || drawMode) return;
       const el = fig.querySelector('svg, img');
       if (el) openLightbox(el);
     });
@@ -1623,6 +1654,7 @@ function setupLinks(container) {
       btn.addEventListener('click', () => openVideo(url));
       // Also add a small QR toggle
       const qrBtn = document.createElement('span');
+      qrBtn.className = 'qr-btn';
       qrBtn.textContent = ' 📱';
       qrBtn.style.cursor = 'pointer';
       qrBtn.title = 'QRコード表示';
@@ -1639,6 +1671,7 @@ function setupLinks(container) {
     } else {
       // Non-Vimeo: keep the link clickable, add a separate QR toggle button
       const qrBtn = document.createElement('span');
+      qrBtn.className = 'qr-btn';
       qrBtn.textContent = ' 📱';
       qrBtn.style.cursor = 'pointer';
       qrBtn.title = 'QRコード表示';
@@ -1669,44 +1702,66 @@ function toggleMode() {
   }
 }
 
+// 印刷時，スライドの途中（書き込み欄を含む）で改ページしない．既定でON
+let pageBreakOn = true;
 function togglePageBreak() {
   document.body.classList.toggle('page-break-on');
   const on = document.body.classList.contains('page-break-on');
+  pageBreakOn = on;
   const btn = document.querySelector('.page-break-toggle');
   if (btn) btn.textContent = '改ページ区切り: ' + (on ? 'ON' : 'OFF');
 }
+
+// 印刷範囲（パート別にPDFを作る用）．URL ?print=1&part=1 / 2 でも指定できる
+const PRINT_FILTERS = {
+  all:    { label: '全体',            heading: '初級ミクロ経済学 — 2027年度版',  parts: null },
+  micro1: { label: '初級ミクロ経済学1', heading: '初級ミクロ経済学1 — 2027年度版', parts: ['オリエンテーション', '初級ミクロ経済学1'] },
+  micro2: { label: '初級ミクロ経済学2', heading: '初級ミクロ経済学2 — 2027年度版', parts: ['初級ミクロ経済学2'] },
+};
+let printFilter = 'all';
 
 function enterPrintMode() {
   mode = 'print';
   if (drawMode) toggleDraw();
   notes[current] = document.getElementById('noteArea').value;
-  document.body.className = 'print-mode';
+  document.body.className = 'print-mode' + (pageBreakOn ? ' page-break-on' : '');
   document.getElementById('modeToggle').textContent = '🖥 スライド表示';
 
   const main = document.getElementById('mainArea');
   const area = document.getElementById('slideArea');
 
-  let html = '<div class="print-header"><h1>初級ミクロ経済学 — 2027年度版</h1><p>多鹿 智哉 ｜ 配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
+  const pf = PRINT_FILTERS[printFilter] || PRINT_FILTERS.all;
+  const opts = Object.entries(PRINT_FILTERS).map(([k, f]) => `<option value="${k}"${k === printFilter ? ' selected' : ''}>${f.label}</option>`).join('');
+  let html = `<div class="print-header"><h1>${pf.heading}</h1><p>多鹿 智哉 ｜ 配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: ${pageBreakOn ? 'ON' : 'OFF'}</button> <select class="page-break-toggle" onchange="printFilter=this.value; enterPrintMode();">${opts}</select></div>`;
 
   let printPart = '';
+  let firstPartHead = true;
   SLIDES.forEach((s, i) => {
     // Skip Note frames and title slide (first slide) in print mode
     if (s.is_note) return;
     if (i === 0) return;
+    if (pf.parts && !pf.parts.includes(s.part)) return;
+    // パートの表紙（「初級ミクロ経済学1」など）は見出し帯と重複するので印刷しない
+    if (!s.section && s.html.includes('section-title-big')) return;
 
     if (s.part && s.part !== printPart) {
       printPart = s.part;
-      html += `<div class="print-part-head">${s.part}</div>`;
+      html += `<div class="print-part-head${firstPartHead ? ' first-part' : ''}">${s.part}</div>`;
+      firstPartHead = false;
     }
 
     const isSectionTitle = s.html.includes('section-title-big');
     const margin = s.printMargin || 80;  // default 80px, editable per slide
 
-    html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}">`;
+    // 書き込み欄が非常に大きい（1ページに収まらない）スライドだけは途中で改ページを許す
+    const tooTall = margin >= 600;
+    html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}${tooTall ? ' print-slide-tall' : ''}">`;
     html += `<span class="slide-number">${i+1} / ${SLIDES.length}</span>`;
+    html += '<div class="print-body">';
     if (s.section) html += `<div class="section-badge">${s.part ? `<span class="part-label">${s.part}</span> › ` : ''}${s.section}</div>`;
     if (s.title && s.title !== 'Note') html += `<div class="frame-title">${s.title}</div>`;
     html += s.html;
+    html += '</div>';
     if (!isSectionTitle) {
       html += `<div class="print-note-area" style="min-height:${margin}px"></div>`;
     }
@@ -2117,6 +2172,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function initWhenReady() {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
       showSlide(current);
+      const qs = new URLSearchParams(window.location.search);
+      if (qs.has('print')) {
+        const pp = qs.get('part');
+        printFilter = pp === '1' ? 'micro1' : pp === '2' ? 'micro2' : 'all';
+        enterPrintMode();
+      }
       // Canvas is now sized; bring up cloud sync (no-op until slide-sync.js is configured).
       if (window.SlideSync) SlideSync.init({
         storageKey: STORAGE_KEY,
@@ -2173,7 +2234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- ============ SECTION: はじめに ============ -->
 
 <!-- ===== はじめに: section title ===== -->
-<template class="slide-data" data-title="" data-section="はじめに" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="はじめに" data-note="false" data-print-margin="0">
 <div class="section-title-big">はじめに</div>
 </template>
 
@@ -2183,10 +2244,10 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>講義するひと</li>
-<li class="sub-item">» 多鹿 智哉 @ 日本大学 経済学部</li>
+<li class="sub-item">多鹿 智哉 @ 日本大学 経済学部</li>
 
 <li class="sub-item"><svg class="icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg> 連絡先: <a href="mailto:tajika.tomoya@nihon-u.ac.jp">tajika.tomoya@nihon-u.ac.jp</a></li>
-<li class="sub-item">»  オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
+<li class="sub-item">オフィスアワー：<a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" >予約リンク</a>
 <a href="https://calendar.app.google/bdYcGQaSf6sfY7o88" target="_blank" class="qr-link">https://calendar.app.google/bdYcGQaSf6sfY7o88</a>
 </ul>
 </ul>
@@ -2194,8 +2255,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>この講義の目的・目標</li>
-<li class="sub-item">» ミクロ経済学の初歩的な理論を身につける</li>
-<li class="sub-item">» 数式か図か言葉のいずれかを用いて論理的に説明できるようになること．</li>
+<li class="sub-item">ミクロ経済学の初歩的な理論を身につける</li>
+<li class="sub-item">数式か図か言葉のいずれかを用いて論理的に説明できるようになること．</li>
 <li>教科書</li>
 <ol>
 <li>参考書ガイド</li>
@@ -2222,7 +2283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li>価格弾力性・曲線のシフト</li>
 <li>市場均衡分析の応用例（1，2）</li>
 <li>課税</li>
-<li>市場の失敗（外部性，コース交渉，公共財）</li>
+<li>市場の失敗（外部性，コース交渉）</li>
 <li>市場の失敗（情報の非対称性・カルテル）</li>
 <li>ゲーム理論（逐次手番）</li>
 <li>ゲーム理論（同時手番）</li>
@@ -2261,9 +2322,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>授業について：</li>
-<li class="sub-item">» 大学の講義は「授業90分+予復習180分」で二単位です．</li>
-<li class="sub-item">» すべての授業は授業に<strong>すべて</strong>出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</li>
-<li class="sub-item">» この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．</li>
+<li class="sub-item">大学の講義は「授業90分+予復習180分」で二単位です．</li>
+<li class="sub-item">すべての授業は授業に<strong>すべて</strong>出席し，予復習の180分をしっかりすれば単位が取れるような設計になっています（原則）．</li>
+<li class="sub-item">この講義では以下の二つができれば予復習に時間をそこまで取る必要はありません．</li>
 <ol>
 <li>授業中：ノートをとって内容を理解し，小テストを解く．</li>
 <li>予習：講義資料を先に見て，わからなそうなところをメモしておく</li>
@@ -2275,9 +2336,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>持ち物：筆記具，計算用紙，講義スライド</li>
-<li class="sub-item">» スライドに板書や理解したことなどを書き込むこと</li>
-<li class="sub-item">» タブレット派用に電子でも配布する</li>
-<li class="sub-item">» 必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．</li>
+<li class="sub-item">スライドに板書や理解したことなどを書き込むこと</li>
+<li class="sub-item">タブレット派用に電子でも配布する</li>
+<li class="sub-item">必ず書き込むための時間を取るので，聴くことと書くことは同時にやらない方が良い．</li>
 <li>この講義はオンデマンド授業です．</li>
 </ul>
 </div>
@@ -2292,14 +2353,14 @@ document.addEventListener('DOMContentLoaded', () => {
 <ul>
 
 <li>小テストは選択式か計算問題</li>
-<li class="sub-item">» 小テストは...で出題</li>
-<li class="sub-item">» 小テストに何を用いても何回チャレンジしても良い（最高点のみが成績に加算）</li>
+<li class="sub-item">小テストはManabaで出題</li>
+<li class="sub-item">小テストに何を用いても何回チャレンジしても良い（最高点のみが成績に加算）</li>
 <li>発言点は授業１回あたり最大1点，ただし授業内容に関係するものとする（事実上の出席点）</li>
 </ul>
 </div>
 <div class="column">
 <ul>
-<li></li>
+<li>試験は対面・マーク式</li>
 </ul>
 </div>
 </div>
@@ -2314,7 +2375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ============ SECTION: ミクロ経済学の方法 ============ -->
 
-<template class="slide-data" data-title="" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="ミクロ経済学の方法" data-note="false" data-print-margin="0">
 <div class="section-title-big">ミクロ経済学の方法</div>
 </template>
 
@@ -2323,25 +2384,25 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>ミクロ経済学とは何か？</li>
-<li class="sub-item">» <span class="keyword">インセンティブ（誘因）</span>に関わるもの全て</li>
-<li class="sub-item">» キーワードは「最善を尽くす」</li>
+<li class="sub-item"><span class="keyword">インセンティブ（誘因）</span>に関わるもの全て</li>
+<li class="sub-item">キーワードは「最善を尽くす」</li>
 <li>ミクロ経済学に何ができるか？<br><span class="small">※教員のところは授業の話ではなく研究の専門の話</span></li>
-<li class="sub-item">» 意思決定論：個人が何を選択する（べき）かの理論．</li>
-<li class="sub-item">» 価格理論：価格の決まり方と資源配分の探求</li>
-<li class="sub-item">» ゲーム理論：複数人による決め方の理論</li>
-<li class="sub-item">» 行動経済学：心理学の知見を取り込んだ意思決定論とその応用</li>
+<li class="sub-item">意思決定論：個人が何を選択する（べき）かの理論．</li>
+<li class="sub-item">価格理論：価格の決まり方と資源配分の探求</li>
+<li class="sub-item">ゲーム理論：複数人による決め方の理論</li>
+<li class="sub-item">行動経済学：心理学の知見を取り込んだ意思決定論とその応用</li>
 </ul>
 </div>
 <div class="column">
 <ul class="small">
-<li class="sub-item">» 国際貿易論・都市経済：地理的な知見を取り込んだ分析</li>
-<li class="sub-item">» 労働経済学：労働問題を扱う</li>
-<li class="sub-item">» 産業組織論：企業と競争の問題を研究</li>
-<li class="sub-item">» 公共経済学・財政学：租税・財政政策などを研究する</li>
-<li class="sub-item">» メカニズムデザイン・マーケットデザイン：人がどのように行動するかを読んだ上で，制度を設計する．</li>
+<li class="sub-item">国際貿易論・都市経済：地理的な知見を取り込んだ分析</li>
+<li class="sub-item">労働経済学：労働問題を扱う</li>
+<li class="sub-item">産業組織論：企業と競争の問題を研究</li>
+<li class="sub-item">公共経済学・財政学：租税・財政政策などを研究する</li>
+<li class="sub-item">メカニズムデザイン・マーケットデザイン：人がどのように行動するかを読んだ上で，制度を設計する．</li>
 <li>他にもたくさん</li>
 <li>この講義で学ぶのは「価格理論」と「ゲーム理論」</li>
-<li class="sub-item">» 上記を学ぶためのエッセンスが詰まっている．</li>
+<li class="sub-item">上記を学ぶためのエッセンスが詰まっている．</li>
 </ul>
 </div>
 </div>
@@ -2352,15 +2413,15 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>経済学は「モデル」を作る</li>
-<li class="sub-item">» モデルとは？ → 現実社会の単純化された模型</li>
-<li class="sub-item">» 分析のために関係のない，興味のない部分は切り捨てる</li>
-<li class="sub-item">» 論理的に「何が起きるか」「何が良いか」を調べる</li>
+<li class="sub-item">モデルとは？ → 現実社会の単純化された模型</li>
+<li class="sub-item">分析のために関係のない，興味のない部分は切り捨てる</li>
+<li class="sub-item">論理的に「何が起きるか」「何が良いか」を調べる</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>モデルの例1</li>
-<li class="sub-item">» 自由は良いことか？</li>
+<li class="sub-item">自由は良いことか？</li>
 <li>設定</li>
 <ol>
 <li>人々は自分にとって最も良いものを選ぶ</li>
@@ -2376,7 +2437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>モデルの例2</li>
-<li class="sub-item">» 規制は良いことか？</li>
+<li class="sub-item">規制は良いことか？</li>
 <li>設定</li>
 <ol>
 <li>人々は「今の」自分にとって最も良いものを選ぶ</li>
@@ -2388,7 +2449,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>モデルの例3</li>
-<li class="sub-item">» 規制は良いことか？</li>
+<li class="sub-item">規制は良いことか？</li>
 <li>設定</li>
 <ol>
 <li>ある人は「将来の」自分にとって最も良いものを選び，ある人は「今の」自分にとって最も良いものを選ぶ</li>
@@ -2421,7 +2482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ============ SECTION: 意思決定 ============ -->
 
-<template class="slide-data" data-title="" data-section="意思決定" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="意思決定" data-note="false" data-print-margin="0">
 <div class="section-title-big">意思決定</div>
 </template>
 
@@ -2431,20 +2492,20 @@ document.addEventListener('DOMContentLoaded', () => {
 <ul>
 <li>ミクロ経済学の基本：人々はどのように意思決定を行うか？</li>
 <li>他の分野でも重要:</li>
-<li class="sub-item">» マーケティングは人々の選択に関わる学問</li>
-<li class="sub-item">» 意思決定の理論の理解がフワッフワだと分析もフワッフワになる</li>
+<li class="sub-item">マーケティングは人々の選択に関わる学問</li>
+<li class="sub-item">意思決定の理論の理解がフワッフワだと分析もフワッフワになる</li>
 <li>ミクロ経済学がミクロ経済学であるためには</li>
-<li class="sub-item">» 人々の選択に根拠をつけられること</li>
-<li class="sub-item">» 根拠をつけられるのであれば「良し悪し」が判断できる</li>
+<li class="sub-item">人々の選択に根拠をつけられること</li>
+<li class="sub-item">根拠をつけられるのであれば「良し悪し」が判断できる</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>行動経済学も，意思決定の部分に関わる</li>
-<li class="sub-item">» 例：</li>
+<li class="sub-item">例：</li>
 <ul>
-<li class="sub-item">» 普通の経済学：選択肢を全部認識している</li>
-<li class="sub-item">» 不注意の経済学：一部の選択肢を認識していない</li>
+<li class="sub-item">普通の経済学：選択肢を全部認識している</li>
+<li class="sub-item">不注意の経済学：一部の選択肢を認識していない</li>
 </ul>
 <li>キラキラした応用分野を学ぶには基礎がしっかりしてないと薄っぺらい</li>
 </ul>
@@ -2460,19 +2521,19 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="framed" style="text-align:center; font-size:1.1em;">
 「人は効用を最大にするように行動する」
 </div>
-<li class="sub-item">» <span class="keyword">効用</span>：人々が得る利益，幸せの度合い，（マイナスの効用として）費用など...</li>
-<li class="sub-item">» ※どんなことでもできるわけではない．物理的や経済的な<span class="keyword">制約</span>に直面する．</li>
+<li class="sub-item"><span class="keyword">効用</span>：人々が得る利益，幸せの度合い，（マイナスの効用として）費用など...</li>
+<li class="sub-item">※どんなことでもできるわけではない．物理的や経済的な<span class="keyword">制約</span>に直面する．</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>人々の「好み」とは次のような質問に対する回答のリスト</li>
 <div class="framed">プラン$a$とプラン$b$だったら$a$を選んでいいですか？</div>
-<li class="sub-item">» yesなら「$a$のプランの方が効用が低くない」</li>
-<li class="sub-item">» noなら「$a$のプランの方が効用が低い」</li>
+<li class="sub-item">yesなら「$a$のプランの方が効用が低くない」</li>
+<li class="sub-item">noなら「$a$のプランの方が効用が低い」</li>
 <li>選択肢に限りがあり「合理的」なら矛盾なくプランにランキングをつけることができる．</li>
-<li class="sub-item">» ランキングの高い順に大きい点数をつけていく．この点数が効用</li>
-<li class="sub-item">» 数字の値は大小関係さえわかればなんでもよい（<span class="keyword">序数的</span>効用）</li>
+<li class="sub-item">ランキングの高い順に大きい点数をつけていく．この点数が効用</li>
+<li class="sub-item">数字の値は大小関係さえわかればなんでもよい（<span class="keyword">序数的</span>効用）</li>
 </ul>
 </div>
 </div>
@@ -2483,8 +2544,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="column">
 <ul>
 <li>合理的であること</li>
-<li class="sub-item">» どんな選択肢でも比較できる（完備性）</li>
-<li class="sub-item">» 好みがサイクルしない（非循環性）</li>
+<li class="sub-item">どんな選択肢でも比較できる（完備性）</li>
+<li class="sub-item">好みがサイクルしない（非循環性）</li>
 </ul>
 </div>
 <div class="column">
@@ -2495,26 +2556,26 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 </template>
 
-<template class="slide-data" data-title="合理的な行動---費用便益分析" data-section="意思決定" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="合理的な行動---費用便益分析" data-section="意思決定" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>プラスの効用を便益，マイナスの効用を費用と呼ぶ．</li>
 <li>あらゆる行動の価値をお金に換算できるとする</li>
-<li class="sub-item">» <span class="keyword">ニュメレール（価値尺度財）</span>：このときのお金のようなもの</li>
+<li class="sub-item"><span class="keyword">ニュメレール（価値尺度財）</span>：このときのお金のようなもの</li>
 <li>「ヒトは以下の効用を最大化するように行動する」として分析する．</li>
 $$\text{効用}=\text{便益}-\text{費用}$$
 </ul>
 </div>
 <div class="column">
 <ul>
-<li>グレゴリはキノコ狩りを生業としている．キノコ狩りをするためには入山許可書1万ルーブル，道具代30万ルーブル，保険料15万ルーブルがかかる．一方でグレゴリには数学の才能があり，もし彼がキノコ狩りでなく数学者をするならばその仕事自体から得られる効用と合わせて7000万ルーブルを稼ぐことができる．さらに多才なことに物理学の才能もある．グレゴリが数学者でもなくキノコ狩りをするのでもなく物理学者をやるとその仕事自体から得られる効用と合わせて9000万ルーブル稼ぐことができる．さらに彼はいままで数学者になるための教育を受け，それには合計5000万ルーブルの費用がかかった．グレゴリがキノコ狩りをすることの効用はいくら以上か？</li>
+<li>グレゴリはキノコ狩りを生業とするかどうかを考えている．キノコ狩りをするためには入山許可書1万ルーブル，道具代30万ルーブル，保険料15万ルーブルがかかる．一方でグレゴリには数学の才能があり，もし彼がキノコ狩りでなく数学者をするならばその仕事自体から得られる効用と合わせて7000万ルーブルを稼ぐことができる．さらに多才なことに物理学の才能もある．グレゴリが数学者でもなくキノコ狩りをするのでもなく物理学者をやるとその仕事自体から得られる効用と合わせて9000万ルーブル稼ぐことができる．さらに彼はいままで数学者になるための教育を受け，それには合計5000万ルーブルの費用がかかった．グレゴリがキノコ狩りをすることを選んだとき，その効用はいくら以上か？</li>
 </ul>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="計算用紙" data-section="意思決定" data-note="true" data-print-margin="0">
+<template class="slide-data" data-title="計算用紙" data-section="意思決定" data-note="true" data-print-margin="300">
 </template>
 
 <template class="slide-data" data-title="機会費用とサンクコスト" data-section="意思決定" data-note="false" data-print-margin="0">
@@ -2522,57 +2583,61 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>ある行動をするために諦めた行動から得られる便益の最大値をその行動の<span class="keyword">機会費用</span>と呼ぶ．</li>
-<li class="sub-item">» グレゴリの例では物理学者をすることによる9000万ルーブルの便益がキノコ狩りをすることの機会費用になる</li>
+<li class="sub-item">グレゴリの例では物理学者をすることによる9000万ルーブルの便益がキノコ狩りをすることの機会費用になる</li>
 <li>また，どんな行動をしても既に回収不可能な費用のことを<span class="keyword">埋没費用（サンクコスト）</span>と呼ぶ</li>
-<li class="sub-item">» グレゴリの例では数学者になるために受けた教育費用5000万ルーブルの費用はそれである．</li>
-<li class="sub-item">» 合理的な意思決定では埋没費用は意思決定に考慮すべきでない</li>
+<li class="sub-item">グレゴリの例では数学者になるために受けた教育費用5000万ルーブルの費用はそれである．</li>
+<li class="sub-item">合理的な意思決定では埋没費用は意思決定に考慮すべきでない</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>埋没費用の誤謬：本来考えるべきでない埋没費用のことを気にして意思決定が狂う現象</li>
-<li class="sub-item">» 例：コンコルド効果</li>
+<li class="sub-item">例：コンコルド効果</li>
 </ul>
+<div class="tikz-figure"><img src="img_micro/Concorde_216_(G-BOAF)_last_flight.jpg" alt="コンコルド（G-BOAF）の最終飛行"></div>
+<div class="tiny" style="text-align:center;color:var(--text-dim)">写真：Adrian Pingstone / Wikimedia Commons（パブリックドメイン）</div>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="埋没費用の誤謬の恩恵" data-section="意思決定" data-note="false" data-print-margin="0">
-<ul>
-<li>〈発展〉 合理的でない人にとっては埋没費用を気にする方が良い場合も...</li>
-<li class="sub-item">» 例: 事前の自分にとっては運動した方が良いのでジムの会員になるが，事後の自分はめんどうで行きたくない．ジムの会費は埋没費用．</li>
-<ol>
-<li>埋没費用の誤謬にハマらない人：「合理的に」ジムに行かない</li>
-<li>ハマる人：せっかく払ったからとジムに行く．</li>
-</ol>
-<p>事前の自分にとってはどちらが良い？</p>
-<li>〈考えてみましょう〉</li>
-<li class="sub-item">» あなたの身の回りの埋没費用はなんですか？</li>
-<li class="sub-item">» 埋没費用の誤謬に陥っていますか？</li>
-<li class="sub-item">» 埋没費用を気にしないことは本当に良いことでしょうか？</li>
-</ul>
-</template>
 
 <template class="slide-data" data-title="費用便益分析の欠点" data-section="意思決定" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
 <ul>
 <li>費用便益分析の欠点</li>
-<li class="sub-item">» 費用と便益は別々のものとして考える</li>
-<li class="sub-item">→ 所得を反映させられない．</li>
-<li class="sub-item">→ 「費用」が大きいと所得が大きく変わってしまう．</li>
-<li class="sub-item">→ 便益も変わってしまうかも？（所得効果）</li>
+<li class="sub-item">費用と便益は別々のものとして考える</li>
+<li class="sub-item arrow">→ 所得を反映させられない．</li>
+<li class="sub-item arrow">→ 「費用」が大きいと所得が大きく変わってしまう．</li>
+<li class="sub-item arrow">→ 便益も変わってしまうかも？（所得効果）</li>
 <li>費用便益分析が妥当でなくなる例</li>
-<li class="sub-item">» 所持金が200万円の人が150万円の車を購入するかどうか<br>※購入前と後の所得では車の価値が違う！</li>
+<li class="sub-item">所持金が200万円の人が150万円の車を購入するかどうか<br>※購入前と後の所得では車の価値が違う！</li>
 </ul>
 </div>
 <div class="column"></div>
 </div>
 </template>
 
+
+<template class="slide-data" data-title="埋没費用の誤謬の恩恵" data-section="意思決定" data-note="false" data-print-margin="0">
+<ul>
+<li>〈発展〉 合理的でない人にとっては埋没費用を気にする方が良い場合も...</li>
+<li class="sub-item">例: 事前の自分にとっては運動した方が良いのでジムの会員になるが，事後の自分はめんどうで行きたくない．ジムの会費は埋没費用．</li>
+<ol>
+<li>埋没費用の誤謬にハマらない人：「合理的に」ジムに行かない</li>
+<li>ハマる人：せっかく払ったからとジムに行く．</li>
+</ol>
+<p>事前の自分にとってはどちらが良い？</p>
+<li>〈考えてみましょう〉</li>
+<li class="sub-item">あなたの身の回りの埋没費用はなんですか？</li>
+<li class="sub-item">埋没費用の誤謬に陥っていますか？</li>
+<li class="sub-item">埋没費用を気にしないことは本当に良いことでしょうか？</li>
+</ul>
+</template>
+
 <!-- ============ SECTION: 需要と供給 ============ -->
 
-<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="section-title-big">需要と供給</div>
 </template>
 
@@ -2581,9 +2646,9 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>以降の章では「財」の取引を考える</li>
-<li class="sub-item">» 財とは取引される対象で，商品，サービス，余暇など有形無形を問わない</li>
+<li class="sub-item">財とは取引される対象で，商品，サービス，余暇など有形無形を問わない</li>
 <li>取引量の数詞として，「単位」を用いる</li>
-<li class="sub-item">» 例：商品であれば1個，水などであれば1Lなど</li>
+<li class="sub-item">例：商品であれば1個，水などであれば1Lなど</li>
 <li>財の購入時に支払う金額は「価格 $\times$ 数量」である．</li>
 </ul>
 </div>
@@ -2596,9 +2661,9 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>経済活動の最大の舞台は<span class="keyword">市場</span>である</li>
-<li class="sub-item">» この市場ではどのように取引が行われるべきか？</li>
+<li class="sub-item">この市場ではどのように取引が行われるべきか？</li>
 <li>例として「家」の市場を考える．</li>
-<li class="sub-item">» 家を欲しがる人と家を建てる人（大工）がいる．</li>
+<li class="sub-item">家を欲しがる人と家を建てる人（大工）がいる．</li>
 </ul>
 </div>
 <div class="column">
@@ -2615,7 +2680,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </table>
 </template>
 
-<template class="slide-data" data-title="適当なマッチングを考える..." data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="適当なマッチングを考える..." data-section="需要と供給" data-note="false" data-print-margin="500">
 <table class="slide-table">
 <tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
 <tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
@@ -2626,9 +2691,19 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="columns">
 <div class="column"><ul>
 <li>このマッチングはうまくいっているか？</li>
-<li class="sub-item">» 不満がある人がいる...</li>
+
+<li class="sub-item">取引余剰の考え方
+
+<li class="sub-item">取引によって得られた「利益」の合計を計算する
+
 </ul></div>
-<div class="column"><ul><li>もっと良い取引方法を！</li></ul></div>
+<div class="column"><ul>
+<li>このマッチングは安定的か？</li>
+  <li class="sub-item">不満がある人がいる...</li>
+
+
+
+</ul></div>
 </div>
 </template>
 
@@ -2640,8 +2715,8 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>上の曲線は<span class="keyword">需要曲線</span>という．</li>
-<li class="sub-item">» <span class="keyword">需要量</span>とはある価格が与えられたとき，その価格ならこれだけ買いたいという量の総合計．</li>
-<li class="sub-item">» 価格と需要量を結びつける関係を需要曲線という.</li>
+<li class="sub-item"><span class="keyword">需要量</span>とはある価格が与えられたとき，その価格ならこれだけ買いたいという量の総合計．</li>
+<li class="sub-item">価格と需要量を結びつける関係を需要曲線という.</li>
 </ul>
 </div>
 </div>
@@ -2655,9 +2730,9 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>この曲線は<span class="keyword">供給曲線</span>と呼ぶ．</li>
-<li class="sub-item">» <span class="keyword">供給量</span>とはある価格が与えられたとき，その価格ならこれだけ売りたいという量の総合計</li>
-<li class="sub-item">» 価格と供給量を結びつける関係を供給曲線という．</li>
-<li class="sub-item">» 追加で一個作るための費用の大きさ（限界費用）が供給曲線を形作る</li>
+<li class="sub-item"><span class="keyword">供給量</span>とはある価格が与えられたとき，その価格ならこれだけ売りたいという量の総合計</li>
+<li class="sub-item">価格と供給量を結びつける関係を供給曲線という．</li>
+<li class="sub-item">追加で一個作るための費用の大きさ（限界費用）が供給曲線を形作る</li>
 </ul>
 </div>
 </div>
@@ -2671,7 +2746,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>需要量と供給量が一致するときの価格を<span class="keyword">（市場）均衡価格</span>と呼ぶ</li>
-<li class="sub-item">» 「均衡」は選択の次に経済学にとって大事な要素</li>
+<li class="sub-item">「均衡」は選択の次に経済学にとって大事な要素</li>
 <li>均衡価格では"ある意味"不満がない</li>
 </ul>
 </div>
@@ -2683,24 +2758,28 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>架空の商品の取引をします．</li>
-<li class="sub-item">» 商品の価値はランダムに決まる数です</li>
+<li class="sub-item">商品の価値はランダムに決まる数です</li>
 <li>取引は一度に2回まで行われます</li>
 <li>商品の価格は注文の需要と供給が交わるところで決まります</li>
-<li class="sub-item">» 価格よりも希望購入金額が高ければ買え，希望売却金額が低ければ売れます．</li>
+<li class="sub-item">価格よりも希望購入金額が高ければ買え，希望売却金額が低ければ売れます．</li>
 <li>最終的な利益は2回目の後にでます．</li>
-<li class="sub-item">» 景品が一つもらえます．景品は賞金の大きい順に選べます．</li>
+<li class="sub-item">景品が一つもらえます．景品は賞金の大きい順に選べます．</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>実験はスマホ（or PC）を使って行います．</li>
-<li class="sub-item">» 以下のQRコードからアクセスしてみましょう（授業中のみ有効）</li>
+<li class="sub-item">以下のQRコードからアクセスしてみましょう（授業中のみ有効）</li>
 <a href="https://class-experiments-basicmicro-tomoyatajika.onrender.com/" target="_blank" class="qr-link">🔗 QRリンク</a>
 <li>まずは練習してみましょう．</li>
 </ul>
 </div>
 </div>
 </template> -->
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="section-title-big">余剰と効率性</div>
+</template>
 
 <template class="slide-data" data-title="余剰の概念（消費者余剰）" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
@@ -2729,9 +2808,9 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>社会的総余剰</li>
-<li class="sub-item">» 消費者余剰と生産者余剰の和</li>
+<li class="sub-item">消費者余剰と生産者余剰の和</li>
 <li>「支払意思額 $-$ 費用」と考えても良い</li>
-<li class="sub-item">» なぜ？：お金の部分は相殺されるから</li>
+<li class="sub-item">なぜ？：お金の部分は相殺されるから</li>
 </ul>
 </div>
 <div class="column">
@@ -2741,7 +2820,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="社会的総余剰：図解" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="社会的総余剰：図解" data-section="需要と供給" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="過少生産のケース"></div>
@@ -2761,13 +2840,13 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="tikz-figure anim" style="--ar:620/400"><img src="img_micro/discrete_to_continuous_anime.svg" alt="階段状の需要・供給曲線から滑らかな需要・供給曲線へ"></div>
 </template>
 
-<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="50">
+<template class="slide-data" data-title="滑らかな需要曲線・供給曲線での余剰" data-section="需要と供給" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>数式で需要曲線・供給曲線が与えられているケース</li>
-<li class="sub-item">» 需要曲線：$P=21-3Q$</li>
-<li class="sub-item">» 供給曲線：$P=2Q+1$</li>
+<li class="sub-item">需要曲線：$P=21-3Q$</li>
+<li class="sub-item">供給曲線：$P=2Q+1$</li>
 </ul>
 </div>
 <div class="column"></div>
@@ -2779,19 +2858,19 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <div class="column">
 <ul>
 <li>社会的総余剰は合計</li>
-<li class="sub-item">» 当然の疑問は「足していいの？」</li>
-<li class="sub-item">» すべてをお金に関する価値に変換でき，そのレートが常に一定ならOK</li>
+<li class="sub-item">当然の疑問は「足していいの？」</li>
+<li class="sub-item">すべてをお金に関する価値に変換でき，そのレートが常に一定ならOK</li>
 <li><span class="keyword">パレート効率性</span>：よりゆるい最適性の基準</li>
-<li class="sub-item">» AからBに移ったとき，全員が改善するなら BのほうがAよりよい</li>
-<li class="sub-item">» AからBに移ったとき，誰かが損するなら，BのほうがAより良いとは言えない</li>
+<li class="sub-item">AからBに移ったとき，全員が改善するなら BのほうがAよりよい</li>
+<li class="sub-item">AからBに移ったとき，誰かが損するなら，BのほうがAより良いとは言えない</li>
 <li>Aがパレート効率的であるとは，他のどの状態に移っても誰かが損すること．</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>金銭的価値の足し算ですべての価値が決まり，余剰が譲渡できる世界ならば「社会的総余剰最大化 $=$ パレート効率的」</li>
-<li class="sub-item">» そうでなければ「社会的総余剰最大化してなくてもパレート効率的」のときがある</li>
-<li class="sub-item">» 例：</li>
+<li class="sub-item">そうでなければ「社会的総余剰最大化してなくてもパレート効率的」のときがある</li>
+<li class="sub-item">例：</li>
 <ol>
 <li>この章の最初の適当なマッチング：余剰は低い，アダムは取引できて嬉しい</li>
 <li>市場均衡：余剰は最大，アダムは取引できなくて悲しい</li>
@@ -2802,8 +2881,6 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </template>
 
 <template class="slide-data" data-title="例" data-section="需要と供給" data-note="false" data-print-margin="0">
-<div class="columns">
-<div class="column">
 <ul><li>社会に選択肢が$x_1$〜$x_5$だけとする.</li></ul>
 <table class="slide-table">
 <tr><th></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th></tr>
@@ -2811,26 +2888,24 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <tr><th>イヴ</th><td>2</td><td>0</td><td>2</td><td>1</td><td>5</td></tr>
 <tr><th>ルツ</th><td>2</td><td>4</td><td>1</td><td>10</td><td>1</td></tr>
 </table>
-</div>
-<div class="column">
 <ul>
-<li class="sub-item">» $x_{1}$はパレート効率的か？</li>
-<li class="sub-item">» $x_{2}$は...</li>
-<li class="sub-item">» $x_{3}$は...</li>
-<li class="sub-item">» $x_{4}$は...</li>
-<li class="sub-item">» $x_{5}$は...</li>
+<li>行の選択肢から列の選択肢へ移動すると損する人は？</li>
 </ul>
-</div>
-</div>
+<table class="slide-table fill-table">
+<tr><th>から＼へ</th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th><th>効率的？</th></tr>
+<tr><th>$x_1$</th><td>—</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>$x_2$</th><td></td><td>—</td><td></td><td></td><td></td><td></td></tr>
+<tr><th>$x_3$</th><td></td><td></td><td>—</td><td></td><td></td><td></td></tr>
+<tr><th>$x_4$</th><td></td><td></td><td></td><td>—</td><td></td><td></td></tr>
+<tr><th>$x_5$</th><td></td><td></td><td></td><td></td><td>—</td><td></td></tr>
+</table>
 </template>
 
 <template class="slide-data" data-title="パレート効率性以外の判断基準" data-section="需要と供給" data-note="false" data-print-margin="0">
-<div class="columns">
-<div class="column">
 <ul>
 <li>パレート効率性だけでは選択肢を絞りきれない</li>
-<li class="sub-item">→ 社会厚生関数</li>
-<li>左の方法でそれぞれの選択肢の「社会厚生」を求める</li>
+<li class="sub-item arrow">→ 社会厚生関数</li>
+<li>下の方法でそれぞれの選択肢の「社会厚生」を求める</li>
 </ul>
 <table class="slide-table">
 <tr><th></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th></tr>
@@ -2838,15 +2913,16 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <tr><th>イヴ</th><td>2</td><td>0</td><td>2</td><td>1</td><td>5</td></tr>
 <tr><th>ルツ</th><td>2</td><td>4</td><td>1</td><td>10</td><td>1</td></tr>
 </table>
-</div>
-<div class="column">
-<ul>
-<li>足す（ベンサム型）</li>
-<li>掛ける（ナッシュ型）</li>
-<li>最小値で比較（レキシミン型）</li>
-</ul>
-</div>
-</div>
+<table class="slide-table fill-table">
+<tr><th style="width:30%"></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$x_4$</th><th>$x_5$</th><th>最良</th></tr>
+<tr><th>足す（ベンサム型）</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>掛ける（ナッシュ型）</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>最小値で比較（レキシミン型）</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+</template>
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="section-title-big">価格弾力性</div>
 </template>
 
 <template class="slide-data" data-title="需要曲線と供給曲線の特徴①: 価格弾力性" data-section="需要と供給" data-note="false" data-print-margin="0">
@@ -2855,19 +2931,19 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <ul>
 <li><span class="small">※これ以降は需要曲線と供給曲線をなめらかな曲線で描く．</span></li>
 <li>需要曲線は右下がり，供給曲線は右上がり</li>
-<li class="sub-item">» <span class="keyword">需要法則</span>: その財価格が上がると需要量は下がる（少なくとも増えない）<br>（例外：ギッフェン財，ヴェブレン財など）</li>
+<li class="sub-item"><span class="keyword">需要法則</span>: その財価格が上がると需要量は下がる（少なくとも増えない）<br>（例外：ギッフェン財，ヴェブレン財など）</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>ではどれくらいの反応を示すのか？</li>
-<li class="sub-item">» 同じ価格だけ需要と価格が増減してもインパクトは異なる.</li>
+<li class="sub-item">同じ価格だけ需要と価格が増減してもインパクトは異なる.</li>
 <ol>
 <li>駄菓子の価格が$10$円上昇すると需要量が$10$万個減った．</li>
 <li>車の価格が$10$円上昇すると需要量が$1$台減った．</li>
 </ol>
-<li class="sub-item">» 「駄菓子の方が車より10万倍価格に敏感」と言える？</li>
-<li class="sub-item">» これらはもともとの価格と需要量が違うのでインパクトが異なる</li>
+<li class="sub-item">「駄菓子の方が車より10万倍価格に敏感」と言える？</li>
+<li class="sub-item">これらはもともとの価格と需要量が違うのでインパクトが異なる</li>
 </ul>
 </div>
 </div>
@@ -2887,9 +2963,26 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>具体例で計算してみよう</li>
-<li class="sub-item">» 駄菓子の価格が$100$円から$110$円に値上がりしたところ，需要量が$120$万個から$110$万個に減った．</li>
-<li class="sub-item">» 車の価格が$100$万円から$110$万円に値上がりしたところ，需要量が$12$万台から$11$万台に減った．</li>
+<li class="sub-item">駄菓子の価格が$100$円から$110$円に値上がりしたところ，需要量が$120$万個から$110$万個に減った．</li>
 </ul>
+<table class="slide-table fill-table tall">
+<tr><th>価格の変化率</th><th>需要量の変化率</th><th>価格弾力性</th></tr>
+<tr><td></td><td></td><td></td></tr>
+</table>
+<ul>
+<li class="sub-item">車の価格が$100$万円から$110$万円に値上がりしたところ，需要量が$12$万台から$11$万台に減った．</li>
+</ul>
+<table class="slide-table fill-table tall">
+<tr><th>価格の変化率</th><th>需要量の変化率</th><th>価格弾力性</th></tr>
+<tr><td></td><td></td><td></td></tr>
+</table>
+<ul>
+<li class="sub-item">あるコンビニのペットボトルのお茶の価格が$150$円から$165$円に値上がりしたところ，需要量が$100$本から$70$本に減った．</li>
+</ul>
+<table class="slide-table fill-table tall">
+<tr><th>価格の変化率</th><th>需要量の変化率</th><th>価格弾力性</th></tr>
+<tr><td></td><td></td><td></td></tr>
+</table>
 </div>
 </div>
 </template>
@@ -2899,29 +2992,42 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>価格弾力性が$1$より大きいとき，その財は<span class="keyword">弾力的</span>，$1$より小さいとき<span class="keyword">非弾力的</span>という．</li>
-<li class="sub-item">» どのような財が弾力的でどのような財がそうではないか？</li>
+<li >どのような財が弾力的でどのような財がそうではないか？</li>
+<ul>
+<li>弾力的な財（<span class="keyword">奢侈財</span>）</li>
+
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+<li>非弾力的な財（<span class="keyword">必需財</span>）</li>
+
+</ul>
 </ul>
 </div>
 <div class="column"><ul><li>図解</li></ul></div>
 </div>
 </template>
 
-<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="500">
 <div class="columns">
 <div class="column">
 <ul>
 <li>価格が増加すると弾力性はどうなる？</li>
-<li class="sub-item">» 分数の性質：分母が大きいなら小さい，分子が大きいなら大きい</li>
-<li class="sub-item">» 価格が低いなら需要量が大きいことに注目</li>
+<li class="sub-item">分数の性質：分母が大きいなら小さい，分子が大きいなら大きい</li>
+<li class="sub-item">価格が低いなら需要量が大きいことに注目</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>需要曲線の傾きが急勾配になると弾力性はどうなる？</li>
-<li class="sub-item">» 傾きが大きいと，同じ価格の変化に対して，需要量の変化が小さい</li>
+<li class="sub-item">傾きが大きいと，同じ価格の変化に対して，需要量の変化が小さい</li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="section-title-big">曲線のシフト</div>
 </template>
 
 <template class="slide-data" data-title="需要曲線と供給曲線の特徴② 曲線のシフト" data-section="需要と供給" data-note="false" data-print-margin="0">
@@ -2929,11 +3035,10 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>価格以外の理由で需要量や供給量が変わる場合がある.</li>
-<li class="sub-item">» 例：</li>
+<li class="sub-item">例：</li>
 <ol>
 <li>価値の増減</li>
 <li>製造費用の増減</li>
-<li>課税</li>
 </ol>
 </ul>
 
@@ -2944,7 +3049,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="曲線のシフトのつづき" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="曲線のシフト：均衡の変化" data-section="需要と供給" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
 <div class="tikz-figure anim" style="--ar:700/400"><img src="img_micro/demand_shift.svg" alt="需要曲線の右シフトによる市場均衡の変化"></div>
@@ -2957,14 +3062,14 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="曲線シフトから需要曲線・供給曲線を明らかにする" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="曲線シフトから需要曲線・供給曲線を明らかにする" data-section="需要と供給" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>需要曲線を右シフトさせるショックが起きたとする</li>
-<li class="sub-item">» 例:</li>
-<li class="sub-item">» このとき，価格と購入量ともに上昇したことが観測された．</li>
-<li class="sub-item">» ありうるパターンは次のうちどれか？</li>
+<li class="sub-item">例:</li>
+<li class="sub-item">このとき，価格と購入量ともに上昇したことが観測された．</li>
+<li class="sub-item">ありうるパターンは次のうちどれか？</li>
 </ul>
 </div>
 <div class="column">
@@ -3008,8 +3113,8 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>需要曲線を右シフトさせるショックが起きたとする</li>
-<li class="sub-item">» 価格が2%上昇，取引量が5%増加</li>
-<li class="sub-item">» このとき，わかるのは<br>
+<li class="sub-item">価格が2%上昇，取引量が5%増加</li>
+<li class="sub-item">このとき，わかるのは<br>
 <span style="font-size:1.2em;">「<strong>供給</strong>の価格弾力性が<strong>$\frac{5}{2}$</strong>」</span>
 </li>
 </ul>
@@ -3017,10 +3122,14 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>注意すべきこと：わかるのは均衡点での取引量のみ</li>
-<li class="sub-item">» 需要曲線のシフトによってわかるのは需要曲線についての情報とは限らない</li>
+<li class="sub-item">需要曲線のシフトによってわかるのは需要曲線についての情報とは限らない</li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<div class="section-title-big">市場均衡分析の応用</div>
 </template>
 
 <template class="slide-data" data-title="市場均衡分析の応用例① 最低賃金制度" data-section="需要と供給" data-note="false" data-print-margin="0">
@@ -3028,14 +3137,14 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>最低賃金は貧困層の助けになるか？</li>
-<li class="sub-item">» 「働くこと」を財と考える．</li>
-<li class="sub-item">» 労働者が「労働」の供給者，企業が「労働」の需要者</li>
+<li class="sub-item">「働くこと」を財と考える．</li>
+<li class="sub-item">労働者が「労働」の供給者，企業が「労働」の需要者</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>労働の供給量 $-$ 労働の需要量を<span class="keyword">失業</span>と呼ぶ．</li>
-<li class="sub-item">» 最低賃金によって失業が発生する</li>
+<li class="sub-item">最低賃金によって失業が発生する</li>
 </ul>
 </div>
 </div>
@@ -3046,16 +3155,16 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>〈実証分析〉 実際に最低賃金の引き上げによって失業は増える？</li>
-<li class="sub-item">» Card and Krueger (1994)：必ずしもそうとは言えない</li>
-<li class="sub-item">» 「労働経済学」という分野ではいろんな視点から分析する</li>
-<li class="sub-item">» 文献を調べてみましょう．</li>
+<li class="sub-item">Card and Krueger (1994)：必ずしもそうとは言えない</li>
+<li class="sub-item">「労働経済学」という分野ではいろんな視点から分析する</li>
+<li class="sub-item">文献を調べてみましょう．</li>
 </ul>
 </div>
 <div class="column"></div>
 </div>
 </template>
 
-<template class="slide-data" data-title="市場均衡分析の応用例② 豊作貧乏" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="市場均衡分析の応用例② 豊作貧乏" data-section="需要と供給" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul><li>$q^{\text{前}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
@@ -3065,7 +3174,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul><li>$q^{\text{後}}$まで費用$0$，それより多く作る費用は$\infty$</li></ul>
 <div class="tikz-figure"><img src="img_micro/hosaku2.svg" alt="豊作後の供給曲線のシフト"></div>
 <ul>
-<li class="sub-item">» 生産できる量が増えた（豊作の）結果，収入はどうなるか？</li>
+<li class="sub-item">生産できる量が増えた（豊作の）結果，収入はどうなるか？</li>
 </ul>
 <a href="https://youtu.be/HMIVlvWZg5o?t=105" target="_blank" class="qr-link">🔗 QRリンク</a>
 </div>
@@ -3080,31 +3189,31 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li>課税すればどうなるか?</li>
 <li><span class="keyword">従量税</span>を考える．一単位購入するごとに税が$t$円課される．</li>
 <li>財を一単位購入するとき，</li>
-<li class="sub-item">» 消費者の支払額:</li>
-<li class="sub-item">» 生産者の受け取る額:</li>
+<li class="sub-item">消費者の支払額:</li>
+<li class="sub-item">生産者の受け取る額:</li>
 <li>実質的な価格は?</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>均衡では何が起きるか</li>
-<li class="sub-item">» 税<span class="keyword">込</span>価格での需要量と税<span class="keyword">抜</span>価格での供給量が一致する</li>
+<li class="sub-item">税<span class="keyword">込</span>価格での需要量と税<span class="keyword">抜</span>価格での供給量が一致する</li>
 </ul>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="課税の効果のつづき① 課税下での市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="課税の効果のつづき① 課税下での市場均衡" data-section="需要と供給" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>課税があるときの市場均衡の図示</li>
-<li class="sub-item">» 均衡じゃないときの図</li>
+<li class="sub-item"> どういう状態が均衡になるかの図</li>
 </ul>
 <div class="tikz-figure anim" style="--ar:660/440"><img src="img_micro/tax_equilibrium.svg" alt="従量税のもとでの市場均衡"></div>
 </div>
 <div class="column">
-<ul><li class="sub-item">» 均衡にあるときの図</li></ul>
+<ul><li class="sub-item">均衡にあるときの図</li></ul>
 <div class="tikz-figure"><img src="img_micro/tax_ch1.svg" alt="従量税の影響"></div>
 </div>
 </div>
@@ -3115,6 +3224,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>課税下では税収も社会的総余剰に含まれる</li>
+<li class="sub-item">なぜ？</li>
 </ul>
 </div>
 <div class="column">
@@ -3130,6 +3240,19 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="tikz-figure"><img src="img_micro/optax1-ch1.svg" alt="死荷重損失の比較：非弾力的な需要（左, 死荷重小）と弾力的な需要（右, 死荷重大）"></div>
 <ul>
 <li>需要曲線の傾き（弾力性）に注目</li>
+<li class="sub-item">弾力性が高い ➯
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+ <li class="sub-item">弾力性が低い ➯
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+ 
 <li><span class="keyword">ラムゼイ・ルール</span>(Ramsey, 1927，逆弾力性ルールとも):</li>
 </ul>
 </template>
@@ -3137,7 +3260,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 
 <!-- ============ SECTION: 市場の失敗 ============ -->
 
-<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="0">
 <div class="section-title-big">市場の失敗</div>
 </template>
 
@@ -3146,31 +3269,35 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>市場取引では社会的総余剰が最大になる</li>
-<li class="sub-item">» これはいつでも成り立つものではない</li>
+<li class="sub-item">これはいつでも成り立つものではない</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>市場取引がうまくいくための条件</li>
-<li class="sub-item">» 人々は自分の消費からしか利益や損失を受けない（私的消費・私的生産）</li>
-<li class="sub-item">» 人々の間で財の性質に関する情報が同じである（対称情報）</li>
-<li class="sub-item">» 人々は自分一人で価格を変えられないものと考えている（価格受容者）</li>
+<li class="sub-item">人々は自分の消費からしか利益や損失を受けない（私的消費・私的生産）</li>
+<li class="sub-item">人々の間で財の性質に関する情報が同じである（対称情報）</li>
+<li class="sub-item">人々は自分一人で価格を変えられないものと考えている（価格受容者）</li>
 <li>上の条件が成り立たないと，市場取引が社会的総余剰を最大にしないときがある</li>
-<li class="sub-item">» 成り立たない時に問題が起きることの総称を<span class="keyword">市場の失敗</span>と呼ぶ．</li>
-<li class="sub-item">» この講義では簡単な例を紹介する</li>
+<li class="sub-item">成り立たない時に問題が起きることの総称を<span class="keyword">市場の失敗</span>と呼ぶ．</li>
+<li class="sub-item">この講義では簡単な例を紹介する</li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="section-title-big">外部性</div>
 </template>
 
 <template class="slide-data" data-title="外部性" data-section="市場の失敗" data-note="false" data-print-margin="0">
 <ul>
 <li>他人の行動が自分の効用に直接影響を与えるとき，<span class="keyword">外部性</span>があると言う．</li>
-<li class="sub-item">» 例：</li>
+<li class="sub-item">例：</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="300">
 <ul>
 <li>数値例：</li>
 </ul>
@@ -3181,18 +3308,18 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
 </table>
 <ul>
-<li class="sub-item">» 追加の登場人物：近所に住むおじさん<br>「家が一軒建つたびに，500万円だけの騒音被害を受ける」</li>
+<li class="sub-item">追加の登場人物：近所に住むおじさん<br>「家が一軒建つたびに，500万円だけの騒音被害を受ける」</li>
 </ul>
 <div class="columns">
 <div class="column"><ul>
-<li class="sub-item">» 市場均衡で建つ家の数</li>
-<li class="sub-item">» そのときの社会的総余剰</li>
+<li class="sub-item">市場均衡で建つ家の数</li>
+<li class="sub-item">そのときの社会的総余剰</li>
 </ul></div>
 <div class="column"></div>
 </div>
 </template>
 
-<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="300">
 <table class="slide-table">
 <tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
 <tr><th>支払意思額（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
@@ -3201,16 +3328,97 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </table>
 <div class="columns">
 <div class="column"><ul>
-<li class="sub-item">» １軒当たり買い手に500万円の課税</li>
-<li class="sub-item">» このとき建つ家の数</li>
-<li class="sub-item">» 社会的総余剰</li>
+<li class="sub-item">１軒当たり買い手に500万円の課税</li>
+<li class="sub-item">このとき建つ家の数</li>
+<li class="sub-item">社会的総余剰</li>
 </ul></div>
 <div class="column"></div>
 </div>
 <ul>
 <li><span class="keyword">ピグー税</span>：外部性の問題を税金をかけることで解決できる</li>
-<li class="sub-item">» 外部性によって生じる被害分を当事者に負担させる（外部性の内部化）</li>
+<li class="sub-item">外部性によって生じる被害分を当事者に負担させる（外部性の<span class="keyword">内部化</span>）</li>
 </ul>
+</template>
+
+
+
+<template class="slide-data" data-title="外部性：コース交渉" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>外部性の責任は誰が持つべきか？</li>
+<li class="sub-item">政府が介入せず，当事者（汚染者と被汚染者）の交渉で解決する方法もある</li>
+<li>権利の認め方は二通り</li>
+<li class="sub-item">被汚染者に「汚染されない権利」：汚染者が被汚染者に賠償金を払う</li>
+<li class="sub-item">汚染者に「汚染する権利」：被汚染者が汚染者に補償金を払って汚染を減らしてもらう</li>
+<li>どちらに権利を認めるかで，汚染量は変わるか？</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="外部性：コースの定理" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<ul>
+<li>モデル：汚染水準$p$</li>
+<li class="sub-item">汚染者の効用：$v(p)$</li>
+<li class="sub-item">被汚染者の不効用：$C(p)$</li>
+<li class="sub-item">社会的総余剰：$v(p)-C(p)$，これを最大にする汚染水準を$p^*$とする</li>
+<li class="sub-item">話を簡単にするため，お金のことを考えなければ，汚染者はいくらでも汚染したい，非汚染者は一切汚染されたくないとしよう
+
+</ul>
+<div class="framed"><span class="keyword">コースの定理</span>：交渉費用（取引費用）がかからなければ，どちらに権利を認めても，交渉の結果，社会的総余剰を最大にする汚染量$p^*$が実現する．</div>
+<ul>
+<li class="sub-item">現実には交渉・訴訟に費用がかかるため，権利の配分によって結果は変わる</li>
+</ul>
+</div>
+<div class="column"></div>
+</div>
+</template>
+
+<template class="slide-data" data-title="コースの定理：汚染者に権利がある場合" data-section="市場の失敗" data-note="false" data-print-margin="300">
+<ul>
+<li>汚染者に「汚染する権利」を認める</li>
+<li class="sub-item">被汚染者が補償金を払って汚染を減らしてもらう交渉をする</li>
+</ul>
+<div class="columns">
+<div class="column">
+<ul>
+<li>過剰に汚染されているケース（$p>p^*$）では汚染を止められるか？</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>汚染をもっと減らせるか？（$p \lt p^*$にできるか？）</li>
+</ul>
+</div>
+</div>
+</template>
+
+<template class="slide-data" data-title="コースの定理：被汚染者に権利がある場合" data-section="市場の失敗" data-note="false" data-print-margin="300">
+<ul>
+<li>被汚染者に「汚染されない権利」を認める</li>
+<li class="sub-item">汚染者が賠償金を払って汚染させてもらう交渉をする</li>
+</ul>
+<div class="columns">
+<div class="column">
+<ul>
+<li>汚染が少なすぎるケース（$p \lt p^*$）では汚染を増やせるか？</li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li>汚染をもっと増やせるか？（$p>p^*$にできるか？）</li>
+</ul>
+</div>
+</div>
+</template>
+
+
+<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="section-title-big">情報の非対称性</div>
 </template>
 
 <template class="slide-data" data-title="情報の非対称性" data-section="市場の失敗" data-note="false" data-print-margin="0">
@@ -3219,11 +3427,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li>現代の闇市，フリマアプリで出品される商品の真の品質は</li>
 <ul>
-<li class="sub-item">» 買い手にはわからない</li>
-<li class="sub-item">» 売り手にはわかる</li>
+<li class="sub-item">買い手にはわからない</li>
+<li class="sub-item">売り手にはわかる</li>
 </ul>
 <li><span class="keyword">情報の非対称性</span>があると言う</li>
-<li class="sub-item">» 情報に格差がある</li>
+<li class="sub-item">情報に格差がある</li>
 </ul>
 </div>
 <div class="column">
@@ -3237,8 +3445,8 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </table>
 <ul>
 <li>「良い」か「悪い」かが売り手・買い手双方にわかっている場合，市場が分かれる</li>
-<li class="sub-item">» 良い状態の市場</li>
-<li class="sub-item">» 悪い状態の市場</li>
+<li class="sub-item">良い状態の市場</li>
+<li class="sub-item">悪い状態の市場</li>
 </ul>
 </div>
 </div>
@@ -3254,26 +3462,30 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </table>
 <ul>
 <li>「良い」か「悪い」かが売り手にしかわかっていない場合，市場がまとめられる</li>
-<li class="sub-item">» 十把一絡げ，玉石混交な状態</li>
+<li class="sub-item">十把一絡げ，玉石混交な状態</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>良いものと悪いものが半々だとする</li>
-<li class="sub-item">» 買い手の評価は</li>
-<li class="sub-item">» 買ってもらうためには価格は最大でも</li>
-<li class="sub-item">» 上記の価格で売り手は売りたいか？<br>良い売り手：<br>悪い売り手：</li>
-<li class="sub-item">→ 市場には悪いものしか残らない！</li>
+<li class="sub-item">買い手の評価は</li>
+<li class="sub-item">買ってもらうためには価格は最大でも</li>
+<li class="sub-item">上記の価格で売り手は売りたいか？<br>良い売り手：<br>悪い売り手：</li>
+<li class="sub-item arrow">→ 市場には悪いものしか残らない！</li>
 <li><span class="keyword">逆淘汰</span>（逆選抜，逆選択とも）</li>
-<li class="sub-item">» 良いものが駆逐される</li>
-<li class="sub-item">» 品質保証（あるいは売り手への信頼）は大事</li>
+<li class="sub-item">良いものが駆逐される</li>
+<li class="sub-item">品質保証（あるいは売り手への信頼）は大事</li>
 </ul>
 </div>
 </div>
 </template>
 
 
-<template class="slide-data" data-title="カルテル" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<div class="section-title-big">カルテル</div>
+</template>
+
+<template class="slide-data" data-title="カルテル" data-section="市場の失敗" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3293,16 +3505,29 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
 <tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
 </table>
+</div>
+<div class="column">
+<ul>
+<li>カルテルがないときの図</li>
+</ul>
+</div>
+</div>
+<hr class="divider">
+<div class="columns">
+<div class="column">
 <ul>
 <li>売り手連合が価格を3500と偽って表明し，市場に参加する
 </li>
 <ul>
 <li>市場均衡価格はどうなるか？</li>
+<li>生産者余剰はどうなるか？</li>
+  <li> 社会的総余剰はどうなるか？</li>
 </ul>
 </ul>
 </div>
 <div class="column">
 <ul>
+<li>カルテルを作るときの図</li>
 </ul>
 </div>
 </div>
@@ -3311,7 +3536,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 
 
 <!-- SECTION: ゲーム理論 -->
-<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <div class="section-title-big">ゲーム理論</div>
 </template>
 
@@ -3320,95 +3545,101 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li>ミクロ経済学の行動原理は「選べる中でベストなものを選ぶ」だった</li>
 <li>欠けていたのは「<span class="keyword">どんな行動がベストかは他人の行動で変わる</span>」という視点</li>
-<li class="sub-item">» じゃんけん：相手がグーと予想するならパーを出すべき</li>
-<li class="sub-item">» 家事の分担：他の人がやってくれるなら自分はやらなくてよい</li>
-<li class="sub-item">» 待ち合わせ：相手が北口に行くと予想すれば自分も北口へ</li>
+<li class="sub-item">じゃんけん：相手がグーと予想するならパーを出すべき</li>
+<li class="sub-item">家事の分担：他の人がやってくれるなら自分はやらなくてよい</li>
+<li class="sub-item">待ち合わせ：相手が北口に行くと予想すれば自分も北口へ</li>
 <li>他人の行動を予想する必要があるが，その予想も自分の行動の予想に依存する</li>
-<li class="sub-item">» この予想の立て方と，その結果の行動を分析するのが<span class="keyword">ゲーム理論</span></li>
+<li class="sub-item">この予想の立て方と，その結果の行動を分析するのが<span class="keyword">ゲーム理論</span></li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
-<div class="section-title-big">人生の計画表</div>
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<div class="section-title-big">計画表</div>
 </template>
 
 <template class="slide-data" data-title="最も身近な「他人」" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>自分の行動に影響を与える最も身近な人物は<span class="keyword">将来の自分自身</span></li>
 <li>宿題を明日に先延ばしにするか，我慢して今やるか</li>
-<li class="sub-item">» ギリギリになったらやってくれるタイプと信じているなら，先延ばししてよい</li>
-<li class="sub-item">» ギリギリになったら諦めるタイプなら，今やってしまう方が得</li>
+<li class="sub-item">ギリギリになったらやってくれるタイプと信じているなら，先延ばししてよい</li>
+<li class="sub-item">ギリギリになったら諦めるタイプなら，今やってしまう方が得</li>
 <li><span class="keyword">将来の自分がどうするかが，今の自分が何をすべきかを決める</span></li>
 </ul>
 </template>
 
 <template class="slide-data" data-title="意思決定の木" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<!-- 図（手書き） -->
+<div class="tikz-figure"><img src="img_micro/single-decision-tree-simple.svg" alt="意思決定の木"></div>
 <ul>
 <li>スタート地点が<span class="keyword">根</span>．選択のたびに<span class="keyword">ノード</span>（意思決定ノード・手番）で枝分かれする</li>
 <li>終着点（<span class="keyword">終端ノード</span>）に，最終的に得られる効用＝<span class="keyword">利得</span>が書いてある</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="逆算推論法" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<!-- 図（手書き） -->
-<ul>
-<li>Step 1：各ノードで利得の高い選択肢を選ぶ</li>
-<li>Step 2：得られる利得をノードの直下に書き込む</li>
-<li>Step 3：根で最も利得の高い選択肢を選ぶ</li>
-</ul>
-</template>
-
-<template class="slide-data" data-title="戦略とは計画である" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="戦略と逆算推論法" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
 <ul>
 <li>「根では〜を選び，ノードAにいくと〜を選び，ノードBにいくなら〜を選ぶ」</li>
-<li class="sub-item">» この計画を<span class="keyword">戦略</span>と呼ぶ</li>
+<li class="sub-item">この計画を<span class="keyword">戦略</span>と呼ぶ</li>
 <li>ノードBやCは本来なら選ばれないルートだが，戦略は<span class="keyword">いざというときの計画まで</span>含む</li>
-<li class="sub-item">» 逆算推論法を使えば，どのノードからでも利得を最大にする戦略を選べる</li>
-<li class="sub-item">» 想定外のノードにたどり着いてもベストな選択ができる</li>
+
 </ul>
+<div class="tikz-figure"><img src="img_micro/single-decision-tree-simple.svg" alt="意思決定の木"></div>
+</div>
+<div class="column">
+<ul>
+<li>最適な戦略の選び方：<span class="keyword">逆算推論法</span></li>
+<li class="sub-item">Step 1：各ノードで利得の高い選択肢を選ぶ</li>
+<li class="sub-item">Step 2：得られる利得をノードの直下に書き込む</li>
+<li class="sub-item">Step 3：根で最も利得の高い選択肢を選ぶ</li>
+<li >逆算推論法を使えば，どのノードからでも利得を最大にする戦略を選べる</li>
+<li>想定外のノードにたどり着いてもベストな選択ができる</li>
+
+</ul>
+<div class="tikz-figure"><img src="img_micro/single-decision-tree-simple.svg" alt="意思決定の木"></div>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="例題：旅の計画" data-section="ゲーム理論" data-note="false" data-print-margin="300">
-<!-- 図（手書き） -->
+<div class="tikz-figure"><img src="img_micro/single-decision-tree-comp.svg" alt="旅の計画の意思決定の木"></div>
 <ul>
 <li>逆算推論法で解き，最適な旅行ルートとそのときの利得を求めなさい．</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <div class="section-title-big">逐次手番ゲーム</div>
 </template>
 
 <template class="slide-data" data-title="ゲームの木" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<!-- 図（手書き） -->
+<div class="columns">
+<div class="column">
 <ul>
 <li>意思決定ノードにはその番の<span class="keyword">プレイヤー</span>の名前，終端ノードには利得のペア</li>
-<li class="sub-item">» $(3,0)$ は「Aの利得が $3$，Bの利得が $0$」</li>
+<li class="sub-item">$(3,0)$ は「Aの利得が $3$，Bの利得が $0$」</li>
 <li>順番に選んでいく構造のゲームを<span class="keyword">逐次手番ゲーム</span>と呼ぶ</li>
 </ul>
-</template>
-
-<template class="slide-data" data-title="何をすべきかは予想次第" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<div class="tikz-figure"><img src="img_micro/game-tree1.svg" alt="ゲームの木"></div>
+</div>
+<div class="column">
+何をすべきかは予想次第
 <ul>
 <li>Bが $x_1$ で上，$x_2$ で下を選ぶなら</li>
-<li class="sub-item">» Aは up で利得3，down で利得2 → up を選ぶべき</li>
+<li class="sub-item">Aは up で利得3，down で利得2 → up を選ぶべき</li>
 <li>Bが $x_1$ で下を選ぶなら</li>
-<li class="sub-item">» Aは up で利得0 → down を選ぶべき</li>
+<li class="sub-item">Aは up で利得0 → down を選ぶべき</li>
 <li>「Bが何をするか」の予想は，Bが自分の利得を最大にすると考えれば逆算推論法で立つ</li>
 </ul>
+<div class="tikz-figure"><img src="img_micro/game-tree1.svg" alt="ゲームの木"></div>
+</div>
+</div>
 </template>
 
-<template class="slide-data" data-title="逆算推論法で解く" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<!-- 図（手書き） -->
-<ul>
-<li>$x_1$：Bは上で $0$，下で $2$ → 下．$x_2$：Bは上を選ぶ</li>
-<li>$x_0$：Aは up なら $(0,2)$，down なら $(1,2)$ → <span class="keyword">down</span></li>
-</ul>
-</template>
+
 
 <template class="slide-data" data-title="練習1：先に動く強み" data-section="ゲーム理論" data-note="false" data-print-margin="300">
-<!-- 図（手書き） -->
+<div class="tikz-figure"><img src="img_micro/game-tree-ex2.svg" alt="規格選択のゲームの木"></div>
 <ul>
 <li>同じ規格ならXで $(3,1)$，Yで $(1,3)$．バラバラなら両者 $0$</li>
 <li>AはXを，BはYを好む．Aが先に決め，Bがそれを見てから決める</li>
@@ -3417,11 +3648,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </template>
 
 <template class="slide-data" data-title="練習2：ムカデゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="300">
-<!-- 図（手書き） -->
 <ul>
 <li>誰かがDを選ぶとそこで終わり．最後までCが続けば $(5,7)$</li>
 <li>逆算推論法で解きなさい．</li>
 </ul>
+<div class="tikz-figure"><img src="img_micro/centipede.svg" alt="ムカデゲームのゲームの木"></div>
 </template>
 
 <template class="slide-data" data-title="練習3：ホールドアップ問題" data-section="ゲーム理論" data-note="false" data-print-margin="300">
@@ -3429,19 +3660,19 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>部下が仕事をした後，上司が報酬を払うか決める</li>
-<li class="sub-item">» 払う：上司 $5$，部下 $1$</li>
-<li class="sub-item">» 払わない：上司 $10$，部下 $-4$</li>
+<li class="sub-item">払う：上司 $5$，部下 $1$</li>
+<li class="sub-item">払わない：上司 $10$，部下 $-4$</li>
 <li>逆算推論法で解きなさい．</li>
 </ul>
 </div>
 <div class="column">
-<!-- 図（手書き）：ゲームの木 -->
+<div class="tikz-figure"><img src="img_micro/game-tree-holdup.svg" alt="ホールドアップ問題のゲームの木"></div>
 </div>
 </div>
 </template>
 
 
-<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <div class="section-title-big">同時手番のゲーム</div>
 </template>
 
@@ -3449,12 +3680,13 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li>選択が同時に行われる場合，逆算推論法は使えない</li>
 <li><span class="keyword">戦略形ゲーム</span>：プレイヤー・各自の戦略・戦略の組に対する利得が定まったもの</li>
-<li class="sub-item">» 利得表で表現できる</li>
+<li class="sub-item">利得表で表現できる</li>
 </ul>
-<table class="slide-table">
-<tr><th>ジョン ＼ オスカー</th><th>協力する</th><th>しない</th></tr>
-<tr><td>協力する</td><td>5, 5</td><td>3, 3</td></tr>
-<tr><td>しない</td><td>6, 0</td><td>4, 1</td></tr>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>協力する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>協力する</th><td>5, 5</td><td>3, 3</td></tr>
+<tr><th>しない</th><td>6, 0</td><td>4, 1</td></tr>
 </table>
 <ul>
 <li>左がジョンの利得，右がオスカーの利得</li>
@@ -3462,203 +3694,272 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </template>
 
 <template class="slide-data" data-title="支配戦略" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
 <ul>
 <li>オスカーが「協力する」なら，ジョンは 協力する $5$ より しない $6$ がよい</li>
-<li>オスカーが「協力しない」なら，ジョンは しない $4$ がよい</li>
-<li class="sub-item">» つまりジョンは<span class="keyword">相手が何をしても「しない」がよい</span></li>
+<li>オスカーが「しない」なら，ジョンは しない $4$ がよい</li>
+<li class="sub-item">つまりジョンは<span class="keyword">相手が何をしても「しない」がよい</span></li>
 <li>相手がどんな戦略でも $x$ が $y$ より良いとき，$x$ は $y$ を<span class="keyword">支配する</span>という</li>
-<li class="sub-item">» 他のすべての戦略を支配する戦略を<span class="keyword">支配戦略</span>と呼ぶ</li>
+<li class="sub-item">他のすべての戦略を支配する戦略を<span class="keyword">支配戦略</span>と呼ぶ</li>
 <li>ジョンの行動が読み切れるので，オスカーも「しない」を選ぶ</li>
 </ul>
+</div>
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>協力する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>協力する</th><td>5, 5</td><td>3, 3</td></tr>
+<tr><th>しない</th><td>6, 0</td><td>4, 1</td></tr>
+</table>
+</div>
+</div>
 </template>
 
-<template class="slide-data" data-title="読み切れない場合" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<table class="slide-table">
-<tr><th>ジョン ＼ オスカー</th><th>大学</th><th>駅</th></tr>
-<tr><td>大学</td><td>1, 1</td><td>0, 0</td></tr>
-<tr><td>駅</td><td>0, 0</td><td>1, 1</td></tr>
+<template class="slide-data" data-title="囚人のジレンマ" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>協力する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>協力する</th><td>3, 3</td><td>0, 4</td></tr>
+<tr><th>しない</th><td>4, 0</td><td>1, 1</td></tr>
 </table>
 <ul>
-<li>待ち合わせ．場所が同じなら出会えて利得1，違えば0</li>
-<li class="sub-item">» 相手が大学に行くと予想すれば大学へ，駅と予想すれば駅へ</li>
-<li class="sub-item">» お互いにどう予想するかが決定的に大事になる</li>
+<li>両者とも「しない」が支配戦略．（しない，しない）がナッシュ均衡</li>
+<li class="sub-item">両者の戦略が支配戦略であるとき，そのナッシュ均衡を<span class="keyword">支配戦略均衡</span>と呼ぶ</li>
 </ul>
 </template>
 
 <template class="slide-data" data-title="ナッシュ均衡" data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<div class="columns">
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>大学</th><th>駅</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>大学</th><td>1, 1</td><td>0, 0</td></tr>
+<tr><th>駅</th><td>0, 0</td><td>1, 1</td></tr>
+</table>
+<ul>
+<li>待ち合わせ．場所が同じなら出会えて利得1，違えば0</li>
+<li class="sub-item">相手が大学に行くと予想すれば大学へ，駅と予想すれば駅へ</li>
+<li class="sub-item">お互いにどう予想するかが決定的に大事になる</li>
+</ul>
+</div>
+<div class="column">
 <ul>
 <li>2人とも「相手は大学に行く」と予想したとする</li>
-<li class="sub-item">» その予想に対してベストな行動をとれば，実際に大学に行く</li>
-<li class="sub-item">» つまり<span class="keyword">予想そのものが正当化される</span></li>
+<li class="sub-item">その予想に対してベストな行動をとれば，実際に大学に行く</li>
+<li class="sub-item">つまり<span class="keyword">予想そのものが正当化される</span></li>
 <li>$x_B$ に対してAの利得を最大にする戦略を，$x_B$ への<span class="keyword">最適反応</span>という</li>
 <li>$(x_A,x_B)$ が<span class="keyword">ナッシュ均衡</span>とは，互いに相手の戦略への最適反応になっていること</li>
 </ul>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="予想の自己正当化" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>予想を前提にすると，各プレイヤーのベストな行動がちょうどその予想どおりになる</li>
-<li class="sub-item">» この性質を「予想が<span class="keyword">自己正当化</span>されている」と呼ぶ</li>
+<li class="sub-item">この性質を「予想が<span class="keyword">自己正当化</span>されている」と呼ぶ</li>
 <li>大事なのは，外から誰かが命令しなくても</li>
-<li class="sub-item">» 各プレイヤーがベストを尽くすだけで予想どおりの結果が保たれる，という点</li>
+<li class="sub-item">各プレイヤーがベストを尽くすだけで予想どおりの結果が保たれる，という点</li>
 <li>待ち合わせゲームでは（大学，大学）と（駅，駅）の<span class="keyword">2つ</span>がナッシュ均衡</li>
-<li class="sub-item">» ナッシュ均衡は複数存在しうる</li>
+<li class="sub-item">ナッシュ均衡は複数存在しうる</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="囚人のジレンマ" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<table class="slide-table">
-<tr><th>ジョン ＼ オスカー</th><th>協力する</th><th>協力しない</th></tr>
-<tr><td>協力する</td><td>3, 3</td><td>0, 4</td></tr>
-<tr><td>協力しない</td><td>4, 0</td><td>1, 1</td></tr>
-</table>
-<ul>
-<li>両者とも「協力しない」が支配戦略．（協力しない，協力しない）がナッシュ均衡</li>
-<li class="sub-item">» 両者の戦略が支配戦略であるとき，そのナッシュ均衡を<span class="keyword">支配戦略均衡</span>と呼ぶ</li>
-</ul>
-</template>
 
-<template class="slide-data" data-title="「同時」の解釈 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<ul>
-<li>何度でも戦略を変えられる状況を考える</li>
-<li class="sub-item">» （協力，協力）を宣言 → ジョンは「やっぱり協力しない」に変えたくなる</li>
-<li class="sub-item">» するとオスカーも変えたくなり，（しない，しない）にたどり着く</li>
-<li class="sub-item">» 宣言の変更が起きなくなったところで実際に行動に移す</li>
-<li>（しない，しない）はナッシュ均衡なので，信憑性のある予想である</li>
-<li class="sub-item">» 宣言どおり行動するのがお互いにベスト</li>
-</ul>
-</template>
 
-<template class="slide-data" data-title="「同時」の解釈 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<ul>
-<li>「同時」とは，<span class="keyword">相手が何を選んだかを見ないまま自分も選ぶ</span>という意味</li>
-<li class="sub-item">» 順番に選んでいても，あとの人が前の選択を知らされなければ同じこと</li>
-<li class="sub-item">» 逆に相手の選択を見てから選べるなら，それは逐次手番</li>
-<li>つまり同時か逐次かを分けているのは，時間の前後ではなく<span class="keyword">情報</span></li>
-</ul>
-</template>
 
 <template class="slide-data" data-title="パレート効率性との関係" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>戦略の組み合わせを「状態」と見て，パレート効率性を当てはめられる</li>
-<li class="sub-item">» 最初の利得表では（協力する，協力する）$=(5,5)$ はパレート効率的</li>
-<li class="sub-item">» （協力しない，協力しない）$=(4,1)$ はそうでない</li>
+<li class="sub-item">最初の利得表では（協力する，協力する）$=(5,5)$ はパレート効率的</li>
+<li class="sub-item">（しない，しない）$=(4,1)$ はそうでない</li>
 <li><span class="keyword">ナッシュ均衡はパレート効率的とは限らない</span></li>
-<li class="sub-item">» 実際，最初の表のナッシュ均衡はパレート効率的でない</li>
+<li class="sub-item">実際，最初の表のナッシュ均衡はパレート効率的でない</li>
 </ul>
+<div class="columns">
+<div class="column">
+<ul><li>最初の利得表</li></ul>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>協力する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>協力する</th><td>5, 5</td><td>3, 3</td></tr>
+<tr><th>しない</th><td>6, 0</td><td>4, 1</td></tr>
+</table>
+</div>
+<div class="column">
+<ul><li>囚人のジレンマ</li></ul>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>協力する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>協力する</th><td>3, 3</td><td>0, 4</td></tr>
+<tr><th>しない</th><td>4, 0</td><td>1, 1</td></tr>
+</table>
+</div>
+<div class="column">
+<ul><li>待ち合わせ</li></ul>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>大学</th><th>駅</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>大学</th><td>1, 1</td><td>0, 0</td></tr>
+<tr><th>駅</th><td>0, 0</td><td>1, 1</td></tr>
+</table>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="均衡が複数あるとき 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<table class="slide-table">
-<tr><th>先輩 ＼ 後輩</th><th>雑用する</th><th>しない</th></tr>
-<tr><td>雑用する</td><td>4, 4</td><td>2, 6</td></tr>
-<tr><td>しない</td><td>6, 2</td><td>0, 0</td></tr>
-</table>
-<table class="slide-table">
-<tr><th>ジョン ＼ オスカー</th><th>買占めない</th><th>買占める</th></tr>
-<tr><td>買占めない</td><td>4, 4</td><td>0, 3</td></tr>
-<tr><td>買占める</td><td>3, 0</td><td>2, 2</td></tr>
+<div class="columns">
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">後輩</th></tr>
+<tr><td class="corner" colspan="2"></td><th>雑用する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">先輩</th><th>雑用する</th><td>4, 4</td><td>2, 6</td></tr>
+<tr><th>しない</th><td>6, 2</td><td>0, 0</td></tr>
 </table>
 <ul>
-<li>上は（する，しない）と（しない，する）の2つ．下は（買占めない×2）と（買占める×2）</li>
+<li>ナッシュ均衡は
+</li>
+<ul>
+<li> どちらがもっともらしいか？</li>
 </ul>
+</ul>
+</div>
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>買占めない</th><th>買占める</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>買占めない</th><td>4, 4</td><td>0, 3</td></tr>
+<tr><th>買占める</th><td>3, 0</td><td>2, 2</td></tr>
+</table>
+<ul>
+<li>ナッシュ均衡は
+</li>
+<ul>
+<li> どちらがもっともらしいか？</li>
+</ul>
+</ul>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="均衡が複数あるとき 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>ナッシュ均衡という枠組みだけでは絞り込めない</li>
-<li class="sub-item">» 話し合いをすれば，パレート効率的なものが選ばれるという議論がある</li>
-<li class="sub-item">» <span class="keyword">慣例</span>も役立つ．後輩が雑用をするという慣例があれば，それが均衡にもなり続く</li>
+<li class="sub-item">話し合いをすれば，パレート効率的なものが選ばれるという議論がある</li>
+<li class="sub-item"><span class="keyword">慣例</span>も役立つ．後輩が雑用をするという慣例があれば，それが均衡にもなり続く</li>
 <li><span class="keyword">予言やうわさ</span>も影響する</li>
-<li class="sub-item">» 品薄のうわさを自分が信じなくても，他人が信じて買占めると実際に品薄になる</li>
-<li class="sub-item">» すると自分も買占めるのが最適反応になる．これを<span class="keyword">予言の自己成就</span>と呼ぶ</li>
+<li class="sub-item">品薄のうわさを自分が信じなくても，他人が信じて買占めると実際に品薄になる</li>
+<li class="sub-item">すると自分も買占めるのが最適反応になる．これを<span class="keyword">予言の自己成就</span>と呼ぶ</li>
 </ul>
+<div class="columns">
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">後輩</th></tr>
+<tr><td class="corner" colspan="2"></td><th>雑用する</th><th>しない</th></tr>
+<tr><th class="player" rowspan="2">先輩</th><th>雑用する</th><td>4, 4</td><td>2, 6</td></tr>
+<tr><th>しない</th><td>6, 2</td><td>0, 0</td></tr>
+</table>
+</div>
+<div class="column">
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">オスカー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>買占めない</th><th>買占める</th></tr>
+<tr><th class="player" rowspan="2">ジョン</th><th>買占めない</th><td>4, 4</td><td>0, 3</td></tr>
+<tr><th>買占める</th><td>3, 0</td><td>2, 2</td></tr>
+</table>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="ナッシュ均衡が存在しない例" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<table class="slide-table">
-<tr><th>警察 ＼ 犯人</th><th>駅に隠れる</th><th>電車で逃げる</th></tr>
-<tr><td>駅を捜査</td><td>$1, -1$</td><td>$-1, 1$</td></tr>
-<tr><td>電車を捜査</td><td>$-1, 1$</td><td>$1, -1$</td></tr>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">犯人</th></tr>
+<tr><td class="corner" colspan="2"></td><th>駅に隠れる</th><th>電車で逃げる</th></tr>
+<tr><th class="player" rowspan="2">警察</th><th>駅を捜査</th><td>$1, -1$</td><td>$-2, 2$</td></tr>
+<tr><th>電車を捜査</th><td>$-1, 1$</td><td>$1, -1$</td></tr>
 </table>
 <ul>
 <li>「駅に隠れる」→「駅を捜査」→「電車で逃げる」→「電車を捜査」→… と循環する</li>
-<li class="sub-item">» 「相手に手を読まれたら負ける」という構造</li>
-<li class="sub-item">» 自己正当化できる予想が1つも存在しない</li>
+<li class="sub-item">「相手に手を読まれたら負ける」という構造</li>
+<li class="sub-item">自己正当化できる予想が1つも存在しない</li>
 </ul>
 </template>
 
 <template class="slide-data" data-title="混合戦略" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>行き詰まった原因は，予想が相手の手を1つに決めつけていたこと</li>
-<li class="sub-item">» そこで「相手がどちらを選ぶかは読み切れない」という予想を許す</li>
-<li class="sub-item">» どれくらい読み切れないかは確率で表す</li>
+<li class="sub-item">そこで「相手がどちらを選ぶかは読み切れない」という予想を許す</li>
+<li class="sub-item">どれくらい読み切れないかは確率で表す</li>
 <li>相手から見て自分の手が読み切れない状態を作る戦略を<span class="keyword">混合戦略</span>と呼ぶ</li>
-<li class="sub-item">» 1つに決めた戦略は<span class="keyword">純粋戦略</span>と呼ぶ</li>
+<li class="sub-item">1つに決めた戦略は<span class="keyword">純粋戦略</span>と呼ぶ</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="確率はどう決まるか 1." data-section="ゲーム理論" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="確率はどう決まるか" data-section="ゲーム理論" data-note="false" data-print-margin="300">
+<div class="columns">
+<div class="column">
 <ul>
 <li>警察が確率 $p$ で駅を捜査するとき，犯人の期待利得は</li>
-<li class="sub-item">» 駅に隠れる：$p\times(-1)+(1-p)\times 1=1-2p$</li>
-<li class="sub-item">» 電車で逃げる：$p\times 1+(1-p)\times(-1)=2p-1$</li>
+<li class="sub-item">駅に隠れる：</li>
+<li class="sub-item">電車で逃げる：</li>
 <li>一方の期待利得が高ければ犯人はそちらに偏り，警察に読まれてしまう</li>
-<li class="sub-item">» 犯人が読み切れない手を保つには，両方が同じだけ良くなければならない</li>
-<li class="sub-item">» $1-2p=2p-1$ より $p=0.5$</li>
+<li class="sub-item">犯人が読み切れない手を保つには，両方が同じだけ良くなければならない</li>
+<li class="sub-item">したがって，$p=$</li>
 </ul>
+</div>
+<div class="column">
+<ul>
+<li>犯人が確率 $q$ で駅に隠れるとき，警察の期待利得は</li>
+<li class="sub-item">駅を捜査：</li>
+<li class="sub-item">電車を捜査：</li>
+<li>警察も読み切れない手を保つには，両方が同じだけ良くなければならない</li>
+<li class="sub-item">したがって，$q=$</li>
+</ul>
+</div>
+</div>
+<table class="slide-table game-table" style="margin-top:3.5em">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">犯人</th></tr>
+<tr><td class="corner" colspan="2"></td><th>駅に隠れる</th><th>電車で逃げる</th></tr>
+<tr><th class="player" rowspan="2">警察</th><th>駅を捜査</th><td>$1, -1$</td><td>$-2, 2$</td></tr>
+<tr><th>電車を捜査</th><td>$-1, 1$</td><td>$1, -1$</td></tr>
+</table>
 </template>
 
-<template class="slide-data" data-title="確率はどう決まるか 2." data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<ul>
-<li>犯人の手が読まれない条件を考えていたのに，決まったのは<span class="keyword">警察の確率</span>だった</li>
-<li class="sub-item">» 自分がどう混ぜるかは，<span class="keyword">相手を無差別に保つように</span>決まる</li>
-<li class="sub-item">» つまり相手の利得によって定まる</li>
-<li>同様に，犯人が駅に隠れる確率も $0.5$</li>
-<li>ナッシュ均衡：警察は $0.5$ ずつ，犯人も $0.5$ ずつ</li>
-</ul>
-</template>
+
 
 <template class="slide-data" data-title="無差別条件とナッシュの定理" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>ある混合戦略がナッシュ均衡のとき，正の確率をふっている純粋戦略が2つあれば</li>
-<li class="sub-item">» それぞれの期待利得は互いに等しい．これを<span class="keyword">無差別条件</span>と呼ぶ</li>
+<li class="sub-item">それぞれの期待利得は互いに等しい．これを<span class="keyword">無差別条件</span>と呼ぶ</li>
 <li>プレイヤーの数も純粋戦略の数も有限なら， 混合戦略まで含めれば<span class="keyword">戦略形ゲームは必ずナッシュ均衡を持つ</span></li>
-<li class="sub-item">» <span class="keyword">ナッシュの定理</span>（Nash, 1951）</li>
+<li class="sub-item"><span class="keyword">ナッシュの定理</span>（Nash, 1951）</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="$2\times2$ ゲームの公式" data-section="ゲーム理論" data-note="false" data-print-margin="0">
-<table class="slide-table">
-<tr><th>ジョン ＼ オスカー</th><th>L</th><th>R</th></tr>
-<tr><td>T</td><td>$a, e$</td><td>$d, f$</td></tr>
-<tr><td>B</td><td>$b, h$</td><td>$c, g$</td></tr>
-</table>
-<ul>
-<li>$a&gt;b,\ c&gt;d,\ e&gt;f,\ g&gt;h$ とすると，無差別条件から $$q = \frac{c-d}{a-b+c-d},\qquad p = \frac{g-h}{e-f+g-h}$$</li>
-<li>選択肢や人数が増えると，こうした公式を作るのは難しくなる</li>
-</ul>
-</template>
+
 
 <template class="slide-data" data-title="例題：キーパーとキッカー" data-section="ゲーム理論" data-note="false" data-print-margin="300">
-<table class="slide-table">
-<tr><th>キッカー ＼ キーパー</th><th>左</th><th>右</th></tr>
-<tr><td>左</td><td>0, 100</td><td>60, 40</td></tr>
-<tr><td>右</td><td>100, 0</td><td>20, 80</td></tr>
+<table class="slide-table game-table">
+<tr><td class="corner" colspan="2"></td><th class="player" colspan="2">キーパー</th></tr>
+<tr><td class="corner" colspan="2"></td><th>左</th><th>右</th></tr>
+<tr><th class="player" rowspan="2">キッカー</th><th>左</th><td>0, 100</td><td>60, 40</td></tr>
+<tr><th>右</th><td>100, 0</td><td>20, 80</td></tr>
 </table>
 <ul>
 <li>混合戦略のナッシュ均衡を求めなさい．</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <div class="section-title-big">提携形ゲーム</div>
 </template>
 
 <template class="slide-data" data-title="協力ゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>分配を研究する分野：<span class="keyword">協力ゲーム</span></li>
-<li class="sub-item">» 例：共同プロジェクトの儲け，破産時の残った資産</li>
+<li class="sub-item">例：共同プロジェクトの儲け，破産時の残った資産</li>
 <li>これまでのゲーム：<span class="keyword">非協力ゲーム</span>（区別のための名称）</li>
 </ul>
 </template>
@@ -3666,8 +3967,8 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <template class="slide-data" data-title="提携形ゲーム" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li><span class="keyword">提携</span>：プレイヤーの集合 $N$ の一部</li>
-<li class="sub-item">» <span class="keyword">1人提携</span>，<span class="keyword">全体提携</span></li>
-<li class="sub-item">» $n$ 人なら $2^n-1$ 通り</li>
+<li class="sub-item"><span class="keyword">1人提携</span>，<span class="keyword">全体提携</span></li>
+<li class="sub-item">$n$ 人なら $2^n-1$ 通り</li>
 <li><span class="keyword">提携値</span> $v(S)$：提携が協力して生み出せる総利益</li>
 </ul>
 </template>
@@ -3689,8 +3990,8 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <template class="slide-data" data-title="コア" data-section="ゲーム理論" data-note="false" data-print-margin="0">
 <ul>
 <li>提携 $S$ の裏取引 $y$</li>
-<li class="sub-item">» すべての $i\in S$ について $y_i&gt;x_i$</li>
-<li class="sub-item">» $\sum_{i\in S} y_i = v(S)$</li>
+<li class="sub-item">すべての $i\in S$ について $y_i&gt;x_i$</li>
+<li class="sub-item">$\sum_{i\in S} y_i = v(S)$</li>
 <li>このとき $S$ は配分 $x$ を<span class="keyword">ブロックする</span></li>
 <li>ブロックされない配分：<span class="keyword">コア配分</span>，その集まり：<span class="keyword">コア</span></li>
 </ul>
@@ -3699,15 +4000,15 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <template class="slide-data" data-title="コア：例1" data-section="ゲーム理論" data-note="false" data-print-margin="300">
 <ul>
 <li>$v(\{i\})=0$，2人提携はどれも $10$，$v(\{1,2,3\})=20$</li>
-<li class="sub-item">» $x=(15,3,2)$ はコア配分か？</li>
-<li class="sub-item">» $x=(10,5,5)$ はコア配分か？</li>
+<li class="sub-item">$x=(15,3,2)$ はコア配分か？</li>
+<li class="sub-item">$x=(10,5,5)$ はコア配分か？</li>
 </ul>
 </template>
 
 <template class="slide-data" data-title="コア：例2" data-section="ゲーム理論" data-note="false" data-print-margin="300">
 <ul>
 <li>$v(\{i\})=0$，2人提携はどれも $10$，$v(\{1,2,3\})=10$</li>
-<li class="sub-item">» コア配分は存在するか？</li>
+<li class="sub-item">コア配分は存在するか？</li>
 </ul>
 </template>
 
@@ -3747,7 +4048,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 
 <!-- ============ SECTION: 消費者の行動 ============ -->
 
-<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <div class="section-title-big">消費者の行動</div>
 </template>
 
@@ -3756,16 +4057,16 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>選択可能なものの中から最も効用が高くなるものを選ぶ．</li>
-<li class="sub-item">» 効用とは → 選択肢の望ましさ具合を数値化したもの</li>
-<li class="sub-item">» 消費者の問題に応用すると，「限られた予算の中でどの財をどれだけ購入するべきか？」</li>
+<li class="sub-item">効用とは → 選択肢の望ましさ具合を数値化したもの</li>
+<li class="sub-item">消費者の問題に応用すると，「限られた予算の中でどの財をどれだけ購入するべきか？」</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>消費者の問題の例</li>
-<li class="sub-item">» 1000円を握りしめて現金オンリーの回転寿司店にきたとき</li>
-<li class="sub-item">» 労働と余暇</li>
-<li class="sub-item">→ 限られた時間の中でどれだけ遊んでどれだけ働くべきか</li>
+<li class="sub-item">1000円を握りしめて現金オンリーの回転寿司店にきたとき</li>
+<li class="sub-item">労働と余暇</li>
+<li class="sub-item arrow">→ 限られた時間の中でどれだけ遊んでどれだけ働くべきか</li>
 </ul>
 </div>
 </div>
@@ -3776,10 +4077,10 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>回転寿司店での選択</li>
-<li class="sub-item">» メニュー：ウニ，マグロ，海鮮サラダの３種類</li>
-<li class="sub-item">» ウニは１皿450円，マグロは1皿300円，海鮮サラダは１皿150円</li>
-<li class="sub-item">» X氏の財布には450円しかない．</li>
-<li class="sub-item">» X氏は各寿司ネタの組み合わせについて，完全なランキングを作ることができる．このランキングは財布の中身が増えても減っても変わらない．</li>
+<li class="sub-item">メニュー：ウニ，マグロ，海鮮サラダの３種類</li>
+<li class="sub-item">ウニは１皿450円，マグロは1皿300円，海鮮サラダは１皿150円</li>
+<li class="sub-item">X氏の財布には450円しかない．</li>
+<li class="sub-item">X氏は各寿司ネタの組み合わせについて，完全なランキングを作ることができる．このランキングは財布の中身が増えても減っても変わらない．</li>
 </ul>
 </div>
 <div class="column">
@@ -3802,11 +4103,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column">
 <ul>
 <li>所得の減少</li>
-<li class="sub-item">» 手持ち金が450円から400円になった</li>
-<li class="sub-item">» 消費行動はどう変化するか？</li>
+<li class="sub-item">手持ち金が450円から400円になった</li>
+<li class="sub-item">消費行動はどう変化するか？</li>
 <li>価格の上昇</li>
-<li class="sub-item">» 所得は450円のまま海鮮サラダが150円から200円になった</li>
-<li class="sub-item">» 消費行動はどう変化するか？（<span class="keyword">ギッフェン財</span>）</li>
+<li class="sub-item">所得は450円のまま海鮮サラダが150円から200円になった</li>
+<li class="sub-item">消費行動はどう変化するか？（<span class="keyword">ギッフェン財</span>）</li>
 </ul>
 </div>
 <div class="column">
@@ -3831,17 +4132,17 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li><span class="keyword">消費プラン：</span>消費者が選ぶ財の消費量の組み合わせ</li>
 <li>消費プラン$w$の効用を$u(w)$と書く．</li>
-<li class="sub-item">» $u$は<span class="keyword">効用関数</span>とよばれる</li>
-<li class="sub-item">» 効用の値そのものは重要ではない．</li>
-<li class="sub-item">→ 大小比較さえできれば良い：<span class="keyword">序数性</span>の仮定</li>
+<li class="sub-item">$u$は<span class="keyword">効用関数</span>とよばれる</li>
+<li class="sub-item">効用の値そのものは重要ではない．</li>
+<li class="sub-item arrow">→ 大小比較さえできれば良い：<span class="keyword">序数性</span>の仮定</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>財は$x$と$y$の二種類</li>
-<li class="sub-item">» 財$x$の消費量を$q_{x}$，財$y$の消費量を$q_{y}$と書く．</li>
-<li class="sub-item">» $q_{x}$と$q_{y}$の組み合わせ$(q_{x},q_{y})$が消費プランに相当する．</li>
-<li class="sub-item">» 消費者の問題は予算内で$q_{x}$と$q_{y}$を選ぶという問題に翻訳できる．</li>
+<li class="sub-item">財$x$の消費量を$q_{x}$，財$y$の消費量を$q_{y}$と書く．</li>
+<li class="sub-item">$q_{x}$と$q_{y}$の組み合わせ$(q_{x},q_{y})$が消費プランに相当する．</li>
+<li class="sub-item">消費者の問題は予算内で$q_{x}$と$q_{y}$を選ぶという問題に翻訳できる．</li>
 </ul>
 </div>
 </div>
@@ -3852,6 +4153,10 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <div class="column"><ul><li>これまで</li></ul></div>
 <div class="column"><ul><li>消費者の行動の章，複数財市場の均衡の章では</li></ul></div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">予算制約</div>
 </template>
 
 <template class="slide-data" data-title="予算制約" data-section="消費者の行動" data-note="false" data-print-margin="0">
@@ -3867,13 +4172,13 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <div class="column">
 <ul>
 <li>図解</li>
-<li class="sub-item">» ポイント：財$x$だけに所得を使うとき，財$y$だけに所得を使うときを考える</li>
+<li class="sub-item">ポイント：財$x$だけに所得を使うとき，財$y$だけに所得を使うときを考える</li>
 </ul>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="予算制約：図解" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="予算制約：図解" data-section="消費者の行動" data-note="false" data-print-margin="300">
 <div class="framed">基本：価格が上昇すると買えるものが減る．所得が上昇すると買えるものが増える</div>
 <div class="columns">
 <div class="column">
@@ -3908,12 +4213,16 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 </div>
 </template>
 
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">無差別曲線</div>
+</template>
+
 <template class="slide-data" data-title="無差別曲線" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>二つの消費プランが<span class="keyword">無差別</span> $\iff$ どちらの消費プランから得られる効用も同じ</li>
 <li><span class="keyword">無差別曲線</span>：無差別な消費プランの点を結んだ曲線</li>
 <a href="https://ttajika.github.io/micro-contents/anime_gallery.html#anime-indifference" target="_blank" class="qr-link">アニメーションによる説明</a>
-<li class="sub-item">» 次のページの特徴を仮定する</li>
+<li class="sub-item">次のページの特徴を仮定する</li>
 </ul>
 </template>
 
@@ -3965,10 +4274,14 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 </div>
 </template>
 
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">効用最大化</div>
+</template>
+
 <template class="slide-data" data-title="効用最大化行動" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>無差別曲線を使って効用最大化行動を考える．</li>
-<li class="sub-item">» ポイント：改善できるならそこはベストではない</li>
+<li class="sub-item">ポイント：改善できるならそこはベストではない</li>
 </ul>
 <div class="tikz-figure anim" style="--ar:600/540"><img src="img_micro/utility_max_anime.svg" alt="効用最大化"></div>
 </template>
@@ -3976,14 +4289,14 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <template class="slide-data" data-title="限界効用" data-section="消費者の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>$u(q_{x},q_{y})$: $(q_{x},q_{y})$という消費プランから得られる効用</li>
-<li class="sub-item">» $MU_x$: 財$x$の<span class="keyword">限界効用</span></li>
-<li class="sub-item">» $MU_y$: 財$y$の<span class="keyword">限界効用</span></li>
+<li class="sub-item">$MU_x$: 財$x$の<span class="keyword">限界効用</span></li>
+<li class="sub-item">$MU_y$: 財$y$の<span class="keyword">限界効用</span></li>
 <li>ある財の限界効用：その財の消費量をほんの少し増やしたときの効用の増分</li>
-<li class="sub-item">» ex. おおざっぱに言えば $MU_{x}=3$ ならば「$q_x$を$1\%$増やしたとき，効用は$3\%$増える」</li>
+<li class="sub-item">ex. おおざっぱに言えば $MU_{x}=3$ ならば「$q_x$を$1\%$増やしたとき，効用は$3\%$増える」</li>
 <ul>
 <li>無差別曲線の凸性から</li>
-<li class="sub-item">» $MU_x$: 財$x$の限界効用は$x$の消費量が増えると減る</li>
-<li class="sub-item">» $MU_y$: 財$y$の限界効用は$y$の消費量が増えると減る</li>
+<li class="sub-item">$MU_x$: 財$x$の限界効用は$x$の消費量が増えると減る</li>
+<li class="sub-item">$MU_y$: 財$y$の限界効用は$y$の消費量が増えると減る</li>
 </ul>
 </ul>
 </template>
@@ -3994,10 +4307,10 @@ $$\frac{MU_x}{p_x}= \frac{MU_y}{p_y}$$
 </div>
 <ul>
 <li>直観：最後の1円の使い道</li>
-<li class="sub-item">» 1円で買える財$x$の量</li>
-<li class="sub-item">» 1円で買える財$y$の量</li>
+<li class="sub-item">1円で買える財$x$の量</li>
+<li class="sub-item">1円で買える財$y$の量</li>
 <li>$\frac{MU_x}{p_x}> \frac{MU_y}{p_y}$のとき</li>
-<li class="sub-item">» 1円分財$y$を減らし，1円分財$x$を増やすと，効用は</li>
+<li class="sub-item">1円分財$y$を減らし，1円分財$x$を増やすと，効用は</li>
 </ul>
 </template>
 
@@ -4016,8 +4329,8 @@ $$MU_{x}-MU_{y}\Delta=0$$
 $$MRS_{xy}:= \Delta = \frac{MU_{x}}{MU_{y}}$$
 <li>この交換比率$MRS_{xy}$を<span class="keyword">財$x$の財$y$に対する限界代替率</span>という．</li>
 <li>限界代替率の特徴</li>
-<li class="sub-item">» $x$を増やす量が十分小さいなら，それは無差別曲線の傾き（の絶対値）</li>
-<li class="sub-item">» 無差別曲線が原点に向かって凸なら，$\Delta$は$x$の量が増えるにつれ，減少する．</li>
+<li class="sub-item">$x$を増やす量が十分小さいなら，それは無差別曲線の傾き（の絶対値）</li>
+<li class="sub-item">無差別曲線が原点に向かって凸なら，$\Delta$は$x$の量が増えるにつれ，減少する．</li>
 </ul>
 </template>
 
@@ -4028,6 +4341,10 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </template>
 
 <template class="slide-data" data-title="効用最大化条件・成り立たないケース" data-section="消費者の行動" data-note="false" data-print-margin="0">
+</template>
+
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">所得・価格の変化と需要</div>
 </template>
 
 <template class="slide-data" data-title="所得による需要の変化" data-section="消費者の行動" data-note="false" data-print-margin="0">
@@ -4052,13 +4369,13 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <ul>
 <li>所得が$1\%$変化したとき、需要量が何$\%$変化するか，の指標</li>
 <li>需要の所得弾力性が$0$以上$1$未満なら<span class="keyword">必需財</span></li>
-<li class="sub-item">» 所得の変化率 $>$ 需要量の変化率</li>
+<li class="sub-item">所得の変化率 $>$ 需要量の変化率</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>需要の所得弾力性が$1$より大きいなら<span class="keyword">贅沢財</span>（奢侈財とも言う）</li>
-<li class="sub-item">» 所得の変化率 $<$ 需要量の変化率</li>
+<li class="sub-item">所得の変化率 $<$ 需要量の変化率</li>
 </ul>
 </div>
 </div>
@@ -4070,15 +4387,15 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <div class="column">
 <ul>
 <li><span class="keyword">粗代替財</span></li>
-<li class="sub-item">» $x$と$y$のどちらかだけでいい場合にはそうなりやすい</li>
-<li class="sub-item">» 財$x$の価格が上昇したとき，財$y$の需要量が</li>
+<li class="sub-item">$x$と$y$のどちらかだけでいい場合にはそうなりやすい</li>
+<li class="sub-item">財$x$の価格が上昇したとき，財$y$の需要量が</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li><span class="keyword">粗補完財</span></li>
-<li class="sub-item">» $x$と$y$をペアで消費したい時にはそうなりやすい</li>
-<li class="sub-item">» 財$x$の価格が上昇したとき，財$y$の需要量が</li>
+<li class="sub-item">$x$と$y$をペアで消費したい時にはそうなりやすい</li>
+<li class="sub-item">財$x$の価格が上昇したとき，財$y$の需要量が</li>
 </ul>
 </div>
 </div>
@@ -4088,11 +4405,11 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <ul>
 <li>$x$と$y$が粗補完財であるとき，必ずしもその二つの財をペアで消費したいわけではない．</li>
 <li>財$x$の価格が増加することは実質的に所得が減少すること</li>
-<li class="sub-item">→ 財$y$が正常財ならこのあおりを喰らって消費量が減少する</li>
+<li class="sub-item arrow">→ 財$y$が正常財ならこのあおりを喰らって消費量が減少する</li>
 <li>[例] 電気使用量と牛肉の選択：電気代の値上がりで家計を圧迫したのでたまに買ってた牛肉の頻度が減る</li>
-<li class="sub-item">» これは電気と牛肉を共に消費したい（補完関係）が理由だろうか？</li>
+<li class="sub-item">これは電気と牛肉を共に消費したい（補完関係）が理由だろうか？</li>
 <li>所得効果と混ざってしまう！</li>
-<li class="sub-item">→ 所得効果を分離したい → <span class="keyword">スルツキー分解</span>という技がある</li>
+<li class="sub-item arrow">→ 所得効果を分離したい → <span class="keyword">スルツキー分解</span>という技がある</li>
 </ul>
 </template>
 
@@ -4104,12 +4421,12 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <div class="column">
 <ul>
 <li><span class="keyword">補償所得</span>：価格が変化したときに効用を元々の水準に保つために変化させた所得</li>
-<li class="sub-item">» $A \to C$の変化：<span class="keyword">代替効果</span></li>
-<li class="sub-item">» $C\to B$の変化：<span class="keyword">所得効果</span></li>
+<li class="sub-item">$A \to C$の変化：<span class="keyword">代替効果</span></li>
+<li class="sub-item">$C\to B$の変化：<span class="keyword">所得効果</span></li>
 <li>$x$財の価格増加を考える（「粗」がつかない純粋な代替効果）</li>
-<li class="sub-item">» 代替効果により$y$財の消費量が増加 → $x$は$y$の<span class="keyword">代替財</span></li>
-<li class="sub-item">» 代替効果により$y$財の消費量が減少 → $x$は$y$の<span class="keyword">補完財</span></li>
-<li class="sub-item">» 世の中に財が二種類しかなければ必ずそれらは互いに代替財 → 三種類以上あれば補完財になるペアがある</li>
+<li class="sub-item">代替効果により$y$財の消費量が増加 → $x$は$y$の<span class="keyword">代替財</span></li>
+<li class="sub-item">代替効果により$y$財の消費量が減少 → $x$は$y$の<span class="keyword">補完財</span></li>
+<li class="sub-item">世の中に財が二種類しかなければ必ずそれらは互いに代替財 → 三種類以上あれば補完財になるペアがある</li>
 </ul>
 </div>
 </div>
@@ -4124,17 +4441,21 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </div>
 </template>
 
-<template class="slide-data" data-title="消費者問題の応用：労働供給の問題" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">消費者問題の応用</div>
+</template>
+
+<template class="slide-data" data-title="消費者問題の応用：労働供給の問題" data-section="消費者の行動" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>労働供給：どれだけ働きたいかを決める</li>
 <li>24時間生きる人を考える．</li>
-<li class="sub-item">» $t$時間働くと$w\cdot t$だけの給与をもらえる.</li>
-<li class="sub-item">» この人の効用は消費$c$と余暇$\ell$（働かなかった時間）から得られる．</li>
-<li class="sub-item">» 消費財の価格は$p$であるとする．</li>
-<li class="sub-item">» その他不労所得が$s$だけあるとする．</li>
-<li class="sub-item">→ この人の効用最大化問題はどのように書けるか？</li>
+<li class="sub-item">$t$時間働くと$w\cdot t$だけの給与をもらえる.</li>
+<li class="sub-item">この人の効用は消費$c$と余暇$\ell$（働かなかった時間）から得られる．</li>
+<li class="sub-item">消費財の価格は$p$であるとする．</li>
+<li class="sub-item">その他不労所得が$s$だけあるとする．</li>
+<li class="sub-item arrow">→ この人の効用最大化問題はどのように書けるか？</li>
 </ul>
 </div>
 <div class="column"></div>
@@ -4147,8 +4468,8 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 <div class="column">
 <ul>
 <li>賃金の変化の効果と<span class="keyword">オファーカーブ</span></li>
-<li class="sub-item">» 「価格」と「所得」の両方に影響する</li>
-<li class="sub-item">» ギッフェン財との違い</li>
+<li class="sub-item">「価格」と「所得」の両方に影響する</li>
+<li class="sub-item">ギッフェン財との違い</li>
 </ul>
 </div>
 </div>
@@ -4156,22 +4477,22 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 
 <!-- ============ SECTION: 複数財市場の均衡 ============ -->
 
-<template class="slide-data" data-title="" data-section="複数財市場の均衡" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
 <div class="section-title-big">複数財市場の均衡</div>
 </template>
 
 <template class="slide-data" data-title="純粋交換経済" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
 <ul>
 <li>消費者理論を応用して，複数人がいる市場の「均衡」を分析する</li>
-<li class="sub-item">» 均衡では「価格」が決まる</li>
+<li class="sub-item">均衡では「価格」が決まる</li>
 <li>消費者：レオンとケネスの二人</li>
-<li class="sub-item">» 純粋交換経済：あらかじめ彼らのもっている財$x$と$y$をお互いに交換する．</li>
+<li class="sub-item">純粋交換経済：あらかじめ彼らのもっている財$x$と$y$をお互いに交換する．</li>
 <li><span class="keyword">初期保有量</span>あるいは<span class="keyword">初期賦存量</span></li>
-<li class="sub-item">» レオンの初期保有$(e_{Lx},e_{Ly})$</li>
-<li class="sub-item">» ケネスの初期保有$(e_{Kx},e_{Ky})$</li>
+<li class="sub-item">レオンの初期保有$(e_{Lx},e_{Ly})$</li>
+<li class="sub-item">ケネスの初期保有$(e_{Kx},e_{Ky})$</li>
 <li>消費プラン</li>
-<li class="sub-item">» レオンの消費プラン$(q_{Lx},q_{Ly})$</li>
-<li class="sub-item">» ケネスの消費プラン$(q_{Kx},q_{Ky})$</li>
+<li class="sub-item">レオンの消費プラン$(q_{Lx},q_{Ly})$</li>
+<li class="sub-item">ケネスの消費プラン$(q_{Kx},q_{Ky})$</li>
 </ul>
 </template>
 
@@ -4188,7 +4509,7 @@ $$p_{x}q_{Kx}+p_{y}q_{Ky}=p_{x}e_{Kx}+p_{y}e_{Ky}$$
 <template class="slide-data" data-title="純粋交換経済における均衡" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
 <ul>
 <li><span class="keyword">財の需給一致条件</span></li>
-<li class="sub-item">» 欲しいものの合計量が世の中にある総量と一致する</li>
+<li class="sub-item">欲しいものの合計量が世の中にある総量と一致する</li>
 $$q_{Lx}+q_{Kx}=e_{Lx}+e_{Kx}$$
 $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <li><span class="keyword">市場均衡</span>（あるいは<span class="keyword">完全競争均衡</span>，<span class="keyword">ワルラス均衡</span>）</li>
@@ -4206,13 +4527,17 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </template>
 
+<template class="slide-data" data-title="" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
+<div class="section-title-big">厚生定理</div>
+</template>
+
 <template class="slide-data" data-title="パレート効率的な配分" data-section="複数財市場の均衡" data-note="false" data-print-margin="0">
 <div class="tikz-figure"><img src="img_micro/edgeworth-pareto.svg" alt="パレート効率的な配分と契約曲線"></div>
 <ul>
 <li>余剰がうまく計算できないので，パレート効率性で評価する</li>
 <li>パレート効率性の復習</li>
-<li class="sub-item">» そこから他の点に移ると誰かが損する → パレート効率的である</li>
-<li class="sub-item">» そこから移ると全員が得をするような他の点がある → パレート効率的でない</li>
+<li class="sub-item">そこから他の点に移ると誰かが損する → パレート効率的である</li>
+<li class="sub-item">そこから移ると全員が得をするような他の点がある → パレート効率的でない</li>
 </ul>
 </template>
 
@@ -4235,19 +4560,19 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>履修制限のある講義科目について考える．</li>
-<li class="sub-item">» 最大履修可能人数が「供給量」になる</li>
-<li class="sub-item">» 「需要量」は登録者数</li>
+<li class="sub-item">最大履修可能人数が「供給量」になる</li>
+<li class="sub-item">「需要量」は登録者数</li>
 <li>「抽選登録」では「履修したい意欲」が反映できないので不満</li>
-<li class="sub-item">» 市場均衡を使ってこの問題を解決！</li>
+<li class="sub-item">市場均衡を使ってこの問題を解決！</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>ポイント投票メカニズム</li>
-<li class="sub-item">» まず学生に「予算」を与える</li>
-<li class="sub-item">» 次に予算内で各科目に対して，履修することの効用を申告する</li>
-<li class="sub-item">» 効用の高い順に受講生が割り当てられ，「価格」を基準に足切りされる</li>
-<li class="sub-item">» 講義が割り当てられた学生は価格の分だけ予算を消費する</li>
+<li class="sub-item">まず学生に「予算」を与える</li>
+<li class="sub-item">次に予算内で各科目に対して，履修することの効用を申告する</li>
+<li class="sub-item">効用の高い順に受講生が割り当てられ，「価格」を基準に足切りされる</li>
+<li class="sub-item">講義が割り当てられた学生は価格の分だけ予算を消費する</li>
 <li>神戸大学，ペンシルバニア大学やハーバード大学の一部では導入されている．日本大学では未導入</li>
 </ul>
 </div>
@@ -4256,7 +4581,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 
 <!-- ============ SECTION: 企業の行動 ============ -->
 
-<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
 <div class="section-title-big">企業の行動</div>
 </template>
 
@@ -4266,16 +4591,17 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <ul>
 <li>生産者である「企業」を詳しく分析する</li>
 <li>基本的な経済学では企業は「利潤」を最大にするように行動する．</li>
-<li class="sub-item">» $\text{利潤}=\text{売上金額} -\text{費用}$</li>
+<li class="sub-item">$\text{利潤}=\text{売上金額} -\text{費用}$</li>
 <li>現実の企業は本当に利潤を最大化している？</li>
-<li class="sub-item">» 典型的な言い訳：利潤を出せないと倒産するので生き残ってる企業は利潤を出している</li>
+<li class="sub-item">典型的な言い訳：利潤を出せないと倒産するので生き残ってる企業は利潤を出している</li>
 <li>マーケットシェアや売り上げ（年商）を目的とする場合もある．</li>
-<li class="sub-item">» 不完全競争ではそのほうが利潤が増えることもある（詳しくは産業組織論で）</li>
-<li class="sub-item">» ワンマン経営者の場合，違う目的が先行することもある</li>
+<li class="sub-item">不完全競争ではそのほうが利潤が増えることもある（詳しくは産業組織論で）</li>
+<li class="sub-item">ワンマン経営者の場合，違う目的が先行することもある</li>
 </ul>
 </div>
 <div class="column">
-<ul><li><a href="https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf">利潤最大化してなさそうな例</a></li></ul>
+<ul><li>利潤最大化してなさそうな例</li></ul>
+<a href="https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf" target="_blank" class="qr-link">🔗 QRリンク</a>
 </div>
 </div>
 </template>
@@ -4285,18 +4611,18 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>企業が選べるものはなに？</li>
-<li class="sub-item">» 生産量（どれだけ作るか）</li>
-<li class="sub-item">» 商品の選択</li>
-<li class="sub-item">» 商品の価格</li>
-<li class="sub-item">» 従業員の採用数</li>
-<li class="sub-item">» 事業のための投資・研究開発</li>
+<li class="sub-item">生産量（どれだけ作るか）</li>
+<li class="sub-item">商品の選択</li>
+<li class="sub-item">商品の価格</li>
+<li class="sub-item">従業員の採用数</li>
+<li class="sub-item">事業のための投資・研究開発</li>
 <p>その他諸々．</p>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>最初から全部分析するのはムリ</li>
-<li class="sub-item">» 以下を仮定する</li>
+<li class="sub-item">以下を仮定する</li>
 <ol type="a">
 <li>商品は決まっている（種類も1つだけ）</li>
 <li>技術も決まっている（生産性の改善とかもナシ）</li>
@@ -4304,10 +4630,14 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <li>選べるのは①どれだけ作るか，②どれだけ人を雇うか，③どれだけ機械を導入するか...</li>
 </ol>
 <li>最も単純なケースは「どれだけ作るか」しか選べない.</li>
-<li class="sub-item">» ひとまずはこのケースを考え，あとあと②，③について考える．</li>
+<li class="sub-item">ひとまずはこのケースを考え，あとあと②，③について考える．</li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">利潤最大化</div>
 </template>
 
 <template class="slide-data" data-title="生産の一番単純なケース" data-section="企業の行動" data-note="false" data-print-margin="0">
@@ -4315,16 +4645,16 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>選ぶのはどれだけ作るかのみ</li>
-<li class="sub-item">» 生産する量を記号で$q$と書く．</li>
-<li class="sub-item">» $q$だけ生産するときの費用を$C(q)$と書く．</li>
-<li class="sub-item">» $C(q)$は<span class="keyword">総費用関数</span>と呼ばれる．</li>
+<li class="sub-item">生産する量を記号で$q$と書く．</li>
+<li class="sub-item">$q$だけ生産するときの費用を$C(q)$と書く．</li>
+<li class="sub-item">$C(q)$は<span class="keyword">総費用関数</span>と呼ばれる．</li>
 </ul>
 </div>
 <div class="column"></div>
 </div>
 </template>
 
-<template class="slide-data" data-title="利潤最大化の一階条件" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="利潤最大化の一階条件" data-section="企業の行動" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
@@ -4344,11 +4674,15 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="300">
 <ul>
 <li>$C(q)=q^2+q$とする．供給関数を求めなさい．</li>
 <li>$C(q)=4\cdot q$だとする．供給関数を求めなさい（微分では解けない）．</li>
 </ul>
+</template>
+
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">費用の構造</div>
 </template>
 
 <template class="slide-data" data-title="費用の種類と構造" data-section="企業の行動" data-note="false" data-print-margin="0">
@@ -4356,15 +4690,15 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>総費用関数のより細かい構造を見る．例として$C(q)=q^2+q+5$</li>
-<li class="sub-item">» <span class="keyword">可変費用</span>とは</li>
-<li class="sub-item">» <span class="keyword">固定費用</span>とは</li>
+<li class="sub-item"><span class="keyword">可変費用</span>とは</li>
+<li class="sub-item"><span class="keyword">固定費用</span>とは</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>経済学における短期と長期</li>
-<li class="sub-item">» 短期とは</li>
-<li class="sub-item">» 長期とは</li>
+<li class="sub-item">短期とは</li>
+<li class="sub-item">長期とは</li>
 <li>固定費用 $\neq$ 埋没費用</li>
 </ul>
 </div>
@@ -4374,20 +4708,20 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <template class="slide-data" data-title="損益分岐点" data-section="企業の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>どのようなときに利益が黒字か（赤字か）？</li>
-<li class="sub-item">→ <span class="keyword">損益分岐点</span>を求める．</li>
+<li class="sub-item arrow">→ <span class="keyword">損益分岐点</span>を求める．</li>
 <li>黒字と赤字の境目＝利潤が0の条件は</li>
-<li class="sub-item">» 損益分岐点での価格は</li>
+<li class="sub-item">損益分岐点での価格は</li>
 <li>利潤最大化条件を使うと...</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="操業停止点" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="操業停止点" data-section="企業の行動" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>利潤が赤字でも（短期的には）店じまいすべきでないかもしれない．</li>
-<li class="sub-item">» 短期的には工場などを売れない → 固定費用はかかりっぱなし</li>
-<li class="sub-item">» 可変費用の部分で黒字であれば固定費用による赤字を減らせる！</li>
+<li class="sub-item">短期的には工場などを売れない → 固定費用はかかりっぱなし</li>
+<li class="sub-item">可変費用の部分で黒字であれば固定費用による赤字を減らせる！</li>
 <li>$q$だけ生産するのと全く生産しないのが同じ利潤になる条件は</li>
 <li>この価格を下回れば生産すべきでない．この価格を<span class="keyword">操業停止点</span>の価格，生産量を<span class="keyword">操業停止点</span>の生産量と呼ぶ．</li>
 </ul>
@@ -4413,17 +4747,21 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </template>
 
 
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">生産関数</div>
+</template>
+
 <template class="slide-data" data-title="生産関数" data-section="企業の行動" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
 <ul>
 <li>総費用関数は謎のブラックボックスであった．</li>
-<li class="sub-item">» 100万個作りたいと言ったら「200億円かかります」とだけ言われるようなもの</li>
-<li class="sub-item">» この総費用関数はどこから出てくるのか？</li>
+<li class="sub-item">100万個作りたいと言ったら「200億円かかります」とだけ言われるようなもの</li>
+<li class="sub-item">この総費用関数はどこから出てくるのか？</li>
 <li><span class="keyword">生産関数</span></li>
-<li class="sub-item">» 生産要素なるものを投入したら生産物が出てくる関数</li>
-<li class="sub-item">→ 生産関数から総費用関数を作る</li>
-<li class="sub-item">» ex. 100万個作るには，作業員を60人雇って，工場を一箇所作って，材料を3トン購入して,...その諸々の費用が200億円かかります．</li>
+<li class="sub-item">生産要素なるものを投入したら生産物が出てくる関数</li>
+<li class="sub-item arrow">→ 生産関数から総費用関数を作る</li>
+<li class="sub-item">ex. 100万個作るには，作業員を60人雇って，工場を一箇所作って，材料を3トン購入して,...その諸々の費用が200億円かかります．</li>
 </ul>
 </div>
 <div class="column"></div>
@@ -4435,19 +4773,19 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>生産要素</li>
-<li class="sub-item">» 二つの要素$K,L$によって財が生産できると想定</li>
+<li class="sub-item">二つの要素$K,L$によって財が生産できると想定</li>
 <ol>
 <li>$K$: 資本<br>使用するには$r\cdot K$だけの費用がかかる<br>$r$を<span class="keyword">レンタル率</span>と呼ぶ.</li>
 <li>$L$: 労働<br>使用するには$w\cdot L$だけの費用がかかる<br>$w$を<span class="keyword">賃金率</span>と呼ぶ.</li>
 </ol>
 <li>生産関数：$f(K,L)$</li>
-<li class="sub-item">» $(K,L)$の組み合わせを投入すると$f(K,L)$だけの量の財ができる.</li>
+<li class="sub-item">$(K,L)$の組み合わせを投入すると$f(K,L)$だけの量の財ができる.</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>例：$f(2,3)=8$は</li>
-<li class="sub-item">» 「工場を2つ建て，工場作業員を3千人雇うと駄菓子を8万個製造可能」くらいの意味</li>
+<li class="sub-item">「工場を2つ建て，工場作業員を3千人雇うと駄菓子を8万個製造可能」くらいの意味</li>
 </ul>
 </div>
 </div>
@@ -4473,15 +4811,19 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </template>
 
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">短期と長期</div>
+</template>
+
 <template class="slide-data" data-title="経済学における短期と長期" data-section="企業の行動" data-note="false" data-print-margin="0">
 <div class="columns">
 <div class="column">
 <ul>
 <li><span class="keyword">長期</span>：すべての生産要素が調整可能</li>
-<li class="sub-item">» <span class="keyword">可変的生産要素</span>: 調整可能な生産要素</li>
+<li class="sub-item"><span class="keyword">可変的生産要素</span>: 調整可能な生産要素</li>
 <li><span class="keyword">短期</span>：一部の生産要素が固定されている．</li>
-<li class="sub-item">» <span class="keyword">固定的生産要素</span>:（すぐには）調整できない生産要素．</li>
-<li class="sub-item">→ たいていは$K=\bar K$の水準で固定されていると想定する．</li>
+<li class="sub-item"><span class="keyword">固定的生産要素</span>:（すぐには）調整できない生産要素．</li>
+<li class="sub-item arrow">→ たいていは$K=\bar K$の水準で固定されていると想定する．</li>
 </ul>
 </div>
 <div class="column"></div>
@@ -4493,10 +4835,10 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <div class="column">
 <ul>
 <li>短期の最適化問題: $q$だけ作る費用は?</li>
-<li class="sub-item">» $K=\bar K$で固定されているとき，$f(\bar K,L)=q$となるような$L$を$L^*(q, \bar K)$とする．</li>
-<li class="sub-item">» このときの総費用は</li>
+<li class="sub-item">$K=\bar K$で固定されているとき，$f(\bar K,L)=q$となるような$L$を$L^*(q, \bar K)$とする．</li>
+<li class="sub-item">このときの総費用は</li>
 $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
-<li class="sub-item">» $r\bar K$は固定費用</li>
+<li class="sub-item">$r\bar K$は固定費用</li>
 </ul>
 </div>
 <div class="column">
@@ -4512,19 +4854,23 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <div class="column">
 <ul>
 <li>長期の生産問題:</li>
-<li class="sub-item">» $K$と$L$の両方を調整する.</li>
-<li class="sub-item">» 生産量$q$を達成するような$K,L$の中で費用が最小になるような組み合わせを考える．</li>
-<li class="sub-item">» 短期の決定より自由度が高い</li>
+<li class="sub-item">$K$と$L$の両方を調整する.</li>
+<li class="sub-item">生産量$q$を達成するような$K,L$の中で費用が最小になるような組み合わせを考える．</li>
+<li class="sub-item">短期の決定より自由度が高い</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>例:</li>
-<li class="sub-item">» ガラケーは時代遅れなので，工場を減らす</li>
-<li class="sub-item">» 半導体は需要が高まりそうなので，工場を増やす</li>
+<li class="sub-item">ガラケーは時代遅れなので，工場を減らす</li>
+<li class="sub-item">半導体は需要が高まりそうなので，工場を増やす</li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="section-title-big">費用最小化</div>
 </template>
 
 <template class="slide-data" data-title="等量曲線と等費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
@@ -4541,7 +4887,7 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <div class="column">
 <ul><li><span class="keyword">等費用曲線</span>: 同じ費用がかかる点$(K,L)$を結んだもの</li></ul>
 <div class="tikz-figure"><img src="img_micro/iso_cost_curve.svg" alt="等費用曲線"></div>
-<ul><li class="sub-item">» 等費用曲線の傾きは</li></ul>
+<ul><li class="sub-item">等費用曲線の傾きは</li></ul>
 </div>
 </div>
 </template>
@@ -4549,10 +4895,10 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <template class="slide-data" data-title="限界生産物" data-section="企業の行動" data-note="false" data-print-margin="0">
 <ul>
 <li>$f(K,L)$: $(K,L)$という生産計画のときの生産量</li>
-<li class="sub-item">» $MP_L$: 労働の<span class="keyword">限界生産物</span></li>
-<li class="sub-item">» $MP_K$: 資本の<span class="keyword">限界生産物</span></li>
+<li class="sub-item">$MP_L$: 労働の<span class="keyword">限界生産物</span></li>
+<li class="sub-item">$MP_K$: 資本の<span class="keyword">限界生産物</span></li>
 <li>ある生産要素の限界生産物：その生産要素の投入量をほんの少し増やしたときの生産量の増分</li>
-<li class="sub-item">» ex. おおざっぱに言えば $MP_L=3$ ならば「$L$の投入量を$1\%$増やしたとき，生産量は$3\%$増える」</li>
+<li class="sub-item">ex. おおざっぱに言えば $MP_L=3$ ならば「$L$の投入量を$1\%$増やしたとき，生産量は$3\%$増える」</li>
 <li>限界変形率との関係</li>
 </ul>
 </template>
@@ -4593,7 +4939,7 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <div class="column">
 <ul>
 <li><span class="keyword">費用</span>とは，ある生産量を達成するための最小の費用</li>
-<li class="sub-item">» 長期と短期で費用にどのような差があるか？</li>
+<li class="sub-item">長期と短期で費用にどのような差があるか？</li>
 </ul>
 </div>
 <div class="column">
@@ -4607,17 +4953,21 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 
 <!-- ============ SECTION: 独占市場 ============ -->
 
-<template class="slide-data" data-title="" data-section="売り方の設計" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="売り方の設計" data-note="false" data-print-margin="0">
 <div class="section-title-big">売り方の設計</div>
 </template>
 
-<template class="slide-data" data-title="独占市場と独占価格" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<div class="section-title-big">独占</div>
+</template>
+
+<template class="slide-data" data-title="独占市場と独占価格" data-section="売り方の設計" data-note="false" data-print-margin="800">
 <div class="columns">
 <div class="column">
 <ul>
 <li>価格受容者は売り方がナイーブすぎる</li>
-  <li class="sub-item">» より良い「売り方の設計」をしよう</li>
-  <li class="sub-item">» 競争相手がいるとややこしいので，競争相手がいないケースをおもに考える</li>
+  <li class="sub-item">より良い「売り方の設計」をしよう</li>
+  <li class="sub-item">競争相手がいるとややこしいので，競争相手がいないケースをおもに考える</li>
 <li>ある財について，それを生産できる企業が一社しかないとき，その状況を<span class="keyword">独占</span>と呼ぶ．</li>
 <li>独占企業は生産量を減らすことで価格を吊り上げることができる．</li>
 </ul>
@@ -4625,25 +4975,37 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <div class="column">
 <ul>
 <li>いままでは... <span class="keyword">完全競争</span></li>
-<li class="sub-item">» 自分がどれだけ買っても売っても価格は変わらない（<span class="keyword">価格受容者</span>という）．</li>
-<li class="sub-item">» 売り手や買い手がたくさんいるならまあそう</li>
+<li class="sub-item">自分がどれだけ買っても売っても価格は変わらない（<span class="keyword">価格受容者</span>という）．</li>
+<li class="sub-item">売り手や買い手がたくさんいるならまあそう</li>
 <li>独占は完全競争では無い（不完全競争）</li>
 <li>完全競争との違い</li>
-<li class="sub-item">» 自分の行動で市場価格が変わることを意識している．（<span class="keyword">価格設定者</span>の仮定）</li>
-<li class="sub-item">» 意識してないときよりも生産量は減る<br>（豊作貧乏になることがわかってるならたくさん作らない）</li>
-<li class="sub-item">→ 社会的総余剰は最大にはならない</li>
+<li class="sub-item">自分の行動で市場価格が変わることを意識している．（<span class="keyword">価格設定者</span>の仮定）</li>
+<li class="sub-item">意識してないときよりも生産量は減る<br>（豊作貧乏になることがわかってるならたくさん作らない）</li>
+<li class="sub-item arrow">→ 社会的総余剰は最大にはならない</li>
 </ul>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="独占均衡" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="独占均衡" data-section="売り方の設計" data-note="false" data-print-margin="800">
 <div class="columns">
 <div class="column">
 <ul>
 <li> 数字の上で解いてみよう
 <ul>
 <li> $P(q)$を生産量が$q$のときに決まる価格とする
+<ul>
+  <li>どうやって求めるか？</li>
+  <li>価格が $D(p)=q$と決まると考える</li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+ 
+  <li>例：$D(p)=10-3p$のとき</li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+  <li class="spacer"></li>
+</ul>
+
 <li> 一つあたりの生産には費用$c$がかかるとする
 </ul>
 <li> このときの企業の利潤は
@@ -4664,26 +5026,30 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 
 
 
+<template class="slide-data" data-title="" data-section="独占市場" data-note="false" data-print-margin="0">
+<div class="section-title-big">価格差別</div>
+</template>
+
 <template class="slide-data" data-title="売り方の工夫---価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
 <ul>
 <li>同じ財なら同じ価格で売られなければいけない？</li>
-<li class="sub-item">» <span class="keyword">一物一価の法則</span></li>
+<li class="sub-item"><span class="keyword">一物一価の法則</span></li>
 <li>なぜ（いつ）一物一価の法則は成り立つか?</li>
-<li class="sub-item">→ <span class="keyword">裁定取引</span>が働くとき</li>
-<li class="sub-item">» もし同じ商品がA店で100円，B店で120円で売っていれば？</li>
-<li class="sub-item">» 「フリーランチは無い」（または「道端に１万円は落ちていない」）</li>
+<li class="sub-item arrow">→ <span class="keyword">裁定取引</span>が働くとき</li>
+<li class="sub-item">もし同じ商品がA店で100円，B店で120円で売っていれば？</li>
+<li class="sub-item">「フリーランチは無い」（または「道端に１万円は落ちていない」）</li>
 <li>裁定取引ができないとき</li>
-<li class="sub-item">» <span class="keyword">価格差別</span>のチャンス</li>
+<li class="sub-item"><span class="keyword">価格差別</span>のチャンス</li>
 <li>この講義では簡単な価格差別の方法を紹介する</li>
-<li class="sub-item">» より多様な方法についてはミクロ経済学A/B，産業組織論，情報の経済学などで学ぶ．</li>
+<li class="sub-item">より多様な方法についてはミクロ経済学A/B，産業組織論，情報の経済学などで学ぶ．</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="なるべく余剰を搾取せよ---完全価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="なるべく余剰を搾取せよ---完全価格差別" data-section="独占市場" data-note="false" data-print-margin="300">
 <ul>
 <li>アダムとイヴに遊園地のチケットを売る．</li>
-<li class="sub-item">» アダムは8000円の支払意思額</li>
-<li class="sub-item">» イヴは10000円の支払意思額</li>
+<li class="sub-item">アダムは8000円の支払意思額</li>
+<li class="sub-item">イヴは10000円の支払意思額</li>
 <li>どうやって売るか？</li>
 <ol>
 <li>8000円で売る</li>
@@ -4693,34 +5059,34 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="学割は学生のためか？---属性による価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="学割は学生のためか？---属性による価格差別" data-section="独占市場" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>完全価格差別は難しい</li>
 <li>属性で区別する</li>
-<li class="sub-item">» 証拠がある属性（e.g., アカデミック版）</li>
-<li class="sub-item">» 地理的要因 (e.g., 国際価格差)</li>
+<li class="sub-item">証拠がある属性（e.g., アカデミック版）</li>
+<li class="sub-item">地理的要因 (e.g., 国際価格差)</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>例：学生は8千円までなら払いたい，社会人は1万円までなら払いたい</li>
-<li class="sub-item">» どのように価格をつけるべきか？</li>
+<li class="sub-item">どのように価格をつけるべきか？</li>
 <li>学生と社会人の区別がつかないなら？</li>
-<li class="sub-item">» 価格を1万円にするときの売り上げ</li>
-<li class="sub-item">» 価格を8千円にするときの売り上げ</li>
+<li class="sub-item">価格を1万円にするときの売り上げ</li>
+<li class="sub-item">価格を8千円にするときの売り上げ</li>
 </ul>
 </div>
 </div>
 </template>
 
-<template class="slide-data" data-title="まとめて売ることの意味---バンドリング" data-section="独占市場" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="まとめて売ることの意味---バンドリング" data-section="独占市場" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>
 <li>一個あたりの支払意思額が消費量に比例してだんだん減っていくケースを考える</li>
-<li class="sub-item">» ケーキの個数と消費するときの効用</li>
+<li class="sub-item">ケーキの個数と消費するときの効用</li>
 </ul>
 <table class="slide-table">
 <tr><th>個数</th><th>効用</th></tr>
@@ -4732,7 +5098,7 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <div class="column">
 <ul>
 <li>この人からなるべくたくさん売上を上げるにはどのように価格をつける？</li>
-<li class="sub-item">» 価格を〇〇円にする.</li>
+<li class="sub-item">価格を〇〇円にする.</li>
 </ul>
 <table class="slide-table">
 <tr><th>一個当たり</th><th>売上数</th><th>売上金額</th></tr>
@@ -4740,10 +5106,25 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <tr><td>150円</td><td></td><td></td></tr>
 </table>
 <ul>
-<li class="sub-item">» <span class="keyword">バンドリング</span>（抱き合わせ販売）</li>
+<li class="sub-item"><span class="keyword">バンドリング</span>（抱き合わせ販売）</li>
+
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+
+<li class="sub-item"><span class="keyword">非線形価格</span>：1つづつ売らなければいけないときでも同じ売上を達成できるか？</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div>
 </div>
+</template>
+
+<template class="slide-data" data-title="" data-section="売り方の設計" data-note="false" data-print-margin="0">
+<div class="section-title-big">オークション</div>
 </template>
 
 <template class="slide-data" data-title="オークション" data-section="売り方の設計" data-note="false" data-print-margin="0">
@@ -4770,17 +5151,17 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <ul>
 <li>全員が正直に入札するとき，誰がいくらで落札し，もうけはいくらか？</li>
 <li>次のように嘘をつくと，もうけはどうなるか？</li>
-<li class="sub-item">» Aが35と書く</li>
-<li class="sub-item">» Aが23と書く</li>
-<li class="sub-item">» Cが31と書く</li>
+<li class="sub-item">Aが35と書く</li>
+<li class="sub-item">Aが23と書く</li>
+<li class="sub-item">Cが31と書く</li>
 </ul>
 </template>
 
 <template class="slide-data" data-title="1位価格オークションとの違い" data-section="売り方の設計" data-note="false" data-print-margin="0">
 <ul>
 <li>1位価格：自分の入札額を払う</li>
-<li class="sub-item">» 正直に30で落札するともうけ $0$</li>
-<li class="sub-item">» 低めに入札したくなるが，読み違えれば落札を逃す</li>
+<li class="sub-item">正直に30で落札するともうけ $0$</li>
+<li class="sub-item">低めに入札したくなるが，読み違えれば落札を逃す</li>
 <li>2位価格：駆け引きが要らず，正直に書けばよい</li>
 </ul>
 </template>
@@ -4788,13 +5169,13 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <template class="slide-data" data-title="留保価格の効果" data-section="売り方の設計" data-note="false" data-print-margin="0">
 <ul>
 <li><span class="keyword">留保価格</span>：これ以下では売らない価格</li>
-<li class="sub-item">» 安売りを防げるが，高すぎると売れ残る</li>
+<li class="sub-item">安売りを防げるが，高すぎると売れ残る</li>
 </ul>
 </template>
 
 <!-- ============ SECTION: Final Remark ============ -->
 
-<template class="slide-data" data-title="" data-section="分野案内" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="" data-section="分野案内" data-note="false" data-print-margin="0">
 <div class="section-title-big">分野案内</div>
 </template>
 
@@ -4803,19 +5184,19 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 <div class="column">
 <ul>
 <li>組織の経済学</li>
-<li class="sub-item">» 企業の内部では市場の論理は使えない</li>
-<li class="sub-item">» 「契約」をキーワードに組織内部の行動を分析</li>
-<li class="sub-item">» 経営学と関連する</li>
+<li class="sub-item">企業の内部では市場の論理は使えない</li>
+<li class="sub-item">「契約」をキーワードに組織内部の行動を分析</li>
+<li class="sub-item">経営学と関連する</li>
 <li>社会的選択理論</li>
-<li class="sub-item">» 人々の好みや情報をどのように集計するか？</li>
-<li class="sub-item">» アローの不可能性定理が有名<br>（民主主義の限界を示した，は誤り）</li>
+<li class="sub-item">人々の好みや情報をどのように集計するか？</li>
+<li class="sub-item">アローの不可能性定理が有名<br>（民主主義の限界を示した，は誤り）</li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>メカニズム・デザイン/マーケット・デザイン</li>
-<li class="sub-item">» ゲーム理論を使って，より良い社会を実現する仕組みづくりのための理論</li>
-<li class="sub-item">» 例：マッチングのデザイン，配属先の決定のデザイン</li>
+<li class="sub-item">ゲーム理論を使って，より良い社会を実現する仕組みづくりのための理論</li>
+<li class="sub-item">例：マッチングのデザイン，配属先の決定のデザイン</li>
 </ul>
 </div>
 </div>

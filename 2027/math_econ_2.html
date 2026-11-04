@@ -94,8 +94,10 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
 .columns { display:flex; gap:24px; }
 .column { flex:1; min-width:0; }
+/* columns の間に薄い区切り線 */
+.columns > .column + .column { border-left:1px solid var(--border); padding-left:24px; }
 ul, ol { padding-left:1.5em; margin:0.3em 0; }
-li { margin:0.4em 0; }
+li { margin:0.9em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 ul ul > li:not(.sub-item):not(.custom-label):not(.spacer) { list-style:none; margin-left:0.5em; }
@@ -126,6 +128,8 @@ body.print-mode .qr-link .qr-toggle { display:none; }
 .phantom { background:var(--phantom-bg); color:transparent; padding:2px 8px; border-radius:3px; border:1px dashed #818cf8; user-select:none; cursor:pointer; transition:color 0.3s; }
 .phantom.revealed { color:var(--accent); background:#c7d2fe; }
 .tikz-placeholder { background:var(--tikz-bg); border:2px dashed var(--tikz-border); border-radius:8px; padding:20px; text-align:center; margin:12px 0; color:#166534; font-size:14px; }
+/* iPad: ペンで図の上に書くとき，画像のドラッグや長押しメニューを出さない */
+img { -webkit-user-drag:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 .tikz-figure { margin:10px 0; text-align:center; transition:opacity 0.15s; }
 .tikz-figure svg { max-height:400px; }
 .tikz-figure[data-scale] svg { max-height:none; }
@@ -1082,7 +1086,10 @@ function setupFigureZoom(el) {
     }
   });
   el.querySelectorAll('.tikz-figure').forEach(fig => {
+    // ペン（Apple Pencil）で触れたときは書き込みとみなし，拡大表示しない
+    fig.onpointerdown = e => { fig._lastPointerType = e.pointerType; };
     fig.onclick = () => {
+      if (fig._lastPointerType === 'pen' || drawMode) return;
       const svg = fig.querySelector('svg, img');
       if (!svg) return;
       const lb = document.getElementById('lightboxInner');
@@ -2112,6 +2119,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindCanvasEvents();
   bindBoardCanvasEvents();
   initPencilDetection();
+  document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('img, svg')) e.preventDefault(); });
   // Show floating pen button on touch-capable devices
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('fabPen').classList.add('show');

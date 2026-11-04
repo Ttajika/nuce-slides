@@ -160,9 +160,11 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 /* ═══ CONTENT STYLES ═══ */
 .columns { display:flex; gap:24px; }
 .column { flex:1; min-width:0; }
+/* columns の間に薄い区切り線 */
+.columns > .column + .column { border-left:1px solid var(--border); padding-left:24px; }
 
 ul, ol { padding-left:1.5em; margin:0.3em 0; }
-li { margin:0.4em 0; }
+li { margin:0.9em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 /* 入れ子の ul（第2レベル）は白丸ではなく » で統一（sub-item と同じ見た目・位置） */
@@ -235,6 +237,8 @@ a:hover { color:#1e40af; }
 }
 .tikz-icon { font-size:24px; display:block; margin-bottom:4px; }
 
+/* iPad: ペンで図の上に書くとき，画像のドラッグや長押しメニューを出さない */
+img { -webkit-user-drag:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 .tikz-figure {
   margin:10px 0; text-align:center;
   transition:opacity 0.15s;
@@ -1196,6 +1200,7 @@ function initPencilDetection() {
   });
 }
 initPencilDetection();
+document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('img, svg')) e.preventDefault(); });
 
 // Show floating pen button on touch-capable devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -1369,7 +1374,11 @@ function closeLightbox(e) {
 }
 function setupFigureZoom(container) {
   container.querySelectorAll('.tikz-figure').forEach(fig => {
+    // ペン（Apple Pencil）で触れたときは書き込みとみなし，拡大表示しない
+    let lastPointerType = '';
+    fig.addEventListener('pointerdown', e => { lastPointerType = e.pointerType; });
     fig.addEventListener('click', () => {
+      if (lastPointerType === 'pen' || drawMode) return;
       const svg = fig.querySelector('svg');
       if (svg) openLightbox(svg);
     });

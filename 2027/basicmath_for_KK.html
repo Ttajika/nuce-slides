@@ -215,10 +215,12 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 /* ---- Columns layout ---- */
 .columns { display:flex; gap:24px; }
 .column { flex:1; min-width:0; }
+/* columns の間に薄い区切り線 */
+.columns > .column + .column { border-left:1px solid var(--border); padding-left:24px; }
 
 /* ---- Lists ---- */
 ul, ol { padding-left: 1.5em; margin:0.3em 0; }
-li { margin: 0.4em 0; }
+li { margin:0.9em 0; }
 li.sub-item { list-style:none; margin-left:0.5em; color:var(--text); }
 li.sub-item::before { content:''; }
 .icon-arrow { font-size:0.6em; vertical-align:0.2em; }
