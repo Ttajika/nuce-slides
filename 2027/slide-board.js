@@ -63,6 +63,7 @@
   let tCanvas = null, aCanvas = null;   // 先生レイヤー（表示用） / 作成モードの入力レイヤー
   const audioURLs = {}, audioBlobs = {};
   let rec = null, play = null, navByBoard = false, lastIdx = -1;
+  let progScrollAt = 0, userGestureAt = 0;   // 再生中の自動スクロール：自分で動かしたスクロールと学生の操作を見分ける
   let tool = 'pen', color = COLORS[2], livePointer = null, drawing = null, penSeen = false;
   let lastPtrLog = { t: -1, x: null, y: null };
   let redrawQueued = false, seeking = false;
@@ -92,7 +93,7 @@
     for (const s of (A.getSections ? A.getSections() : []) || []) if (i >= s.slide) t = s.title;
     return t;
   }
-  function go(i) { navByBoard = true; try { A.showSlide(i); } finally { navByBoard = false; } }
+  function go(i) { navByBoard = true; progScrollAt = performance.now(); try { A.showSlide(i); } finally { navByBoard = false; } }
 
   /* ── 板書データ ───────────────────────────────────────────────────────── */
   const slideData = id => board.slides[id] || (board.slides[id] = { strokes: [], erases: [] });
@@ -194,13 +195,22 @@
     ctx.beginPath(); ctx.arc(x, y, 5 * k, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
   }
   // items: [{t, stroke, instant} | {t, erase:[ids]}]（t 昇順・秒）を時刻 t の状態で描く
+  // 戻り値：いちばん新しく書かれた線の先端（正規化座標）。自動スクロールの目標に使う
   function renderItems(ctx, items, t, W) {
     const gone = new Set();
     for (const it of items) { if (it.t > t) break; if (it.erase) it.erase.forEach(id => gone.add(id)); }
+    let tip = null;
     for (const it of items) {
       if (it.t > t) break;
-      if (it.stroke && !gone.has(it.stroke.id)) drawStroke(ctx, it.stroke, W, it.instant ? Infinity : (t - it.t) * 1000);
+      if (it.stroke && !gone.has(it.stroke.id)) {
+        const upto = it.instant ? Infinity : (t - it.t) * 1000;
+        drawStroke(ctx, it.stroke, W, upto);
+        const p = it.stroke.pts; let k = 0;
+        while (k + 1 < p.length && p[k + 1][2] <= upto) k++;
+        tip = { x: p[k][0], y: p[k][1] };
+      }
     }
+    return tip;
   }
   function pointerAt(list, t) {
     if (!list || !list.length || list[0].t > t) return null;
@@ -217,14 +227,64 @@
     ctx.clearRect(0, 0, tCanvas.width, tCanvas.height);
     if (play && play.mode === 'topic' && play.follow) {
       const t = play.clock.currentTime;
-      renderItems(ctx, play.itemsBySlide[curId()] || [], t, W);
-      drawDot(ctx, pointerAt(play.pointerBySlide[curId()], t), W);
+      const tip = renderItems(ctx, play.itemsBySlide[curId()] || [], t, W);
+      const ptr = pointerAt(play.pointerBySlide[curId()], t);
+      drawDot(ctx, ptr, W);
+      followPoint(ptr || tip);
       return;
     }
-    if (play && play.mode === 'slide' && play.slide === curId()) { renderItems(ctx, play.items, play.t, W); return; }
+    if (play && play.mode === 'slide' && play.slide === curId()) { followPoint(renderItems(ctx, play.items, play.t, W)); return; }
     if (AUTHOR || showTeacher) visibleStrokes(curId()).forEach(s => drawStroke(ctx, s, W));
     if (AUTHOR) drawDot(ctx, livePointer, W);
   }
+  /* ── 再生中の自動スクロール ───────────────────────────────────────────── */
+  // 画面が小さい・拡大中で、再生中の線やポインターが見えない位置にあれば，そこまでスクロールする。
+  // 学生が自分でスクロールしたら止め，「再生位置に戻る」で再開する。
+  function scrollParent(el) {
+    for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      const o = getComputedStyle(n);
+      if (/(auto|scroll)/.test(o.overflowY + o.overflowX) && (n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1)) return n;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  function followPoint(pt) {
+    if (!pt || !play || play.noAuto || !tCanvas) return;
+    const now = performance.now();
+    if (now - progScrollAt < 450) return;   // スクロール中は待つ
+    const vr = visualRect(tCanvas);
+    const px = vr.left + pt.x * vr.width, py = vr.top + pt.y * vr.width;
+    const sc = scrollParent(tCanvas);
+    const doc = sc === document.scrollingElement || sc === document.documentElement;
+    const box = doc ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : sc.getBoundingClientRect();
+    const pl = $('sbPlayer');
+    const bottom = Math.min(box.bottom, pl && pl.classList.contains('show') ? pl.getBoundingClientRect().top : Infinity) - 24;
+    const top = box.top + 24, left = box.left + 24, right = box.right - 24;
+    let dy = 0, dx = 0;
+    if (py < top || py > bottom) dy = py - (box.top + (bottom - box.top) * 0.35);
+    if (px < left || px > right) dx = px - (box.left + box.right) / 2;
+    if (!dx && !dy) return;
+    progScrollAt = now;
+    sc.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+  }
+  function bindScrollWatch() {
+    const gesture = () => { userGestureAt = performance.now(); };
+    ['wheel', 'touchstart', 'keydown'].forEach(t => window.addEventListener(t, gesture, { capture: true, passive: true }));
+    window.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') gesture(); }, { capture: true, passive: true });   // スクロールバーのドラッグ
+    document.addEventListener('scroll', () => {
+      if (!play || play.noAuto) return;
+      const now = performance.now();
+      if (now - userGestureAt > 1200 || now - progScrollAt < 120) return;   // 自動スクロールやページ送りによるもの
+      play.noAuto = true;
+      $('sbBack').classList.add('show');
+    }, { capture: true, passive: true });
+  }
+  // 画面が小さいときは再生中にツールバー類を隠す（☰ で出し入れ）。レイアウトが変わるので resize を通知する
+  function setBars(show) {
+    document.body.classList.toggle('sb-bars', !!show);
+    $('sbBars').classList.toggle('on', !!show);
+    window.dispatchEvent(new Event('resize'));
+  }
+
   function requestRedraw() {
     if (redrawQueued) return;
     redrawQueued = true;
@@ -232,8 +292,22 @@
   }
 
   /* ── 作成モードの入力 ─────────────────────────────────────────────────── */
+  // 画面上の実際の位置・大きさ。CSS zoom の内側では，古い方式の Chromium（VS Code の組み込み
+  // ブラウザなど，StandardizedBrowserZoom 無効）や Safari が getBoundingClientRect を拡大前の
+  // 座標で返すので，実際の幅との比で補正する（新しい方式では補正量が 1 になり何もしない）。
+  function visualRect(el) {
+    const r = el.getBoundingClientRect();
+    let z = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).zoom);
+      if (v > 0) z *= v;
+    }
+    const f = (r.width && el.offsetWidth) ? el.offsetWidth * z / r.width : 1;
+    if (Math.abs(f - 1) < 0.01) return r;
+    return { left: r.left * f, top: r.top * f, width: r.width * f, height: r.height * f };
+  }
   function toNorm(e) {
-    const r = aCanvas.getBoundingClientRect();
+    const r = visualRect(aCanvas);
     const ar = aCanvas.height / aCanvas.width;
     return { x: r4((e.clientX - r.left) / r.width), y: r4((e.clientY - r.top) / r.height * ar) };
   }
@@ -531,6 +605,8 @@
   function showPlayer(title) {
     $('sbTitle').textContent = title; $('sbBack').classList.remove('show'); $('sbPlayer').classList.add('show');
     document.body.classList.add('sb-playing');   // 再生中はトピックボタンを隠す（再生バーと重なるため）
+    document.body.classList.remove('sb-bars'); $('sbBars').classList.remove('on');
+    window.dispatchEvent(new Event('resize'));   // 小さい画面ではツールバーが消えるのでレイアウトを合わせ直す
   }
   function stopPlayback() {
     if (!play) return;
@@ -538,7 +614,8 @@
     play.clock.pause();
     play = null;
     $('sbPlayer').classList.remove('show');
-    document.body.classList.remove('sb-playing');
+    document.body.classList.remove('sb-playing', 'sb-bars');
+    window.dispatchEvent(new Event('resize'));
     redrawTeacher();
   }
 
@@ -633,6 +710,19 @@
       #sbTitle { max-width:11em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.85; }
       #sbBack { display:none; background:var(--accent, #e94560) !important; border-color:transparent !important; }
       #sbBack.show { display:inline-block; }
+      #sbBars { display:none; }
+      #sbBars.on { background:rgba(255,255,255,.25) !important; }
+      @media (max-width: 900px), (max-height: 600px) {
+        #sbBars { display:inline-block; }
+        body.sb-playing:not(.sb-bars) .topbar, body.sb-playing:not(.sb-bars) .draw-toolbar,
+        body.sb-playing .mode-toggle { display:none !important; }
+        body.sb-playing .fab-pen { bottom:120px !important; }   /* 再生バーと重ならないように */
+        #sbPlayer { width:max-content; flex-wrap:wrap; justify-content:center; row-gap:6px; gap:6px; padding:5px 10px;
+          bottom:max(10px, env(safe-area-inset-bottom, 0px)); }
+        #sbPlayer button, #sbPlayer select { padding:3px 7px; }
+        #sbTitle { display:none; }
+        #sbSeek { width:min(260px, 46vw); }
+      }
       #sbAuthor { position:fixed; right:12px; z-index:9002; display:flex; flex-wrap:wrap; align-items:center; gap:5px;
         max-width:min(560px, calc(100vw - 24px)); padding:8px 10px; border-radius:12px; font-size:13px;
         background:rgba(26,26,46,.95); color:#fff; box-shadow:0 6px 24px rgba(0,0,0,.3); }
@@ -668,7 +758,8 @@
       <button id="sbPlay">⏸</button><span id="sbTitle"></span>
       <input type="range" id="sbSeek" min="0" max="1000" value="0"><span id="sbTime">0:00 / 0:00</span>
       <select id="sbSpeed"><option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
-      <button id="sbBack" title="再生中の位置（スライド）に戻って再開">⏎ 再生位置に戻る</button>
+      <button id="sbBack" title="再生中の位置に戻って再開（自動スクロールも再開）">⏎ 再生位置に戻る</button>
+      <button id="sbBars" title="ツールバーを表示／非表示">☰</button>
       <button id="sbClose" title="再生を終了">✕</button></div>`);
 
     const nav = document.querySelector('.topbar-nav');
@@ -727,13 +818,16 @@
         play.clock.play();
       } else play.clock.pause();
     };
-    $('sbBack').onclick = () => { if (!play) return; play.follow = true; $('sbBack').classList.remove('show'); play.clock.play(); };
+    $('sbBack').onclick = () => { if (!play) return; play.follow = true; play.noAuto = false; progScrollAt = 0; $('sbBack').classList.remove('show'); play.clock.play(); };
+    $('sbBars').onclick = () => setBars(!document.body.classList.contains('sb-bars'));
     $('sbClose').onclick = stopPlayback;
     $('sbSpeed').onchange = () => { if (play) play.clock.playbackRate = speed(); };
     $('sbSeek').addEventListener('input', () => {
       if (!play) return; seeking = true;
       play.clock.currentTime = $('sbSeek').value / 1000 * play.duration;
-      if (play.mode === 'topic') { play.follow = true; $('sbBack').classList.remove('show'); }
+      play.noAuto = false;
+      if (play.mode === 'topic') play.follow = true;
+      $('sbBack').classList.remove('show');
     });
     $('sbSeek').addEventListener('change', () => { seeking = false; });
 
@@ -787,6 +881,7 @@
     injectUI();
     hookPage();
     bindPageEvents();
+    bindScrollWatch();
     lastIdx = cur();
     updateUI(); redrawTeacher();
     if (AUTHOR) status('板書作成モード' + (src ? `（${src} を読み込み）` : '') + '。録音はトピック扉スライドから');
