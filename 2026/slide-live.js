@@ -199,6 +199,8 @@
         background:rgba(255,255,255,.15); color:#fff; cursor:pointer; font-size:13px; }
       .sl-meter { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:6px 0 2px; }
       .sl-meter div { height:100%; width:0; background:linear-gradient(90deg,#16a34a,#facc15 70%,#dc2626); transition:width .08s; }
+      #slScrollBtn { display:none; font-size:11px; background:#d97706; border-color:#d97706; }
+      #slScrollBtn.show { display:inline-block; }
       .live-canvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:11; pointer-events:none; }
       /* 配信中はスライドと板書のレイアウト幅を固定し、画面に収まらない分は zoom で縮める。
          こうすると全端末で行の折り返し・座標系が一致し、手書きがずれない。 */
@@ -340,6 +342,7 @@
       b: bl.map(x => normStroke(x, bc)),
       p: p ? normPt(p, c) : null,
       m: getMedia(),
+      h: r4(c.height / c.width),   // canvas の縦横比（viewer が同じ高さまで描画領域を広げる）
     };
     send(msg);
     sent.i = i;
@@ -348,6 +351,7 @@
     sent.boardOpen = bo;
     sent.ptr = msg.p;
     sent.media = msg.m;
+    sent.h = msg.h;
     sent.lastFull = Date.now();
   }
 
@@ -384,6 +388,10 @@
     if (i !== sent.i || now - sent.lastFull > CONFIG.fullEveryMs) { sendFull(); return; }
     const c = adapter.getCanvas();
     if (!c || !c.width) return;
+
+    // canvas の縦横比（回転・リサイズ・スライド内容の変化）
+    const h = r4(c.height / c.width);
+    if (h !== sent.h) { sent.h = h; send({ t: 'dim', i, h }); }
 
     // 手書き
     let r = diffList('s', i, adapter.getStrokes() || [], sent.refs, sent.lastLen, c);
@@ -472,7 +480,7 @@
   // ═══════════════════════════════════════════════════════════════════════
   //  VIEWER
   // ═══════════════════════════════════════════════════════════════════════
-  const L = { i: -1, s: {}, b: {}, bo: false, p: null, m: null, ended: false, presenter: false };
+  const L = { i: -1, s: {}, b: {}, h: {}, bo: false, p: null, m: null, ended: false, presenter: false };
   let following = true;
   let liveCanvas = null, liveBoardCanvas = null;
 
@@ -487,6 +495,8 @@
     // viewer
     switch (m.t) {
       case 'full':
+        if (m.i !== L.i) setScrollFollow(true);
+        if (m.h) L.h[m.i] = m.h;
         L.i = m.i; L.s[m.i] = m.s; L.bo = m.bo; L.b[m.i] = m.b; L.p = m.p; L.ended = false;
         if ('m' in m) L.m = m.m;
         applySlide(); applyBoard(); applyMedia(); redrawLive(); redrawLiveBoard();
@@ -502,17 +512,23 @@
         const store = m.k === 'b' ? L.b : L.s;
         (store[m.i] = store[m.i] || []).push(m.s);
         m.k === 'b' ? redrawLiveBoard() : redrawLive();
+        if (m.k !== 'b' && m.s.p && m.s.p.length) followLive(m.i, m.s.p[m.s.p.length - 1]);
         break;
       }
       case 'pts': {
         const store = m.k === 'b' ? L.b : L.s;
         const arr = store[m.i];
-        if (arr && arr[m.n]) { arr[m.n].p.push(...m.p); m.k === 'b' ? redrawLiveBoard() : redrawLive(); }
+        if (arr && arr[m.n]) {
+          arr[m.n].p.push(...m.p); m.k === 'b' ? redrawLiveBoard() : redrawLive();
+          if (m.k !== 'b' && m.p.length) followLive(m.i, m.p[m.p.length - 1]);
+        }
         else send({ t: 'hello' });   // 取りこぼし → 全体を要求
         break;
       }
+      case 'dim':
+        L.h[m.i] = m.h; redrawLive(); break;
       case 'ptr':
-        L.p = m.p; redrawLive(); break;
+        L.p = m.p; redrawLive(); if (m.p) followLive(L.i, m.p); break;
       case 'board':
         L.bo = m.on; applyBoard(); break;
       case 'media':
@@ -539,6 +555,67 @@
   function applyMedia() {
     if (!following) return;
     try { setMedia(L.m); } catch (e) { console.warn('[slide-live] setMedia', e); }
+  }
+
+  // ── 書いている位置への自動スクロール（viewer）─────────────────────────────
+  // 画面が小さい・拡大中などで、配信者が書いている線やポインターが見えない位置にあれば
+  // そこまでスクロールする。学生が自分でスクロールしたら止め、「✍」ボタンで再開。
+  // 配信者がページを送ると自動で再開する。
+  let scrollFollow = true, lastPt = null, autoScrollAt = 0, userGestureAt = 0;
+  function visualRect(el) {   // CSS zoom 下でも getBoundingClientRect を画面座標にそろえる（slide-board.js と同じ）
+    const r = el.getBoundingClientRect();
+    let z = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).zoom);
+      if (v > 0) z *= v;
+    }
+    const f = (r.width && el.offsetWidth) ? el.offsetWidth * z / r.width : 1;
+    if (Math.abs(f - 1) < 0.01) return r;
+    return { left: r.left * f, top: r.top * f, width: r.width * f, height: r.height * f };
+  }
+  function scrollParent(el) {
+    for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      const o = getComputedStyle(n);
+      if (/(auto|scroll)/.test(o.overflowY + o.overflowX) && (n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1)) return n;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  function setScrollFollow(on) {
+    scrollFollow = on;
+    const b = $('slScrollBtn'); if (b) b.classList.toggle('show', !on);
+  }
+  function followLive(i, pt, force) {
+    if (role !== 'viewer' || !pt) return;
+    lastPt = pt;
+    if (!following || (!scrollFollow && !force) || i !== adapter.getCurrent()) return;
+    if (L.bo) return;                       // 板書ポップアップは画面に収まるので不要
+    const now = performance.now();
+    if (!force && now - autoScrollAt < 450) return;   // スムーズスクロール中は待つ
+    const c = liveCanvas || adapter.getCanvas();
+    if (!c || !c.offsetWidth) return;
+    const vr = visualRect(c);
+    const px = vr.left + pt[0] * vr.width, py = vr.top + pt[1] * vr.width;   // y も幅基準（normPt 参照）
+    const sc = scrollParent(c);
+    const doc = sc === document.scrollingElement || sc === document.documentElement;
+    const box = doc ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : sc.getBoundingClientRect();
+    const m = 40;
+    let dx = 0, dy = 0;
+    if (py < box.top + m || py > box.bottom - m) dy = py - (box.top + (box.bottom - box.top) * 0.4);
+    if (px < box.left + m || px > box.right - m) dx = px - (box.left + box.right) / 2;
+    if (!dx && !dy) return;
+    autoScrollAt = now;
+    sc.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+  }
+  function bindScrollWatch() {
+    const gesture = () => { userGestureAt = performance.now(); };
+    ['wheel', 'touchstart', 'keydown'].forEach(t => window.addEventListener(t, gesture, { capture: true, passive: true }));
+    window.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') gesture(); }, { capture: true, passive: true });
+    document.addEventListener('scroll', () => {
+      if (!scrollFollow || !following) return;
+      const now = performance.now();
+      if (now - userGestureAt > 1200 || now - autoScrollAt < 120) return;   // 自動スクロール・ページ送りによるもの
+      setScrollFollow(false);
+    }, { capture: true, passive: true });
   }
 
   function ensureOverlays() {
@@ -570,9 +647,32 @@
     });
   }
 
+  // ── 描画領域の高さを配信側にそろえる（viewer）──────────────────────────────
+  // canvas の高さは「本文の高さ」と「表示領域の高さ」の大きい方で決まる。縦長の iPad では
+  // 本文の下の余白にも書けるが、横長の PC や拡大中は表示領域が（レイアウト上）短く、
+  // その線が canvas の外になって描かれず、スクロールでも届かない。
+  // そこで配信側の canvas の縦横比（と線の一番下）まで zoom-layer の最小の高さを広げる。
+  let extentWant = null;
+  function fitExtent() {
+    const layer = $('zoomLayer');
+    if (!layer || !layer.offsetWidth) return;
+    const i = adapter.getCurrent();
+    let r = L.h[i] || 0;
+    let maxY = 0;
+    (L.s[i] || []).forEach(st => (st.p || []).forEach(pt => { if (pt[1] > maxY) maxY = pt[1]; }));
+    if (L.p && i === L.i && L.p[1] > maxY) maxY = L.p[1];
+    if (maxY) r = Math.max(r, maxY + 0.03);
+    const want = r ? 'max(100%, ' + Math.ceil(r * layer.offsetWidth) + 'px)' : '';
+    if (want === extentWant) return;
+    extentWant = want;
+    layer.style.minHeight = want;
+    if (typeof window.resizeDrawCanvas === 'function') window.resizeDrawCanvas();   // → redrawLive が再度呼ばれる（変化なしで戻る）
+  }
+
   function redrawLive() {
     if (role !== 'viewer') return;
     ensureOverlays();
+    fitExtent();
     const c = adapter.getCanvas();
     if (!c || !liveCanvas) return;
     if (liveCanvas.width !== c.width || liveCanvas.height !== c.height) {
@@ -637,10 +737,16 @@
     f.title = '配信者のページ送りに追従する / しない';
     f.onclick = () => {
       following = !following;
-      if (following) { applySlide(); applyBoard(); applyMedia(); }
+      if (following) { applySlide(); applyBoard(); applyMedia(); setScrollFollow(true); }
       setBadge();
     };
-    nav.appendChild(b); nav.appendChild(f);
+    const sbtn = document.createElement('button');
+    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.textContent = '✍';
+    sbtn.title = '書いている所へ（自動スクロールを再開）';
+    sbtn.setAttribute('aria-label', '書いている所へ');
+    sbtn.onclick = () => { setScrollFollow(true); followLive(L.i, lastPt || L.p, true); };
+    nav.appendChild(b); nav.appendChild(f); nav.appendChild(sbtn);
+    bindScrollWatch();
     setBadge();
     onPresenceCb = (p) => {
       const was = L.presenter;
