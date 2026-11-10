@@ -16,8 +16,9 @@ for (const f of files) {
   await sleep(1000);
   const title = await page.evaluate(() => document.title);
   await page.evaluate(() => { enterPrintMode(); if (!document.body.classList.contains('page-break-on')) togglePageBreak(); });
-  // wait for MathJax to finish typesetting the print view
-  await page.waitForFunction(() => !document.querySelector('mjx-container') || true, { timeout: 5000 });
+  // enterPrintMode() starts its own typeset after 100ms; let it finish first,
+  // otherwise two concurrent typesets can crash MathJax (splitText IndexSizeError)
+  await sleep(3000);
   await page.evaluate(async () => { await MathJax.typesetPromise(); });
   await sleep(1500);
   // hide fixed UI that would repeat on every page

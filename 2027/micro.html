@@ -377,6 +377,11 @@ body.print-mode .slide-area {
   padding:12px 0;
 }
 
+/* Print: .columns.print-stack stacks vertically on handouts (slide view unchanged),
+   so wide tables get the full page width */
+.print-slide .columns.print-stack { flex-direction:column; gap:28px; }
+.print-slide .columns.print-stack > .column + .column { border-left:none; padding-left:0; }
+
 /* Print: figures get proper spacing */
 .print-slide .tikz-figure { margin:8px 0 12px; }
 .print-slide .tikz-figure svg,
@@ -2695,7 +2700,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 
 
 <template class="slide-data" data-title="市場均衡" data-section="需要と供給" data-note="false" data-print-margin="0">
-<div class="columns">
+<div class="columns print-stack">
 <div class="column">
 <div class="tikz-figure"><img src="img_micro/fig_eq_discrete.svg" alt="市場均衡と余剰"></div>
 </div>
@@ -2780,7 +2785,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="社会的総余剰" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="社会的総余剰" data-section="需要と供給" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3000,7 +3005,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </template>
 
-<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="150">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3090,7 +3095,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="" data-section="需要と供給" data-note="false" data-print-margin="200">
 <ul>
 <li>オイルショックは需要側のショック？供給側のショック？</li>
 <li>コロナショックは需要側のショック？供給側のショック？</li>
@@ -3166,7 +3171,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="市場均衡分析の応用例③ 課税の効果" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="市場均衡分析の応用例③ 課税の効果" data-section="需要と供給" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3228,7 +3233,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </template>
 
-<template class="slide-data" data-title="市場均衡の安定性①" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="市場均衡の安定性①" data-section="需要と供給" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3244,7 +3249,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="市場均衡の安定性②" data-section="需要と供給" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="市場均衡の安定性②" data-section="需要と供給" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3288,14 +3293,14 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="外部性" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="外部性" data-section="市場の失敗" data-note="false" data-print-margin="250">
 <ul>
 <li>他人の行動が自分の効用に直接影響を与えるとき，<span class="keyword">外部性</span>があると言う．</li>
 <li class="sub-item">例：</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="200">
 <ul>
 <li>数値例：</li>
 </ul>
@@ -3317,7 +3322,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="外部性：数値例" data-section="市場の失敗" data-note="false" data-print-margin="200">
 <table class="slide-table">
 <tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
 <tr><th>支払意思額（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
@@ -3428,7 +3433,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 
 
 
-<template class="slide-data" data-title="独占均衡" data-section="独占市場" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="独占均衡" data-section="独占市場" data-note="false" data-print-margin="250">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3468,7 +3473,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </template>
 
-<template class="slide-data" data-title="なるべく余剰を搾取せよ---完全価格差別" data-section="独占市場" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="なるべく余剰を搾取せよ---完全価格差別" data-section="独占市場" data-note="false" data-print-margin="200">
 <ul>
 <li>アダムとイヴに遊園地のチケットを売る．</li>
 <li class="sub-item">アダムは8000円の支払意思額</li>
@@ -3637,7 +3642,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 </template>
 
-<template class="slide-data" data-title="注意：図の横軸・縦軸" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="注意：図の横軸・縦軸" data-section="消費者の行動" data-note="false" data-print-margin="180">
 <div class="columns">
 <div class="column"><ul><li>これまで</li></ul></div>
 <div class="column"><ul><li>消費者の行動の章，複数財市場の均衡の章では</li></ul></div>
@@ -3663,7 +3668,7 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="予算制約：図解" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="予算制約：図解" data-section="消費者の行動" data-note="false" data-print-margin="200">
 <div class="framed">基本：価格が上昇すると買えるものが減る．所得が上昇すると買えるものが増える</div>
 <div class="columns">
 <div class="column">
@@ -3778,7 +3783,7 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="200">
 <div class="math-display" style="text-align:center; font-size:1.3em;">
 $$\frac{MU_x}{p_x}= \frac{MU_y}{p_y}$$
 </div>
@@ -3791,7 +3796,7 @@ $$\frac{MU_x}{p_x}= \frac{MU_y}{p_y}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="限界代替率" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="限界代替率" data-section="消費者の行動" data-note="false" data-print-margin="200">
 <ul>
 <li><span class="keyword">限界代替率</span>：財$x$をほんの少し増やしたときに効用を一定に保つためには財$y$をどれだけ減らさなければいけないかという交換比率</li>
 <li>$x$を増やす量を$1$，$y$を減らす量を$\Delta$とする．</li>
@@ -3811,13 +3816,13 @@ $$MRS_{xy}:= \Delta = \frac{MU_{x}}{MU_{y}}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="効用最大化条件" data-section="消費者の行動" data-note="false" data-print-margin="250">
 <div class="math-display" style="text-align:center; font-size:1.3em;">
 $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代替率}}=\underbrace{\frac{p_x}{p_y}}_{\text{価格比}}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="効用最大化条件・成り立たないケース" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="効用最大化条件・成り立たないケース" data-section="消費者の行動" data-note="false" data-print-margin="300">
 </template>
 
 <template class="slide-data" data-title="所得による需要の変化" data-section="消費者の行動" data-note="false" data-print-margin="0">
@@ -3905,7 +3910,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </div>
 </template>
 
-<template class="slide-data" data-title="ギッフェン・パラドックス" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="ギッフェン・パラドックス" data-section="消費者の行動" data-note="false" data-print-margin="150">
 <div class="columns">
 <div class="column">
 <div class="tikz-figure"><img src="img_micro/giffen.svg" alt="ギッフェン財"></div>
@@ -3914,7 +3919,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </div>
 </template>
 
-<template class="slide-data" data-title="消費者問題の応用：労働供給の問題" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="消費者問題の応用：労働供給の問題" data-section="消費者の行動" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -3931,7 +3936,7 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </div>
 </template>
 
-<template class="slide-data" data-title="効用最大化問題の図示" data-section="消費者の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="効用最大化問題の図示" data-section="消費者の行動" data-note="false" data-print-margin="250">
 <div class="columns">
 <div class="column"></div>
 <div class="column">
@@ -4129,20 +4134,20 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="供給関数" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="供給関数" data-section="企業の行動" data-note="false" data-print-margin="300">
 <ul>
 <li>利潤最大化問題を解く．$C(q)=q^2$とする．</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="300">
 <ul>
 <li>$C(q)=q^2+q$とする．供給関数を求めなさい．</li>
 <li>$C(q)=4\cdot q$だとする．供給関数を求めなさい（微分では解けない）．</li>
 </ul>
 </template>
 
-<template class="slide-data" data-title="費用の種類と構造" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="費用の種類と構造" data-section="企業の行動" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -4162,7 +4167,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="損益分岐点" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="損益分岐点" data-section="企業の行動" data-note="false" data-print-margin="250">
 <ul>
 <li>どのようなときに利益が黒字か（赤字か）？</li>
 <li class="sub-item arrow">→ <span class="keyword">損益分岐点</span>を求める．</li>
@@ -4172,7 +4177,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="操業停止点" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="操業停止点" data-section="企業の行動" data-note="false" data-print-margin="200">
 <div class="columns">
 <div class="column">
 <ul>
@@ -4400,7 +4405,7 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="長期と短期の費用曲線" data-section="企業の行動" data-note="false" data-print-margin="0">
+<template class="slide-data" data-title="長期と短期の費用曲線" data-section="企業の行動" data-note="false" data-print-margin="300">
 <div class="columns">
 <div class="column">
 <ul>

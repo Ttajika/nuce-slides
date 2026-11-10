@@ -199,6 +199,8 @@
         background:rgba(255,255,255,.15); color:#fff; cursor:pointer; font-size:13px; }
       .sl-meter { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:6px 0 2px; }
       .sl-meter div { height:100%; width:0; background:linear-gradient(90deg,#16a34a,#facc15 70%,#dc2626); transition:width .08s; }
+      #slScrollBtn { display:none; font-size:11px; background:#d97706; border-color:#d97706; }
+      #slScrollBtn.show { display:inline-block; }
       .live-canvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:11; pointer-events:none; }
       /* 配信中はスライドと板書のレイアウト幅を固定し、画面に収まらない分は zoom で縮める。
          こうすると全端末で行の折り返し・座標系が一致し、手書きがずれない。 */
@@ -487,6 +489,7 @@
     // viewer
     switch (m.t) {
       case 'full':
+        if (m.i !== L.i) setScrollFollow(true);
         L.i = m.i; L.s[m.i] = m.s; L.bo = m.bo; L.b[m.i] = m.b; L.p = m.p; L.ended = false;
         if ('m' in m) L.m = m.m;
         applySlide(); applyBoard(); applyMedia(); redrawLive(); redrawLiveBoard();
@@ -502,17 +505,21 @@
         const store = m.k === 'b' ? L.b : L.s;
         (store[m.i] = store[m.i] || []).push(m.s);
         m.k === 'b' ? redrawLiveBoard() : redrawLive();
+        if (m.k !== 'b' && m.s.p && m.s.p.length) followLive(m.i, m.s.p[m.s.p.length - 1]);
         break;
       }
       case 'pts': {
         const store = m.k === 'b' ? L.b : L.s;
         const arr = store[m.i];
-        if (arr && arr[m.n]) { arr[m.n].p.push(...m.p); m.k === 'b' ? redrawLiveBoard() : redrawLive(); }
+        if (arr && arr[m.n]) {
+          arr[m.n].p.push(...m.p); m.k === 'b' ? redrawLiveBoard() : redrawLive();
+          if (m.k !== 'b' && m.p.length) followLive(m.i, m.p[m.p.length - 1]);
+        }
         else send({ t: 'hello' });   // 取りこぼし → 全体を要求
         break;
       }
       case 'ptr':
-        L.p = m.p; redrawLive(); break;
+        L.p = m.p; redrawLive(); if (m.p) followLive(L.i, m.p); break;
       case 'board':
         L.bo = m.on; applyBoard(); break;
       case 'media':
@@ -539,6 +546,67 @@
   function applyMedia() {
     if (!following) return;
     try { setMedia(L.m); } catch (e) { console.warn('[slide-live] setMedia', e); }
+  }
+
+  // ── 書いている位置への自動スクロール（viewer）─────────────────────────────
+  // 画面が小さい・拡大中などで、配信者が書いている線やポインターが見えない位置にあれば
+  // そこまでスクロールする。学生が自分でスクロールしたら止め、「✍ 書いている所へ」で再開。
+  // 配信者がページを送ると自動で再開する。
+  let scrollFollow = true, lastPt = null, autoScrollAt = 0, userGestureAt = 0;
+  function visualRect(el) {   // CSS zoom 下でも getBoundingClientRect を画面座標にそろえる（slide-board.js と同じ）
+    const r = el.getBoundingClientRect();
+    let z = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).zoom);
+      if (v > 0) z *= v;
+    }
+    const f = (r.width && el.offsetWidth) ? el.offsetWidth * z / r.width : 1;
+    if (Math.abs(f - 1) < 0.01) return r;
+    return { left: r.left * f, top: r.top * f, width: r.width * f, height: r.height * f };
+  }
+  function scrollParent(el) {
+    for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      const o = getComputedStyle(n);
+      if (/(auto|scroll)/.test(o.overflowY + o.overflowX) && (n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1)) return n;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  function setScrollFollow(on) {
+    scrollFollow = on;
+    const b = $('slScrollBtn'); if (b) b.classList.toggle('show', !on);
+  }
+  function followLive(i, pt, force) {
+    if (role !== 'viewer' || !pt) return;
+    lastPt = pt;
+    if (!following || (!scrollFollow && !force) || i !== adapter.getCurrent()) return;
+    if (L.bo) return;                       // 板書ポップアップは画面に収まるので不要
+    const now = performance.now();
+    if (!force && now - autoScrollAt < 450) return;   // スムーズスクロール中は待つ
+    const c = liveCanvas || adapter.getCanvas();
+    if (!c || !c.offsetWidth) return;
+    const vr = visualRect(c);
+    const px = vr.left + pt[0] * vr.width, py = vr.top + pt[1] * vr.width;   // y も幅基準（normPt 参照）
+    const sc = scrollParent(c);
+    const doc = sc === document.scrollingElement || sc === document.documentElement;
+    const box = doc ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : sc.getBoundingClientRect();
+    const m = 40;
+    let dx = 0, dy = 0;
+    if (py < box.top + m || py > box.bottom - m) dy = py - (box.top + (box.bottom - box.top) * 0.4);
+    if (px < box.left + m || px > box.right - m) dx = px - (box.left + box.right) / 2;
+    if (!dx && !dy) return;
+    autoScrollAt = now;
+    sc.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+  }
+  function bindScrollWatch() {
+    const gesture = () => { userGestureAt = performance.now(); };
+    ['wheel', 'touchstart', 'keydown'].forEach(t => window.addEventListener(t, gesture, { capture: true, passive: true }));
+    window.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') gesture(); }, { capture: true, passive: true });
+    document.addEventListener('scroll', () => {
+      if (!scrollFollow || !following) return;
+      const now = performance.now();
+      if (now - userGestureAt > 1200 || now - autoScrollAt < 120) return;   // 自動スクロール・ページ送りによるもの
+      setScrollFollow(false);
+    }, { capture: true, passive: true });
   }
 
   function ensureOverlays() {
@@ -637,10 +705,15 @@
     f.title = '配信者のページ送りに追従する / しない';
     f.onclick = () => {
       following = !following;
-      if (following) { applySlide(); applyBoard(); applyMedia(); }
+      if (following) { applySlide(); applyBoard(); applyMedia(); setScrollFollow(true); }
       setBadge();
     };
-    nav.appendChild(b); nav.appendChild(f);
+    const sbtn = document.createElement('button');
+    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.textContent = '✍ 書いている所へ';
+    sbtn.title = '配信者が書いている位置への自動スクロールを再開する';
+    sbtn.onclick = () => { setScrollFollow(true); followLive(L.i, lastPt || L.p, true); };
+    nav.appendChild(b); nav.appendChild(f); nav.appendChild(sbtn);
+    bindScrollWatch();
     setBadge();
     onPresenceCb = (p) => {
       const was = L.presenter;
