@@ -559,7 +559,7 @@
 
   // ── 書いている位置への自動スクロール（viewer）─────────────────────────────
   // 画面が小さい・拡大中などで、配信者が書いている線やポインターが見えない位置にあれば
-  // そこまでスクロールする。学生が自分でスクロールしたら止め、「✍ 書いている所へ」で再開。
+  // そこまでスクロールする。学生が自分でスクロールしたら止め、「✍」ボタンで再開。
   // 配信者がページを送ると自動で再開する。
   let scrollFollow = true, lastPt = null, autoScrollAt = 0, userGestureAt = 0;
   function visualRect(el) {   // CSS zoom 下でも getBoundingClientRect を画面座標にそろえる（slide-board.js と同じ）
@@ -741,8 +741,9 @@
       setBadge();
     };
     const sbtn = document.createElement('button');
-    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.textContent = '✍ 書いている所へ';
-    sbtn.title = '配信者が書いている位置への自動スクロールを再開する';
+    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.textContent = '✍';
+    sbtn.title = '書いている所へ（自動スクロールを再開）';
+    sbtn.setAttribute('aria-label', '書いている所へ');
     sbtn.onclick = () => { setScrollFollow(true); followLive(L.i, lastPt || L.p, true); };
     nav.appendChild(b); nav.appendChild(f); nav.appendChild(sbtn);
     bindScrollWatch();
