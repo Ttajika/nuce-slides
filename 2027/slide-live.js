@@ -342,6 +342,7 @@
       b: bl.map(x => normStroke(x, bc)),
       p: p ? normPt(p, c) : null,
       m: getMedia(),
+      h: r4(c.height / c.width),   // canvas の縦横比（viewer が同じ高さまで描画領域を広げる）
     };
     send(msg);
     sent.i = i;
@@ -350,6 +351,7 @@
     sent.boardOpen = bo;
     sent.ptr = msg.p;
     sent.media = msg.m;
+    sent.h = msg.h;
     sent.lastFull = Date.now();
   }
 
@@ -386,6 +388,10 @@
     if (i !== sent.i || now - sent.lastFull > CONFIG.fullEveryMs) { sendFull(); return; }
     const c = adapter.getCanvas();
     if (!c || !c.width) return;
+
+    // canvas の縦横比（回転・リサイズ・スライド内容の変化）
+    const h = r4(c.height / c.width);
+    if (h !== sent.h) { sent.h = h; send({ t: 'dim', i, h }); }
 
     // 手書き
     let r = diffList('s', i, adapter.getStrokes() || [], sent.refs, sent.lastLen, c);
@@ -474,7 +480,7 @@
   // ═══════════════════════════════════════════════════════════════════════
   //  VIEWER
   // ═══════════════════════════════════════════════════════════════════════
-  const L = { i: -1, s: {}, b: {}, bo: false, p: null, m: null, ended: false, presenter: false };
+  const L = { i: -1, s: {}, b: {}, h: {}, bo: false, p: null, m: null, ended: false, presenter: false };
   let following = true;
   let liveCanvas = null, liveBoardCanvas = null;
 
@@ -490,6 +496,7 @@
     switch (m.t) {
       case 'full':
         if (m.i !== L.i) setScrollFollow(true);
+        if (m.h) L.h[m.i] = m.h;
         L.i = m.i; L.s[m.i] = m.s; L.bo = m.bo; L.b[m.i] = m.b; L.p = m.p; L.ended = false;
         if ('m' in m) L.m = m.m;
         applySlide(); applyBoard(); applyMedia(); redrawLive(); redrawLiveBoard();
@@ -518,6 +525,8 @@
         else send({ t: 'hello' });   // 取りこぼし → 全体を要求
         break;
       }
+      case 'dim':
+        L.h[m.i] = m.h; redrawLive(); break;
       case 'ptr':
         L.p = m.p; redrawLive(); if (m.p) followLive(L.i, m.p); break;
       case 'board':
@@ -638,9 +647,32 @@
     });
   }
 
+  // ── 描画領域の高さを配信側にそろえる（viewer）──────────────────────────────
+  // canvas の高さは「本文の高さ」と「表示領域の高さ」の大きい方で決まる。縦長の iPad では
+  // 本文の下の余白にも書けるが、横長の PC や拡大中は表示領域が（レイアウト上）短く、
+  // その線が canvas の外になって描かれず、スクロールでも届かない。
+  // そこで配信側の canvas の縦横比（と線の一番下）まで zoom-layer の最小の高さを広げる。
+  let extentWant = null;
+  function fitExtent() {
+    const layer = $('zoomLayer');
+    if (!layer || !layer.offsetWidth) return;
+    const i = adapter.getCurrent();
+    let r = L.h[i] || 0;
+    let maxY = 0;
+    (L.s[i] || []).forEach(st => (st.p || []).forEach(pt => { if (pt[1] > maxY) maxY = pt[1]; }));
+    if (L.p && i === L.i && L.p[1] > maxY) maxY = L.p[1];
+    if (maxY) r = Math.max(r, maxY + 0.03);
+    const want = r ? 'max(100%, ' + Math.ceil(r * layer.offsetWidth) + 'px)' : '';
+    if (want === extentWant) return;
+    extentWant = want;
+    layer.style.minHeight = want;
+    if (typeof window.resizeDrawCanvas === 'function') window.resizeDrawCanvas();   // → redrawLive が再度呼ばれる（変化なしで戻る）
+  }
+
   function redrawLive() {
     if (role !== 'viewer') return;
     ensureOverlays();
+    fitExtent();
     const c = adapter.getCanvas();
     if (!c || !liveCanvas) return;
     if (liveCanvas.width !== c.width || liveCanvas.height !== c.height) {
