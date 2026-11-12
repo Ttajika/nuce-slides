@@ -130,7 +130,7 @@
       <div class="ss-modal">
         <div id="ssLoginView">
           <h3>🔑 ログイン</h3>
-          <div style="font-size:12.5px;color:#6b7280;">ログインすると、メモ・手書き・理解度が他の端末とも同期されます。</div>
+          <div style="font-size:12.5px;color:#6b7280;">ログインすると、メモ・手書き・ブックマークが他の端末とも同期されます。</div>
           <label for="ssId">ID（例: 学籍番号）</label>
           <input type="text" id="ssId" autocomplete="username" placeholder="a1234567">
           <label for="ssPw">パスワード</label>

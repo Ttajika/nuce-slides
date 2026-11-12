@@ -522,6 +522,42 @@ body.print-mode .geogebra-embed .print-label {
   border-radius:8px; text-align:center; color:var(--text-dim); font-size:13px;
 }
 
+/* ═══ INTERACTIVE FIGURES (GeoGebra 置き換え) ═══ */
+.interactive-fig { width:100%; max-width:640px; margin:8px 0; user-select:none; -webkit-user-select:none; }
+.ifig-svg { width:100%; height:auto; display:block; background:#fff; border:1px solid #e4e4e4; border-radius:8px; touch-action:none; }
+.ifig-grid line { stroke:#eef0f3; stroke-width:1; }
+.ifig-axis line { stroke:#475569; stroke-width:1.4; }
+.ifig-tick text { font-size:11px; fill:#64748b; font-family:'JetBrains Mono',monospace; }
+.ifig-var, .ifig-axlab { font-family:'Times New Roman',serif; font-style:italic; font-size:19px; fill:#1a1a1a; }
+.ifig-curve { fill:none; stroke:#1a1a1a; stroke-width:2.5; }
+.ifig-curve-thick { stroke-width:3.5; }
+.ifig-tangent { stroke:#2563eb; stroke-width:2.5; }
+.ifig-secant { stroke:#dc2626; stroke-width:3; stroke-linecap:round; }
+.ifig-guide { stroke:#dc2626; stroke-width:1.4; stroke-dasharray:5 4; opacity:.75; }
+.ifig-drop { stroke:#94a3b8; stroke-width:1; stroke-dasharray:3 3; }
+.ifig-pt { fill:#1a1a1a; stroke:#fff; stroke-width:2; }
+.ifig-pt-red { fill:#dc2626; }
+.ifig-drag { cursor:grab; }
+.ifig-ptlab { font-family:'Times New Roman',serif; font-style:italic; font-size:18px; fill:#1a1a1a; paint-order:stroke; stroke:#fff; stroke-width:4px; }
+.ifig-note { font-family:'Times New Roman',serif; font-style:italic; font-size:17px; fill:#b91c1c; paint-order:stroke; stroke:#fff; stroke-width:4px; }
+.ifig-red { color:#dc2626; fill:#dc2626; }
+.ifig-blue { color:#2563eb; }
+.ifig-approx { fill:none; stroke-width:3; stroke-linecap:round; }
+.ifig-ghost { fill:none; stroke-width:1.6; opacity:.3; }
+.ifig-legend text { font-size:15px; fill:#1a1a1a; }
+.ifig-legend-bg { fill:#fff; fill-opacity:.88; stroke:#e2e2e0; }
+.ifig-info { font-size:14px; margin:6px 2px; line-height:1.6; }
+.ifig-ctl { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; font-size:14px; }
+.ifig-slider { display:flex; align-items:center; gap:6px; }
+.ifig-slider input { width:150px; accent-color:var(--accent); }
+.ifig-lab { font-family:'Times New Roman',serif; font-style:italic; font-size:17px; }
+.ifig-val { font-family:'JetBrains Mono',monospace; font-size:12px; min-width:3.6em; color:var(--text-dim); }
+.ifig-btn { padding:3px 12px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; font-family:inherit; font-size:13px; }
+.ifig-btn:hover { background:var(--accent-light); }
+.ifig-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.ifig-check { display:flex; align-items:center; gap:4px; font-size:13px; color:var(--text-dim); }
+body.print-mode .ifig-ctl { display:none; }
+
 /* ═══ FLOATING PEN BUTTON (FAB) ═══ */
 .fab-pen {
   display: none;
@@ -601,7 +637,6 @@ body.print-mode .fab-pen { display: none !important; }
     <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
     <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
   </div>
@@ -612,10 +647,6 @@ body.print-mode .fab-pen { display: none !important; }
   <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
   <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
   <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
-  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
-  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
-  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
-  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
   <span class="filter-count" id="filterCount"></span>
 </div>
 
@@ -1266,18 +1297,11 @@ function renderSlide(idx) {
   } else {
     html += s.html;
   }
-  // Understanding bar
-  const u = understanding[idx] || '';
-  html += '<div class="understanding-bar">';
-  html += `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>`;
-  html += `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>`;
-  html += `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
-  html += '</div>';
   el.innerHTML = html;
   renderMath(el);
   setupPhantoms(el);
+  setupInteractiveFigs(el);
   setupLinks(el);
-  updateStatusDot(idx);
 }
 
 function renderMath(el) {
@@ -1286,6 +1310,327 @@ function renderMath(el) {
       console.warn('MathJax typeset error:', err);
     });
   }
+}
+
+// ═══ INTERACTIVE FIGURES (GeoGebra 置き換え) ═══
+// スライド中の <div class="interactive-fig" data-fig="derivative|maclaurin"></div> を図に置き換える
+const SVGNS = 'http://www.w3.org/2000/svg';
+let figUid = 0;
+
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// 座標系つきSVGを作る
+function makePlot(box, opt) {
+  const W = opt.W || 560, H = opt.H || 380, m = { l: 34, r: 16, t: 14, b: 30 };
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'ifig-svg' });
+  box.appendChild(svg);
+  const [x0, x1] = opt.xr, [y0, y1] = opt.yr;
+  const sx = x => m.l + (x - x0) / (x1 - x0) * (W - m.l - m.r);
+  const sy = y => H - m.b - (y - y0) / (y1 - y0) * (H - m.t - m.b);
+  const ix = px => x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0);
+  const clipId = 'ifigclip' + (++figUid);
+  const defs = svgEl('defs', {}, svg);
+  const cp = svgEl('clipPath', { id: clipId }, defs);
+  svgEl('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b }, cp);
+  // grid & axes
+  const g = svgEl('g', { class: 'ifig-grid' }, svg);
+  for (let x = Math.ceil(x0); x <= x1; x++) svgEl('line', { x1: sx(x), x2: sx(x), y1: sy(y0), y2: sy(y1) }, g);
+  for (let y = Math.ceil(y0); y <= y1; y++) svgEl('line', { x1: sx(x0), x2: sx(x1), y1: sy(y), y2: sy(y) }, g);
+  const ax = svgEl('g', { class: 'ifig-axis' }, svg);
+  const yAxisX = (x0 <= 0 && 0 <= x1) ? 0 : x0, xAxisY = (y0 <= 0 && 0 <= y1) ? 0 : y0;
+  svgEl('line', { x1: sx(x0), x2: sx(x1), y1: sy(xAxisY), y2: sy(xAxisY) }, ax);
+  svgEl('line', { x1: sx(yAxisX), x2: sx(yAxisX), y1: sy(y0), y2: sy(y1) }, ax);
+  if (opt.ticks !== false) {
+    const tg = svgEl('g', { class: 'ifig-tick' }, svg);
+    for (let x = Math.ceil(x0); x <= x1; x++) if (x !== 0 && x % (opt.tickStep || 1) === 0) {
+      const t = svgEl('text', { x: sx(x), y: sy(xAxisY) + 15, 'text-anchor': 'middle' }, tg); t.textContent = x;
+    }
+    for (let y = Math.ceil(y0); y <= y1; y++) if (y !== 0 && y % (opt.tickStep || 1) === 0) {
+      const t = svgEl('text', { x: sx(yAxisX) - 6, y: sy(y) + 4, 'text-anchor': 'end' }, tg); t.textContent = y;
+    }
+  }
+  const t1 = svgEl('text', { x: sx(x1) - 4, y: sy(xAxisY) - 6, 'text-anchor': 'end', class: 'ifig-var' }, svg); t1.textContent = 'x';
+  const t2 = svgEl('text', { x: sx(yAxisX) + 6, y: sy(y1) + 12, class: 'ifig-var' }, svg); t2.textContent = 'y';
+  const layer = svgEl('g', { 'clip-path': `url(#${clipId})` }, svg);
+  const top = svgEl('g', {}, svg);
+  const pathOf = (f, a = x0, b = x1, n = 300) => {
+    let d = '';
+    for (let i = 0; i <= n; i++) {
+      const x = a + (b - a) * i / n, y = f(x);
+      const py = Math.max(-1e4, Math.min(1e4, sy(y)));
+      d += (i ? 'L' : 'M') + sx(x).toFixed(2) + ',' + py.toFixed(2);
+    }
+    return d;
+  };
+  // ドラッグ用：クライアント座標 → データx
+  const clientToX = (cx, cy) => {
+    const pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy;
+    return ix(pt.matrixTransform(svg.getScreenCTM().inverse()).x);
+  };
+  return { svg, layer, top, sx, sy, pathOf, clientToX, x0, x1, y0, y1 };
+}
+
+// 凡例の背後に半透明の背景を敷く
+function legendBg(g) {
+  try {
+    const b = g.getBBox();
+    if (!b.width) return;
+    const r = svgEl('rect', { x: b.x - 6, y: b.y - 4, width: b.width + 12, height: b.height + 8, rx: 4, class: 'ifig-legend-bg' });
+    g.insertBefore(r, g.firstChild);
+  } catch (e) {}
+}
+
+function makeSlider(parent, label, min, max, step, val, oninput) {
+  const wrap = document.createElement('label'); wrap.className = 'ifig-slider';
+  wrap.innerHTML = `<span class="ifig-lab">${label}</span>`;
+  const inp = document.createElement('input');
+  Object.assign(inp, { type: 'range', min, max, step, value: val });
+  const out = document.createElement('span'); out.className = 'ifig-val';
+  wrap.appendChild(inp); wrap.appendChild(out); parent.appendChild(wrap);
+  const sync = () => { out.textContent = (+inp.value).toFixed(2); };
+  inp.addEventListener('input', () => { sync(); oninput(+inp.value); });
+  sync();
+  return { inp, set(v) { inp.value = v; sync(); } };
+}
+
+function makeButton(parent, text, onclick) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'ifig-btn';
+  b.textContent = text; b.addEventListener('click', onclick); parent.appendChild(b); return b;
+}
+
+function enableDrag(P, handle, onMove) {
+  handle.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    handle.setPointerCapture(e.pointerId);
+    const mv = ev => onMove(P.clientToX(ev.clientX, ev.clientY));
+    const up = () => { handle.removeEventListener('pointermove', mv); handle.removeEventListener('pointerup', up); handle.removeEventListener('pointercancel', up); };
+    handle.addEventListener('pointermove', mv);
+    handle.addEventListener('pointerup', up);
+    handle.addEventListener('pointercancel', up);
+  });
+}
+
+// ─── 微分の図：割線（赤い線分）と接線 ───
+function buildDerivativeFig(box, isStatic) {
+  // 上に凸な関数
+  const f = x => -0.15 * (x - 5) ** 2 + 5;
+  const df = x => -0.3 * (x - 5);
+  const st = { x: 2, h: 2.5 };
+  const P = makePlot(box, { xr: [-0.5, 9.5], yr: [-0.5, 6.5], ticks: false });
+  const { sx, sy, layer, top } = P;
+
+  svgEl('path', { d: P.pathOf(f, -0.5, 9.5), class: 'ifig-curve' }, layer);
+  const tan = svgEl('line', { class: 'ifig-tangent' }, layer);
+  const guideH = svgEl('line', { class: 'ifig-guide' }, layer);
+  const guideV = svgEl('line', { class: 'ifig-guide' }, layer);
+  const dropP = svgEl('line', { class: 'ifig-drop' }, layer);
+  const dropQ = svgEl('line', { class: 'ifig-drop' }, layer);
+  const sec = svgEl('line', { class: 'ifig-secant' }, layer);
+  const labH = svgEl('text', { class: 'ifig-note', 'text-anchor': 'middle' }, top);
+  const labD = svgEl('text', { class: 'ifig-note' }, top);
+  const labX = svgEl('text', { class: 'ifig-axlab', 'text-anchor': 'middle' }, top);
+  const labXH = svgEl('text', { class: 'ifig-axlab ifig-red', 'text-anchor': 'middle' }, top);
+  const ptP = svgEl('circle', { r: 6, class: 'ifig-pt' }, top);
+  const ptQ = svgEl('circle', { r: 6, class: 'ifig-pt ifig-pt-red' }, top);
+  const labP = svgEl('text', { class: 'ifig-ptlab' }, top);
+  const labQ = svgEl('text', { class: 'ifig-ptlab ifig-red' }, top);
+  const leg = svgEl('g', { class: 'ifig-legend' }, top);
+  svgEl('line', { x1: 350, x2: 374, y1: 296, y2: 296, class: 'ifig-tangent' }, leg);
+  svgEl('text', { x: 380, y: 301 }, leg).textContent = '(x, f(x)) での接線';
+  svgEl('line', { x1: 350, x2: 374, y1: 318, y2: 318, class: 'ifig-secant' }, leg);
+  svgEl('text', { x: 380, y: 323 }, leg).textContent = '2点を結ぶ線分';
+
+  legendBg(leg);
+  const info = document.createElement('div'); info.className = 'ifig-info';
+  box.appendChild(info);
+
+  function draw() {
+    const { x, h } = st, y = f(x), s = df(x);
+    const xq = x + h, yq = f(xq);
+    tan.setAttribute('x1', sx(-1)); tan.setAttribute('y1', sy(y + s * (-1 - x)));
+    tan.setAttribute('x2', sx(11)); tan.setAttribute('y2', sy(y + s * (11 - x)));
+    const ok = Math.abs(h) >= 0.005;
+    [sec, guideH, guideV, dropQ, ptQ, labQ, labH, labD, labXH].forEach(e => e.style.display = ok ? '' : 'none');
+    sec.setAttribute('x1', sx(x)); sec.setAttribute('y1', sy(y));
+    sec.setAttribute('x2', sx(xq)); sec.setAttribute('y2', sy(yq));
+    guideH.setAttribute('x1', sx(x)); guideH.setAttribute('y1', sy(y));
+    guideH.setAttribute('x2', sx(xq)); guideH.setAttribute('y2', sy(y));
+    guideV.setAttribute('x1', sx(xq)); guideV.setAttribute('y1', sy(y));
+    guideV.setAttribute('x2', sx(xq)); guideV.setAttribute('y2', sy(yq));
+    dropP.setAttribute('x1', sx(x)); dropP.setAttribute('y1', sy(y));
+    dropP.setAttribute('x2', sx(x)); dropP.setAttribute('y2', sy(0));
+    dropQ.setAttribute('x1', sx(xq)); dropQ.setAttribute('y1', sy(yq));
+    dropQ.setAttribute('x2', sx(xq)); dropQ.setAttribute('y2', sy(0));
+    ptP.setAttribute('cx', sx(x)); ptP.setAttribute('cy', sy(y));
+    ptQ.setAttribute('cx', sx(xq)); ptQ.setAttribute('cy', sy(yq));
+    labP.setAttribute('x', sx(x) - 8); labP.setAttribute('y', sy(y) - 12);
+    labP.setAttribute('text-anchor', h >= 0 ? 'end' : 'start'); labP.textContent = '(x, f(x))';
+    labQ.setAttribute('x', sx(xq) + (h >= 0 ? 8 : -8)); labQ.setAttribute('y', sy(yq) - 12);
+    labQ.setAttribute('text-anchor', h >= 0 ? 'start' : 'end'); labQ.textContent = '(x+h, f(x+h))';
+    labX.setAttribute('x', sx(x)); labX.setAttribute('y', sy(0) + 20); labX.textContent = 'x';
+    labXH.setAttribute('x', sx(xq)); labXH.setAttribute('y', sy(0) + 20); labXH.textContent = 'x+h';
+    labH.setAttribute('x', sx(x + h / 2)); labH.setAttribute('y', sy(y) + (yq >= y ? 16 : -6)); labH.textContent = 'h';
+    labD.setAttribute('x', sx(xq) + (h >= 0 ? 6 : -6)); labD.setAttribute('y', (sy(y) + sy(yq)) / 2 + 4);
+    labD.setAttribute('text-anchor', h >= 0 ? 'start' : 'end');
+    labD.textContent = Math.abs(yq - y) > 0.25 ? 'f(x+h) − f(x)' : '';
+    const secSlope = ok ? (yq - y) / h : NaN;
+    info.innerHTML =
+      `<span class="ifig-red">線分の傾き</span> (f(x+h) − f(x)) / h = <b>${ok ? secSlope.toFixed(3) : '—（h = 0 では定義できない）'}</b>` +
+      `　　<span class="ifig-blue">接線の傾き</span> f′(x) = <b>${s.toFixed(3)}</b>`;
+  }
+
+  if (!isStatic) {
+    const ctl = document.createElement('div'); ctl.className = 'ifig-ctl'; box.appendChild(ctl);
+    let anim = null;
+    const stop = () => { if (anim) cancelAnimationFrame(anim); anim = null; };
+    const sX = makeSlider(ctl, 'x', 0, 8, 0.01, st.x, v => { stop(); st.x = v; draw(); });
+    const sH = makeSlider(ctl, 'h', -3, 3, 0.01, st.h, v => { stop(); st.h = v; draw(); });
+    makeButton(ctl, 'h → 0', () => {
+      stop();
+      const h0 = Math.abs(st.h) < 0.05 ? 2.5 : st.h, t0 = performance.now(), T = 2500;
+      const step = now => {
+        if (!box.isConnected) return;
+        const u = Math.min(1, (now - t0) / T);
+        st.h = h0 * Math.pow(1 - u, 2.2) + Math.sign(h0) * 0.01 * u;
+        sH.set(st.h); draw();
+        if (u < 1) anim = requestAnimationFrame(step); else anim = null;
+      };
+      anim = requestAnimationFrame(step);
+    });
+    makeButton(ctl, 'リセット', () => { stop(); st.x = 2; st.h = 2.5; sX.set(2); sH.set(2.5); draw(); });
+    // 点のドラッグ
+    ptP.classList.add('ifig-drag'); ptQ.classList.add('ifig-drag');
+    enableDrag(P, ptP, X => { stop(); st.x = Math.max(0, Math.min(8, X)); sX.set(st.x); draw(); });
+    enableDrag(P, ptQ, X => { stop(); st.h = Math.max(-3, Math.min(3, X - st.x)); sH.set(st.h); draw(); });
+  }
+  draw();
+}
+
+// ─── マクローリン展開の図 ───
+function buildMaclaurinFig(box, isStatic) {
+  // f(x) = x e^{-x}  →  f^{(n)}(0) = (−1)^{n+1} n  →  x − x² + x³/2 − x⁴/6 + x⁵/24 − …
+  const f = x => x * Math.exp(-x);
+  const fLabel = 'f(x) = x e⁻ˣ';
+  const c = [0, 1, -1, 1 / 2, -1 / 6, 1 / 24, -1 / 120, 1 / 720, -1 / 5040];
+  const terms = ['', 'x', '− x²', '+ x³/2', '− x⁴/6', '+ x⁵/24', '− x⁶/120', '+ x⁷/720', '− x⁸/5040'];
+  const maxN = Math.min(c.length - 1, +(box.dataset.maxOrder || 4));
+  const minN = 1;
+  const colors = ['#64748b', '#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#4d7c0f'];
+  const poly = n => x => { let s = 0, p = 1; for (let k = 0; k <= n; k++) { s += c[k] * p; p *= x; } return s; };
+  // 連続パラメータ t：floor(t) 次と次の次数の間を補間
+  const blend = t => {
+    const n = Math.floor(t), u = t - n;
+    if (n >= maxN) return poly(maxN);
+    const pn = poly(n);
+    return x => pn(x) + u * c[n + 1] * Math.pow(x, n + 1);
+  };
+  const P = makePlot(box, { xr: [-1, 3.5], yr: [-1.5, 1.5] });
+  const { layer, top } = P;
+  const ghosts = svgEl('g', {}, layer);
+  svgEl('path', { d: P.pathOf(f), class: 'ifig-curve ifig-curve-thick' }, layer);
+  const approx = svgEl('path', { class: 'ifig-approx' }, layer);
+  svgEl('circle', { cx: P.sx(0), cy: P.sy(f(0)), r: 4, class: 'ifig-pt' }, top);
+  const legend = svgEl('g', { class: 'ifig-legend' }, top);
+  const info = document.createElement('div'); info.className = 'ifig-info'; box.appendChild(info);
+  const polyText = n => terms.slice(0, n + 1).filter(Boolean).join(' ');
+
+  function legendRows(rows) {
+    legend.innerHTML = '';
+    rows.forEach((r, i) => {
+      const y = 30 + i * 22;
+      svgEl('line', { x1: 46, x2: 70, y1: y, y2: y, stroke: r.color, 'stroke-width': r.w || 3, 'stroke-dasharray': r.dash || '' }, legend);
+      svgEl('text', { x: 76, y: y + 4 }, legend).textContent = r.text;
+    });
+    legendBg(legend);
+  }
+
+  if (isStatic) {
+    // 印刷用：全次数を重ねて表示
+    approx.remove();
+    for (let n = minN; n <= maxN; n++)
+      svgEl('path', { d: P.pathOf(poly(n)), class: 'ifig-approx', stroke: colors[n] }, layer);
+    const sw = col => `<span style="display:inline-block;width:20px;height:3px;background:${col};vertical-align:middle;margin-right:6px"></span>`;
+    let html = `<div>${sw('#1a1a1a')}${fLabel}</div>`;
+    for (let n = minN; n <= maxN; n++) html += `<div>${sw(colors[n])}${n}次：${polyText(n)}</div>`;
+    info.innerHTML = html;
+    return;
+  }
+
+  let t = minN, showGhost = true;
+  function draw() {
+    const n = Math.floor(t + 1e-9), u = t - n;
+    const lo = Math.min(n, maxN);
+    approx.setAttribute('d', P.pathOf(blend(t)));
+    // 色も補間
+    approx.setAttribute('stroke', u < 0.5 ? colors[lo] : colors[Math.min(lo + 1, maxN)]);
+    ghosts.innerHTML = '';
+    if (showGhost) for (let k = minN; k < Math.min(Math.round(t), maxN + 1); k++)
+      svgEl('path', { d: P.pathOf(poly(k)), class: 'ifig-ghost', stroke: colors[k] }, ghosts);
+    const rows = [{ color: 'var(--text,#1a1a1a)', text: fLabel, w: 3.5 }];
+    if (u < 0.02 || n >= maxN) rows.push({ color: colors[lo], text: `${lo}次：${polyText(lo)}` });
+    else rows.push({ color: approx.getAttribute('stroke'), text: `${n}次 → ${n + 1}次（${polyText(n + 1)}）` });
+    legendRows(rows);
+    const shown = u < 0.02 || n >= maxN ? lo : null;
+    info.innerHTML = shown !== null
+      ? `<b style="color:${colors[shown]}">${shown}次</b>のマクローリン展開　P<sub>${shown}</sub>(x) = ${polyText(shown)}`
+      : `${n}次 → ${n + 1}次：項 <b>${terms[n + 1]}</b> を加えている途中`;
+    btns.forEach((b, i) => b.classList.toggle('active', shown === i + minN));
+  }
+
+  const ctl = document.createElement('div'); ctl.className = 'ifig-ctl'; box.appendChild(ctl);
+  let anim = null;
+  let playToken = 0;
+  const stop = () => { if (anim) cancelAnimationFrame(anim); anim = null; playToken++; playBtn.textContent = '▶ 再生'; };
+  const animateTo = (target, then) => {
+    if (anim) cancelAnimationFrame(anim);
+    const t0 = t, s0 = performance.now(), T = 900 * Math.max(0.4, Math.abs(target - t0));
+    const step = now => {
+      if (!box.isConnected) return;
+      const u = Math.min(1, (now - s0) / T), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      t = t0 + (target - t0) * e; draw();
+      if (u < 1) anim = requestAnimationFrame(step); else { anim = null; t = target; draw(); if (then) then(); }
+    };
+    anim = requestAnimationFrame(step);
+  };
+  const btns = [];
+  for (let n = minN; n <= maxN; n++)
+    btns.push(makeButton(ctl, `${n}次`, () => { stop(); animateTo(n); }));
+  const playBtn = makeButton(ctl, '▶ 再生', () => {
+    if (playBtn.textContent.startsWith('■')) { stop(); return; }
+    stop();
+    const my = playToken;
+    playBtn.textContent = '■ 停止';
+    const loop = () => {
+      if (!box.isConnected || my !== playToken) return;
+      const next = Math.round(t) >= maxN ? minN : Math.round(t) + 1;
+      setTimeout(() => {
+        if (!box.isConnected || my !== playToken) return;
+        if (next === minN) { t = minN; draw(); loop(); } else animateTo(next, loop);
+      }, 1100);
+    };
+    loop();
+  });
+  const gl = document.createElement('label'); gl.className = 'ifig-check';
+  gl.innerHTML = '<input type="checkbox" checked> これまでの近似も表示';
+  gl.querySelector('input').addEventListener('change', e => { showGhost = e.target.checked; draw(); });
+  ctl.appendChild(gl);
+  draw();
+}
+
+function setupInteractiveFigs(root) {
+  const isStatic = document.body.classList.contains('print-mode');
+  root.querySelectorAll('.interactive-fig').forEach(box => {
+    if (box.dataset.built) return;
+    box.dataset.built = '1';
+    box.innerHTML = '';
+    if (box.dataset.fig === 'derivative') buildDerivativeFig(box, isStatic);
+    else if (box.dataset.fig === 'maclaurin') buildMaclaurinFig(box, isStatic);
+  });
 }
 
 function setupPhantoms(el) {
@@ -1553,6 +1898,8 @@ function enterPrintMode() {
     });
   });
 
+  setupInteractiveFigs(area);
+
   // Render math and setup QR codes in print mode
   setTimeout(() => {
     if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
@@ -1668,31 +2015,6 @@ window.addEventListener('beforeunload', () => {
   saveLocal();
 });
 
-// ═══ UNDERSTANDING ═══
-function setUnderstanding(idx, level) {
-  if (understanding[idx] === level) {
-    delete understanding[idx]; // toggle off
-  } else {
-    understanding[idx] = level;
-  }
-  renderSlide(idx);
-  scheduleSave();
-  updateFilterCount();
-}
-
-function updateStatusDot(idx) {
-  // Update the dot next to page info
-  let dot = document.getElementById('statusDot');
-  if (!dot) {
-    dot = document.createElement('span');
-    dot.id = 'statusDot';
-    dot.className = 'status-dot';
-    document.getElementById('pageInfo').after(dot);
-  }
-  const u = understanding[idx];
-  dot.className = 'status-dot' + (u ? ' ' + u : '');
-}
-
 // ═══ BOOKMARKS ═══
 function toggleBookmark(idx) {
   if (bookmarks[idx]) {
@@ -1710,12 +2032,6 @@ function toggleFilter() {
   document.getElementById('filterBar').classList.toggle('show');
 }
 
-function toggleUnderstanding() {
-  const hidden = document.body.classList.toggle('hide-understanding');
-  localStorage.setItem('hideUnderstanding', hidden ? '1' : '');
-  document.getElementById('ubToggleBtn').style.opacity = hidden ? '0.4' : '';
-}
-
 function setFilter(type, el) {
   activeFilter = type;
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1727,10 +2043,6 @@ function setFilter(type, el) {
     filteredIndices = [];
     for (let i = 0; i < SLIDES.length; i++) {
       if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
-      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
-      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
-      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
-      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
     }
   }
   updateFilterCount();
@@ -1922,7 +2234,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Restore saved notes, strokes, and last position
   loadLocal();
-  if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
   // URL page specification: ?page=N or #N (1-based)
   const urlPage = getPageFromURL();
   if (urlPage !== null) current = urlPage;
@@ -2052,6 +2363,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li> 復習：練習問題を解く・わからないところを質問する・スタディグループを作って協力する
 </ol>
 <li> 「わかった」の基準は「授業内容を自分の言葉で説明できる（パラフレーズ）」ことです．
+<li> タイトルに ★ がついたスライドは発展的な内容です．
  </ul> 
  </div> 
  <div class="column"> 
@@ -2107,8 +2419,8 @@ document.addEventListener('DOMContentLoaded', () => {
  <li> 凹関数・凸関数
  <li> 応用：単一財市場の分析
  <li> 問題演習
- <li> 積分
- <li> 応用：確率分布
+ <li> 積分の意味と面積
+ <li> 積分の計算と応用：確率分布
  <li> 問題演習
  <li> 試験1
  <li> 試験2
@@ -2825,21 +3137,17 @@ document.addEventListener('DOMContentLoaded', () => {
  <div class="column"> 
   <ul> 
   <li>  ある関数 $f$ の点 $x$ における<strong class="keyword">微分係数</strong>, あるいは<strong class="keyword">導関数</strong>とは次の式で定義される関数
-<div class="math-display">\[\begin{aligned}\lim_{\Delta\to 0}\frac{f(x+\Delta)-f(x)}{\Delta}\end{aligned}\]</div>
-<li class="sub-item">»   $\displaystyle\lim_{\Delta\to 0}$： 「$\Delta$ がものすごく小さい」  
+<div class="math-display">\[\begin{aligned}\lim_{h\to 0}\frac{f(x+h)-f(x)}{h}\end{aligned}\]</div>
+<li class="sub-item">»   $\displaystyle\lim_{h\to 0}$： 「$h$ がものすごく小さい」  
 <li> 導関数は $f'(x)$ や $\frac{d}{dx}f(x)$ と表記される.
-<li> 極限 $\displaystyle \lim_{\Delta\to 0}\frac{f(x+\Delta)-f(x)}{\Delta}$ が定まるとき, 関数 $f$ は $x$ において<strong class="keyword">微分可能</strong>という
-<li> 微分のおおまかな意味：$ x$ がちょっとだけ（$ \Delta$ だけ）増えたとき，$ f(x)$ が $ f'(x)\cdot \Delta$ だけ増える
+<li> 極限 $\displaystyle \lim_{h\to 0}\frac{f(x+h)-f(x)}{h}$ が定まるとき, 関数 $f$ は $x$ において<strong class="keyword">微分可能</strong>という
+<li> 微分のおおまかな意味：$ x$ がちょっとだけ（$ h$ だけ）増えたとき，$ f(x)$ が $ f'(x)\cdot h$ だけ増える
   </ul> 
   </div> 
  <div class="column"> 
  <ul> 
-  <li> （図示）以下URLを参照<br>
-<div class="geogebra-embed">
-<iframe src="https://www.geogebra.org/calculator/a2vavmry?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
-<div class="print-label">📐 GeoGebra: 微分の図示（オンラインで表示）</div>
-</div>
-<a href="https://www.geogebra.org/calculator/a2vavmry" target="_blank" class="qr-link">🔗 QRリンク</a>
+  <li> （図示）$x$ と $h$ を動かしてみよう
+<div class="interactive-fig" data-fig="derivative"></div>
   </ul>  
   </div> 
   </div>
@@ -2875,11 +3183,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="math-display">\[\begin{aligned}f'(x)=a\cdot x^{a-1}\end{aligned}\]</div> 
 <li>  $f(x)= x^2 = \textcolor{blue}{x}\cdot \textcolor{#800000}{x}$ での直観的な説明
 <li class="sub-item">»   $ \textcolor{#800000}{x}$ を変数と思えば傾きは $  \textcolor{blue}{x}$
-<li class="spacer"> →  $ \textcolor{#800000}{x}$ だけが $ \Delta$ 増なら $ f(x)$ は $  \textcolor{blue}{x}\cdot\Delta$ だけ増  
+<li class="spacer"> →  $ \textcolor{#800000}{x}$ だけが $ h$ 増なら $ f(x)$ は $  \textcolor{blue}{x}\cdot h$ だけ増  
 <li class="sub-item">»  $  \textcolor{blue}{x}$ を変数と思えば傾きは $  \textcolor{#800000}{x}$
-<li class="spacer"> →  $ \textcolor{blue}{x}$ だけが $ \Delta$ 増なら $ f(x)$ は $  \textcolor{#800000}{x}\cdot\Delta$ だけ増  
-<li class="sub-item">»  実際には， $ \textcolor{#800000}{x}$ も $ \textcolor{blue}{x}$ も $ \Delta$ 増
-<li class="spacer"> →  $ x$ が $ \Delta$ 増なら $ f(x)$ は $ ( \textcolor{blue}{x}+\textcolor{#800000}{x} )\cdot \Delta= 2x\cdot \Delta$ だけ増． →  微分係数は $ 2x$
+<li class="spacer"> →  $ \textcolor{blue}{x}$ だけが $ h$ 増なら $ f(x)$ は $  \textcolor{#800000}{x}\cdot h$ だけ増  
+<li class="sub-item">»  実際には， $ \textcolor{#800000}{x}$ も $ \textcolor{blue}{x}$ も $ h$ 増
+<li class="spacer"> →  $ x$ が $ h$ 増なら $ f(x)$ は $ ( \textcolor{blue}{x}+\textcolor{#800000}{x} )\cdot h= 2x\cdot h$ だけ増． →  微分係数は $ 2x$
 
 <li class="spacer"></li>
 <li class="spacer"></li>
@@ -3071,7 +3379,7 @@ $f(x)=h(g(x))$ のとき,
 <template class="slide-data" data-title="マクローリン展開" data-section="テイラー展開" data-note="false" data-print-margin="0">
 <ul>
  <li> もし関数 $f$ が多項式でかけるならば
- <div class="math-display">\[\begin{aligned}f(x)= \alpha_{0}+ \alpha_{1}x+\alpha_{2}x^{2}+\alpha_{3}x^{3}+\alpha_{4}x^{4}+\cdots\end{aligned}\]</div> 
+ <div class="math-display">\[\begin{aligned}f(x)= a_{0}+ a_{1}x+a_{2}x^{2}+a_{3}x^{3}+a_{4}x^{4}+\cdots\end{aligned}\]</div> 
  <li> $f(0)$を計算すると...
  <li class="spacer"> 
  <li> $f'(x)$を計算すると...
@@ -3094,12 +3402,7 @@ $f(x)=h(g(x))$ のとき,
  ※$f^{(n)}(x)$ は $f(x)$ を $n$ 回微分した関数. 
  <li> <strong class="keyword">マクローリン展開</strong>
 
-<div class="geogebra-embed">
-<iframe src="https://www.geogebra.org/calculator/qed66kgf?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
-<div class="print-label">📐 GeoGebra: マクローリン展開（オンラインで表示）</div>
-</div>
-
- <a href="https://www.geogebra.org/calculator/qed66kgf" target="_blank" class="qr-link">🔗 QRリンク</a>
+<div class="interactive-fig" data-fig="maclaurin" data-max-order="4"></div>
  </ul>
 </template>
 
@@ -3287,7 +3590,7 @@ $f(x)=h(g(x))$ のとき,
  <ul>
  <li> 微分不可能であれば，最大化解において微分係数が定義できないことがあるので，$f'(x^*)=0$は言えない．
   <li class="sub-item"> » 例：$f(x)=-|x|$
- <li> <strong>優微分</strong>: $x$における優微分とは，任意の$y$について $f(y)-f(x)\le \xi \cdot (y-x)$となるような $\xi$の集合．
+ <li> <strong>優微分</strong>: $x$における優微分とは，任意の$y$について $f(y)-f(x)\le s \cdot (y-x)$となるような $s$の集合．
  </ul> 
  </div>
  <div class="column">
@@ -3310,7 +3613,8 @@ $f(x)=h(g(x))$ のとき,
  <ol>
  <li> 定義域の端点を最大化解の候補にする
  <li>  $f'(x)=0$ となる $x$ をすべて求め，最大化解の候補にする
- <li> 1，2で求めた候補を $f$ に代入していき，その中で $f(x)$ の値が最大となるものが最大化解である   
+ <li> 微分できない点があれば，それも最大化解の候補にする
+ <li> 1〜3で求めた候補を $f$ に代入していき，その中で $f(x)$ の値が最大となるものが最大化解である   
  </ol>
 </ul>
 </template>
@@ -3401,7 +3705,7 @@ $f(x)=h(g(x))$ のとき,
 <ul>
  <li> 最大化問題の例として，独占企業の利潤問題を考える
  <li> 独占企業の利潤: $D(p)=20-p$ を需要関数とする．
-<li> ただし，生産量が取り得る範囲は $0 \le p \le 18$ であるとする．
+<li> ただし，生産量が取り得る範囲は $0 \le q \le 18$ であるとする．
 <li> $q$ だけ生産することの費用が $\ln(q+1)$ であるとき，企業の利潤（利益）は
   <li class="spacer">
  <li> <strong>微分を使って</strong>この利潤を最大化するような生産量を求める．
@@ -3430,8 +3734,8 @@ $f(x)=h(g(x))$ のとき,
  </div>
  <div class="column">
 <ul>
- <li> 関数 $f$ が<strong class="keyword">凹関数</strong>であるとは任意の $x$, $x'$ と $0\le\alpha\le 1$ を満たす任意の $\alpha$ について次の不等式を満たすことをいう
- <div class="math-display">\[\begin{aligned}f(\alpha x+(1-\alpha)x')\ge \alpha f(x)+(1-\alpha)f(x')\end{aligned}\]</div>  
+ <li> 関数 $f$ が<strong class="keyword">凹関数</strong>であるとは任意の $x$, $x'$ と $0\le t\le 1$ を満たす任意の $t$ について次の不等式を満たすことをいう
+ <div class="math-display">\[\begin{aligned}f(t x+(1-t)x')\ge t f(x)+(1-t)f(x')\end{aligned}\]</div>  
  </ul> 
  </div>
  </div>
@@ -4289,7 +4593,7 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 85: 積分 / ダルブー和 ===== -->
-<template class="slide-data" data-title="ダルブー和" data-section="積分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="★ ダルブー和" data-section="積分" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -4583,7 +4887,7 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 86: 積分 / 積分と面積 ===== -->
-<template class="slide-data" data-title="積分と面積" data-section="積分" data-note="false" data-print-margin="280">
+<template class="slide-data" data-title="★ 積分と面積" data-section="積分" data-note="false" data-print-margin="280">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -4735,7 +5039,7 @@ $f(x)=h(g(x))$ のとき,
 </template>
 
 <!-- ===== Slide 87: 積分 / 積分と面積 ===== -->
-<template class="slide-data" data-title="積分と面積" data-section="積分" data-note="false" data-print-margin="80">
+<template class="slide-data" data-title="★ 積分と面積" data-section="積分" data-note="false" data-print-margin="80">
 <div class="columns"> 
  <div class="column"> 
   <ul> 
@@ -4936,8 +5240,8 @@ $f(x)=h(g(x))$ のとき,
  <div class="column"> 
   <ul> 
   <li>    <strong class="keyword">積分の線型性</strong>. 
-  <div class="math-display">\[\begin{aligned}&  \int_{a}^{b} (\alpha\cdot f(x)+\beta\cdot g(x))dx\\
- & =\alpha\int_{a}^{b} f(x)dx+\beta\int_{a}^{b}g(x)dx\end{aligned}\]</div> 
+  <div class="math-display">\[\begin{aligned}&  \int_{a}^{b} (p\cdot f(x)+q\cdot g(x))dx\\
+ & =p\int_{a}^{b} f(x)dx+q\int_{a}^{b}g(x)dx\end{aligned}\]</div> 
     </ul> 
   </div> 
  <div class="column"> 
@@ -5080,7 +5384,7 @@ $f(x)=h(g(x))$ のとき,
  <li class="sub-item">»  この値は確率的に決まる
  <li class="sub-item">»  $[a,b]$ のどんな値も取ることができる（連続変数）
  <li> $\P(X\le x)$ は $X$ が $x$ 以下である確率。
- <li class="sub-item">»  $F(x)=\P(X\le x)$ であるとき、$F$ を<strong class="keyword">分布関数</strong>あるいは<strong class="keyword">累積密度関数</strong>(cdf)と呼ぶ
+ <li class="sub-item">»  $F(x)=\P(X\le x)$ であるとき、$F$ を<strong class="keyword">分布関数</strong>あるいは<strong class="keyword">累積分布関数</strong>(cdf)と呼ぶ
  <li class="sub-item">»  $f(x)=F'(x)$ であるとき、$f$ を<strong class="keyword">確率密度関数</strong>(pdf)と呼ぶ
  </ul> 
  </div>
@@ -5148,17 +5452,17 @@ $[a,b]$上の分布関数は以下の性質を満たす
   
   <li> 例:
   <li class="sub-item">»  <strong class="keyword">正規分布</strong>: $a=-\infty$, $b=\infty$
-  <div class="math-display">\[\begin{aligned}f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp(-(x-\mu)^2/\sigma^2)\end{aligned}\]</div> 
+  <div class="math-display">\[\begin{aligned}f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)\end{aligned}\]</div> 
   
   </ul> 
   </div> 
  <div class="column"> 
  <ul> 
   <li> 標準正規分布
-    <div class="math-display">\[\begin{aligned}\varphi(z)=\frac{1}{\sqrt{2\pi}}\exp(-z^2)\end{aligned}\]</div> 
+    <div class="math-display">\[\begin{aligned}\varphi(z)=\frac{1}{\sqrt{2\pi}}\exp\left(-\frac{z^2}{2}\right)\end{aligned}\]</div> 
 
   <ul>
-    <li>$\int_{-\infty}^\infty z\phi(z)dz=0$</li>
+    <li>$\int_{-\infty}^\infty z\varphi(z)dz=0$</li>
     <li> 正規分布を変数変換すると標準正規分布になることを利用すると正規分布の期待値を求めることができる</li>
     <li class="spacer"></li>
     <li class="spacer"></li>
@@ -5229,7 +5533,7 @@ $[a,b]$上の分布関数は以下の性質を満たす
 
  
 <!-- ===== Slide 100: 応用：確率分布 / 一次確率支配 ===== -->
-<template class="slide-data" data-title="一次確率支配の十分条件" data-section="応用：確率分布" data-note="false" data-print-margin="400">
+<template class="slide-data" data-title="★ 一次確率支配の十分条件" data-section="応用：確率分布" data-note="false" data-print-margin="400">
 
 <ul>
   <li> 確率変数 $x\in [a,b]$ についての分布関数 $F$ と $G$ について，次の条件が満たされているとき，<strong class="keyword">1回交差条件</strong>を満たす（$g$が$f$を下から交差する）という．

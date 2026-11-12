@@ -679,7 +679,6 @@ body.print-mode .sage-cell-print {
     <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
     <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="nav-btn" id="ubToggleBtn" onclick="toggleUnderstanding()" title="理解度ボタンの表示/非表示" style="font-size:11px">📊</button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
     <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
   </div>
@@ -690,10 +689,6 @@ body.print-mode .sage-cell-print {
   <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
   <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
   <button class="filter-chip" onclick="setFilter('bookmark',this)">⭐ ブックマーク</button>
-  <button class="filter-chip" onclick="setFilter('ok',this)">✅ わかった</button>
-  <button class="filter-chip" onclick="setFilter('unsure',this)">🤔 あやしい</button>
-  <button class="filter-chip" onclick="setFilter('ng',this)">❌ わからない</button>
-  <button class="filter-chip" onclick="setFilter('unmarked',this)">⬜ 未チェック</button>
   <span class="filter-count" id="filterCount"></span>
 </div>
 
@@ -1047,7 +1042,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadLocal();
-  if (localStorage.getItem('hideUnderstanding')) { document.body.classList.add('hide-understanding'); document.getElementById('ubToggleBtn').style.opacity = '0.4'; }
   // URL page specification: ?page=N or #N (1-based)
   const urlPage = getPageFromURL();
   if (urlPage !== null) current = urlPage;
@@ -1255,16 +1249,6 @@ function showSlide(idx) {
   content.style.position = 'relative';
   content.prepend(bmBtn);
 
-  // Understanding bar
-  const u = understanding[idx] || '';
-  const ubar = document.createElement('div');
-  ubar.className = 'understanding-bar';
-  ubar.innerHTML =
-    `<button class="understanding-btn${u==='ok'?' active-ok':''}" onclick="setUnderstanding(${idx},'ok')">✅ わかった</button>` +
-    `<button class="understanding-btn${u==='unsure'?' active-unsure':''}" onclick="setUnderstanding(${idx},'unsure')">🤔 あやしい</button>` +
-    `<button class="understanding-btn${u==='ng'?' active-ng':''}" onclick="setUnderstanding(${idx},'ng')">❌ わからない</button>`;
-  content.appendChild(ubar);
-  updateStatusDot(idx);
   setupAnimFigures(content);
 
   // Setup phantoms
@@ -1826,30 +1810,6 @@ function clearNote() {
   notes[current] = '';
   scheduleSave();
 }
-// ═══ UNDERSTANDING ═══
-function setUnderstanding(idx, level) {
-  if (understanding[idx] === level) {
-    delete understanding[idx];
-  } else {
-    understanding[idx] = level;
-  }
-  showSlide(idx);
-  scheduleSave();
-  updateFilterCount();
-}
-
-function updateStatusDot(idx) {
-  let dot = document.getElementById('statusDot');
-  if (!dot) {
-    dot = document.createElement('span');
-    dot.id = 'statusDot';
-    dot.className = 'status-dot';
-    document.getElementById('slideNum').after(dot);
-  }
-  const u = understanding[idx];
-  dot.className = 'status-dot' + (u ? ' ' + u : '');
-}
-
 // ═══ BOOKMARKS ═══
 function toggleBookmark(idx) {
   if (bookmarks[idx]) {
@@ -1867,12 +1827,6 @@ function toggleFilter() {
   document.getElementById('filterBar').classList.toggle('show');
 }
 
-function toggleUnderstanding() {
-  const hidden = document.body.classList.toggle('hide-understanding');
-  localStorage.setItem('hideUnderstanding', hidden ? '1' : '');
-  document.getElementById('ubToggleBtn').style.opacity = hidden ? '0.4' : '';
-}
-
 function setFilter(type, el) {
   activeFilter = type;
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1885,10 +1839,6 @@ function setFilter(type, el) {
     for (let i = 0; i < SLIDES.length; i++) {
       if (SLIDES[i].is_note) continue;
       if (type === 'bookmark' && bookmarks[i]) filteredIndices.push(i);
-      else if (type === 'ok' && understanding[i] === 'ok') filteredIndices.push(i);
-      else if (type === 'unsure' && understanding[i] === 'unsure') filteredIndices.push(i);
-      else if (type === 'ng' && understanding[i] === 'ng') filteredIndices.push(i);
-      else if (type === 'unmarked' && !understanding[i]) filteredIndices.push(i);
     }
   }
   updateFilterCount();
