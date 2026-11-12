@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>効用関数と無差別曲線</title>
+<script>
+// iframe埋め込み時はスライドに合わせてライトテーマ・余白なしにする
+try{if(window.self!==window.top)document.documentElement.setAttribute('data-embed','');}catch(e){document.documentElement.setAttribute('data-embed','');}
+window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},startup:{typeset:false},chtml:{scale:0.95}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<style>
+:root{
+  --font-sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+  --border-radius-md:8px;
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f7f7f5;
+  --color-background-tertiary:#efefec;
+  --color-border-secondary:#dcdcd8;
+  --color-border-info:#3568d6;
+  --color-text-primary:#1a1a1a;
+  --color-text-secondary:#555;
+  --color-text-tertiary:#888;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-embed]){
+    --color-background-primary:#1e1e1e;
+    --color-background-secondary:#262626;
+    --color-background-tertiary:#303030;
+    --color-border-secondary:#444;
+    --color-border-info:#85b7eb;
+    --color-text-primary:#eee;
+    --color-text-secondary:#bbb;
+    --color-text-tertiary:#888;
+  }
+}
+html{background:var(--color-background-primary);}
+:root[data-embed] body{margin:0 auto;max-width:none;padding:0 4px;}
+#cv{box-shadow:0 4px 18px rgba(0,0,0,0.07),inset 0 0 0 1px rgba(0,0,0,0.04);transition:box-shadow .3s;}
+#formula{position:absolute;top:12px;left:14px;font-size:12px;color:rgba(60,60,60,0.6);pointer-events:none;z-index:1;}
+@media (prefers-color-scheme: dark){:root:not([data-embed]) #formula{color:rgba(220,220,220,0.6);}}
+.cv-wrap{position:relative;}
+#pp,#cl{border:none;cursor:pointer;font-family:inherit;transition:all .18s;outline:none;}
+#pp{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5b8def 0%,#3568d6 100%);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(53,104,214,.32);}
+#pp:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(53,104,214,.45);}
+#pp:active{transform:translateY(0);}
+#cl{padding:7px 14px;border-radius:18px;font-size:12px;background:var(--color-background-tertiary);color:var(--color-text-primary);border:1px solid var(--color-border-secondary);}
+#cl:hover{border-color:var(--color-border-info);color:var(--color-border-info);}
+#ch button{border:1px solid var(--color-border-secondary);border-radius:14px;padding:4px 12px;font-size:11px;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-family:inherit;transition:all .18s;outline:none;}
+#ch button:hover{background:var(--color-background-tertiary);border-color:var(--color-border-info);color:var(--color-text-primary);transform:translateY(-1px);}
+#ch button.active{background:linear-gradient(135deg,#5b8def 0%,#3568d6 100%);color:#fff;border-color:transparent;box-shadow:0 2px 7px rgba(53,104,214,.35);}
+#mk > div{transition:transform .15s,background .15s;}
+#mk > div:hover{transform:translateX(-5px) scale(1.5);background:var(--color-border-info)!important;}
+#mk > div.active{background:#3568d6!important;transform:translateX(-5px) scale(1.4);box-shadow:0 0 0 3px rgba(91,141,239,.25);}
+#pb{background:linear-gradient(90deg,#5b8def,#3568d6)!important;box-shadow:0 0 6px rgba(91,141,239,.45);}
+body { font-family: var(--font-sans); max-width: 640px; margin: 5rem auto; padding: 0 1rem; background:var(--color-background-primary); color:var(--color-text-primary); }
+/* 横長のiframe埋め込み時：グラフを左に大きく，説明と操作を右列に */
+@media (min-width:700px){
+  :root[data-embed] body{padding:0;}
+  :root[data-embed] #app{display:grid;grid-template-columns:minmax(0,1fr) 230px;grid-template-rows:auto auto 1fr;column-gap:12px;height:100vh;box-sizing:border-box;padding:6px!important;}
+  :root[data-embed] .cv-wrap{grid-column:1;grid-row:1 / 4;min-height:0;}
+  :root[data-embed] #cv{height:100%!important;}
+  :root[data-embed] #nar{grid-column:2;grid-row:1;height:auto!important;min-height:120px;margin-bottom:0!important;}
+  :root[data-embed] #ctrl{grid-column:2;grid-row:2;flex-wrap:wrap;}
+  :root[data-embed] #bar{flex:1 1 100%!important;order:3;}
+  :root[data-embed] #tl{order:2;margin-left:auto;}
+  :root[data-embed] #ch{grid-column:2;grid-row:3;align-content:flex-start;}
+}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+</head>
+<body>
+<h2 class="sr-only">効用関数と無差別曲線の図解</h2>
+<div id="app" style="padding:0.5rem 0;">
+<div id="nar" style="font-size:14.5px;color:var(--color-text-primary);height:74px;line-height:1.65;margin-bottom:6px;transition:opacity 0.4s;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);border-left:3px solid var(--color-border-info);overflow:hidden;display:flex;align-items:center;"><span id="narIn"></span></div>
+<div class="cv-wrap">
+<canvas id="cv" style="width:100%;height:450px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);cursor:grab;display:block;"></canvas>
+</div>
+<div id="ctrl" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+  <button id="pp" aria-label="再生/一時停止">▶</button>
+  <button id="cl">Camera: 固定</button>
+  <div id="bar" style="flex:1;position:relative;height:28px;">
+    <div style="position:absolute;top:12px;left:0;right:0;height:4px;background:var(--color-background-tertiary);border-radius:2px;">
+      <div id="pb" style="height:100%;width:0%;background:var(--color-border-info);border-radius:2px;transition:width 0.1s;"></div>
+    </div>
+    <div id="mk" style="position:absolute;top:0;left:0;right:0;height:28px;"></div>
+  </div>
+  <span id="tl" style="font-size:12px;color:var(--color-text-tertiary);min-width:70px;text-align:right;"></span>
+</div>
+<div id="ch" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
+</div>
+<script>
+(function(){
+const cv=document.getElementById('cv'),c=cv.getContext('2d');
+const narEl=document.getElementById('nar'),narIn=document.getElementById('narIn');
+const pbEl=document.getElementById('pb'),tlEl=document.getElementById('tl');
+const ppB=document.getElementById('pp'),clB=document.getElementById('cl');
+const mkEl=document.getElementById('mk'),chEl=document.getElementById('ch');
+const dk=!document.documentElement.hasAttribute('data-embed')&&matchMedia('(prefers-color-scheme:dark)').matches;
+let W,H,dp;
+function rsz(){dp=devicePixelRatio||1;const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dp;cv.height=H*dp;c.setTransform(dp,0,0,dp,0,0);}
+rsz();
+const PI=Math.PI,EP=.08,XM=5,ZS=3.5;
+const fv=(x,y)=>x>EP&&y>EP?Math.pow(x,.4)*Math.pow(y,.6):0;
+function isoY(u,x){if(x<EP)return XM+1;return Math.pow(u/Math.pow(x,.4),1/.6);}
+function isoP(u,n){const p=[];for(let i=0;i<=n;i++){const x=EP+(XM-EP)*i/n,y=isoY(u,x);if(y>=EP&&y<=XM)p.push({x,y});}return p;}
+const cF=dk?'#85b7eb':'#2a6ab5',cP=dk?'#f09595':'#c44040';
+const F=`$\\textcolor{${cF}}{u}$`;
+const Bk=`<span style="font-weight:500;border-bottom:2px solid ${dk?'#f09595':'#c44040'};padding-bottom:1px">オレンジの曲線</span>`;
+const Pl=`<span style="color:${cP};font-weight:500">平面</span>`;
+const uL=[1.5,2.5,3.5],uC2=[dk?'#f0b050':'#b5710e',dk?'#85dba0':'#1a7a3a',dk?'#c492e0':'#7a3ea0'];
+function uD(i){return `<span style="display:inline-block;width:10px;height:3px;border-radius:1px;background:${uC2[i]};vertical-align:middle;margin:0 2px"></span>`;}
+
+// Camera: ry near PI for all scenes, rx ~ -0.55 for 3D, -PI/2 for top-down
+// With mxV=-1 always: at ry=PI,rx=-PI/2 → x right, y up
+// At ry~PI-0.6, rx~-0.55 → nice 3D angle with x pointing right
+const TRX=-PI/2+.01,TRY=PI;
+
+const sc=[
+{time:0,dur:8,title:"効用関数u",
+ t:`青い面が効用関数 ${F} の曲面．消費計画 $(q_x, q_y)$ から効用 $u$ が決まる．`,
+ sF:true,fA:.82,plane:-1,iso:[],isoF:[],seq:null,
+ cam:{rx:-.55,ry:PI-1,z:1},camTo:{rx:-.5,ry:PI-.6,z:1.05}},
+{time:8,dur:7,title:"効用関数を輪切",
+ t:`ある効用水準を選び，${Pl}で曲面を輪切りにする．`,
+ sF:true,fA:.55,plane:0,iso:[],isoF:[],
+ seq:{pl:[0,.5],iso:[.5,.85]},
+ cam:{rx:-.5,ry:PI-.6,z:1.05},camTo:{rx:-.48,ry:PI-.35,z:1.1}},
+{time:15,dur:8,title:"交線を投影",
+ t:`平面と曲面の交線が${Bk}．これを $xy$ 平面に投影したものが ${uD(0)} 無差別曲線．`,
+ sF:true,fA:.4,plane:0,iso:[0],isoF:[],
+ seq:{drop:[0,.4],floor:[.3,1]},newF:0,
+ cam:{rx:-.48,ry:PI-.35,z:1.1},camTo:{rx:-.48,ry:PI-.2,z:1.08}},
+{time:23,dur:14,title:"無差別曲線",
+ t:`真上から．$xy$ 平面上の ${uD(0)} 無差別曲線．同じ効用を生む消費計画が並ぶ．`,
+ sF:false,fA:0,plane:-1,iso:[],isoF:[0],seq:null,
+ cam:{rx:-.48,ry:PI-.2,z:1.08},camTo:{rx:TRX,ry:TRY,z:1.45}},
+{time:37,dur:7,title:"3D図へ戻る",
+ t:`3D に戻り，別の効用水準でも同じことを行う．`,
+ sF:true,fA:.5,plane:-1,iso:[],isoF:[0],seq:null,
+ cam:{rx:TRX,ry:TRY,z:1.45},camTo:{rx:-.5,ry:PI-.5,z:1.05}},
+{time:44,dur:10,title:"他の効用水準でも同じ",
+ t:`2つ目の効用水準で輪切り→投影．${uD(1)} が新しい無差別曲線．効用が大きいほど原点から遠い．`,
+ sF:true,fA:.4,plane:1,iso:[],isoF:[0],
+ seq:{pl:[0,.2],iso:[.2,.4],drop:[.4,.6],floor:[.55,1]},newF:1,
+ cam:{rx:-.5,ry:PI-.5,z:1.05},camTo:{rx:-.48,ry:PI-.3,z:1.08}},
+{time:54,dur:10,title:"3つ目の効用水準",
+ t:`3つ目．${uD(0)}${uD(1)}${uD(2)} が並ぶ．無差別曲線は互いに交わらず，原点から遠いほど高い効用．`,
+ sF:true,fA:.35,plane:2,iso:[],isoF:[0,1],
+ seq:{pl:[0,.2],iso:[.2,.4],drop:[.4,.6],floor:[.55,1]},newF:2,
+ cam:{rx:-.48,ry:PI-.3,z:1.08},camTo:{rx:-.48,ry:PI-.15,z:1.08}},
+{time:64,dur:10,title:"平面へ",
+ t:`$xy$平面へ`,
+ sF:false,fA:0,plane:-1,iso:[],isoF:[0,1,2],seq:null,
+ cam:{rx:-.48,ry:PI-.15,z:1.08},camTo:{rx:TRX,ry:TRY,z:1.45}},
+ {time:74,dur:14,title:"無差別曲線",
+ t:`$xy$平面における無差別曲線．地形図の等高線と同じ原理．原点から遠いほど効用が大きい．`,
+ sF:false,fA:0,plane:-1,iso:[],isoF:[0,1,2],seq:null,
+ cam:{rx:TRX,ry:TRY,z:1.45},camTo:{rx:TRX,ry:TRY,z:1.45}},
+];
+const TD=sc[sc.length-1].time+sc[sc.length-1].dur;
+
+// シーン境界でカメラを連続化（前シーンの末尾を当シーンの始端に）
+for(let i=1;i<sc.length;i++)sc[i].cam={...sc[i-1].camTo};
+
+mkEl.innerHTML='';chEl.innerHTML='';
+sc.forEach((s,i)=>{const p=(s.time/TD*100).toFixed(1);
+  const m=document.createElement('div');m.style.cssText='position:absolute;top:4px;width:9px;height:9px;border-radius:50%;background:var(--color-border-secondary);cursor:pointer;transform:translateX(-4.5px);';
+  m.style.left=p+'%';m.dataset.idx=i;m.onclick=()=>{ct=s.time+.01;};mkEl.appendChild(m);
+  const b=document.createElement('button');b.textContent=s.title;
+  b.onclick=()=>{ct=s.time+.01;if(!pl){pl=true;ppB.textContent='⏸';}};chEl.appendChild(b);});
+
+let pl=false,ct=0,lf=null,pi=-1,rx=-.55,ry=PI-1,sz=1,uz=1,dg=false,dmx,dmy,camLock=false;
+cv.addEventListener('pointerdown',e=>{dg=true;dmx=e.clientX;dmy=e.clientY;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
+cv.addEventListener('pointermove',e=>{if(!dg)return;ry+=(e.clientX-dmx)*.008;rx+=(e.clientY-dmy)*.008;rx=Math.max(-PI/2,Math.min(.1,rx));dmx=e.clientX;dmy=e.clientY;});
+cv.addEventListener('pointerup',()=>{dg=false;cv.style.cursor='grab';});
+cv.addEventListener('wheel',e=>{e.preventDefault();uz*=e.deltaY>0?.93:1.07;uz=Math.max(.4,Math.min(3,uz));},{passive:false});
+ppB.addEventListener('click',()=>{pl=!pl;ppB.textContent=pl?'⏸':'▶';});
+clB.addEventListener('click',()=>{camLock=!camLock;clB.textContent=camLock?'Camera: 固定':'Camera: 自動回転';});
+
+function lr(a,b,t){return a+(b-a)*t;}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function gs(t){for(let i=sc.length-1;i>=0;i--)if(t>=sc[i].time)return{s:sc[i],i};return{s:sc[0],i:0};}
+function seqA(sq,e){if(!sq)return 1;return Math.max(0,Math.min(1,(e-sq[0])/(sq[1]-sq[0])));}
+
+// mxV=-1 always: x points right in all views
+function proj(gx,gy,gz){
+  const x=gx/XM*2-1,y=gy/XM*2-1,z=gz/ZS;
+  const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+  let x1=x*cy-y*sy,y1=x*sy+y*cy,y2=y1*cx-z*sx,z2=y1*sx+z*cx;
+  const s=FB*uz;
+  return[W/2+(-x1-FCX)*s,H/2+(-z2-FCY)*s,y2];
+}
+// 現在のカメラ角度で図全体（箱・軸・目盛ラベル）がキャンバスに収まるよう縮尺と中心を決める
+const KP=[[XM*1.08,0,0],[0,XM*1.08,0],[0,0,ZS*1.08],[XM+.15,EP,3.5],[-.25,XM,0],[XM,-.2,0]];
+for(const gx of[0,XM])for(const gy of[0,XM])KP.push([gx,gy,0]);
+for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){const x=EP+(XM-EP)*i/10,y=EP+(XM-EP)*j/10;KP.push([x,y,fv(x,y)]);}
+let FB=0,FCX=0,FCY=0;
+function fit(pz){
+  const pts=pz==null?KP:KP.concat([[0,0,pz],[XM,0,pz],[0,XM,pz],[XM,XM,pz]]);
+  const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+  let x0=1e9,x9=-1e9,y0=1e9,y9=-1e9;
+  for(const[gx,gy,gz]of pts){const x=gx/XM*2-1,y=gy/XM*2-1,z=gz/ZS;
+    const u=-(x*cy-y*sy),v=-((x*sy+y*cy)*sx+z*cx);
+    x0=Math.min(x0,u);x9=Math.max(x9,u);y0=Math.min(y0,v);y9=Math.max(y9,v);}
+  const tb=Math.min((W-40)/(x9-x0),(H-36)/(y9-y0)),k=FB?.08:1;
+  FB+=(tb-FB)*k;FCX+=((x0+x9)/2-FCX)*k;FCY+=((y0+y9)/2-FCY)*k;
+}
+function isTop(){return rx<-1.2;}
+
+function drawXYPlane(){
+  const N=5,a=isTop()?.15:.08;
+  const cn=[[0,0],[XM,0],[XM,XM],[0,XM]].map(p=>proj(p[0],p[1],0));
+  c.beginPath();cn.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();
+  c.fillStyle=dk?`rgba(60,60,55,${a})`:`rgba(200,200,195,${a})`;c.fill();
+  const ga=isTop()?.35:.15;
+  c.strokeStyle=dk?`rgba(255,255,255,${ga})`:`rgba(0,0,0,${ga})`;c.lineWidth=.5;
+  for(let i=0;i<=N;i++){const a2=proj(i,0,0),b2=proj(i,XM,0);c.beginPath();c.moveTo(a2[0],a2[1]);c.lineTo(b2[0],b2[1]);c.stroke();
+    const c2=proj(0,i,0),d2=proj(XM,i,0);c.beginPath();c.moveTo(c2[0],c2[1]);c.lineTo(d2[0],d2[1]);c.stroke();}
+  const fs=isTop()?13:10;
+  c.font=`500 ${fs}px var(--font-sans)`;c.fillStyle=dk?'#999':'#777';
+  for(let i=1;i<=N;i++){const lx=proj(i,-.2,0);c.fillText(i+'',lx[0]-4,lx[1]+(isTop()?5:12));
+    const ly=proj(-.25,i,0);c.fillText(i+'',ly[0]-(isTop()?12:8),ly[1]+4);}
+}
+function drawAxes(){
+  const al=1.08,zal=isTop()?.01:al;
+  const cls=[dk?'#F09595':'#A32D2D',dk?'#97C459':'#3B6D11',dk?'#85B7EB':'#185FA5'];
+  [[XM*al,0,0,'x'],[0,XM*al,0,'y'],[0,0,ZS*zal,'u']].forEach(([ex,ey,ez,lb],i)=>{
+    if(isTop()&&lb==='u')return;
+    const a=proj(0,0,0),b=proj(ex,ey,ez);
+    c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.strokeStyle=cls[i];c.lineWidth=isTop()?2:1.5;c.stroke();
+    const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy);
+    if(len>20){const ux=dx/len,uy=dy/len;c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]-ux*8+uy*4,b[1]-uy*8-ux*4);c.lineTo(b[0]-ux*8-uy*4,b[1]-uy*8+ux*4);c.closePath();c.fillStyle=cls[i];c.fill();}
+    c.fillStyle=cls[i];c.font=`italic 600 ${isTop()?16:14}px var(--font-sans)`;c.fillText(lb,b[0]+6,b[1]-6);});}
+
+function genQ(fn,N,ci,al){const qs=[],pts=[];
+  for(let i=0;i<=N;i++){pts[i]=[];for(let j=0;j<=N;j++){const x=EP+(XM-EP)*i/N,y=EP+(XM-EP)*j/N;pts[i][j]={x,y,z:fn(x,y)};}}
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const v=[pts[i][j],pts[i+1][j],pts[i+1][j+1],pts[i][j+1]];const pp=v.map(p=>proj(p.x,p.y,p.z));
+    qs.push({pp,d:(pp[0][2]+pp[1][2]+pp[2][2]+pp[3][2])/4,az:(v[0].z+v[1].z+v[2].z+v[3].z)/4,ci,a:al});}return qs;}
+const fP=dk?[[40,90,210],[140,195,248]]:[[30,80,200],[120,185,248]];
+function qC(q){const t=Math.max(0,Math.min(1,q.az/4));return[Math.round(lr(fP[0][0],fP[1][0],t)),Math.round(lr(fP[0][1],fP[1][1],t)),Math.round(lr(fP[0][2],fP[1][2],t))];}
+
+function drawPlane(qi,alpha){const u=uL[qi];
+  const cn=[[EP,EP],[XM,EP],[XM,XM],[EP,XM]].map(p=>proj(p[0],p[1],u));
+  c.beginPath();cn.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();
+  c.fillStyle=dk?`rgba(240,150,150,${.15*alpha})`:`rgba(200,60,60,${.1*alpha})`;c.fill();
+  c.strokeStyle=dk?`rgba(240,150,150,${.3*alpha})`:`rgba(200,60,60,${.2*alpha})`;c.lineWidth=1;c.stroke();
+  const lp=proj(XM+.15,EP,u);c.font='500 11px var(--font-sans)';
+  c.fillStyle=dk?`rgba(240,180,180,${alpha})`:`rgba(180,50,50,${alpha})`;c.fillText('u='+u.toFixed(1),lp[0],lp[1]+4);}
+function drawI3(qi,alpha){const u=uL[qi],pts=isoP(u,120),col=uC2[qi];if(pts.length<2)return;
+  const pp=pts.map(p=>proj(p.x,p.y,u));
+  c.beginPath();pp.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));
+  c.strokeStyle=dk?`rgba(255,255,255,${.2*alpha})`:`rgba(0,0,0,${.08*alpha})`;c.lineWidth=10;c.stroke();
+  c.beginPath();pp.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));
+  c.strokeStyle=col;c.globalAlpha=alpha;c.lineWidth=2.5;c.stroke();c.globalAlpha=1;}
+function drawDrp(qi,alpha){const u=uL[qi],pts=isoP(u,120);
+  for(let k=0;k<pts.length;k+=12){const p=pts[k],tp=proj(p.x,p.y,u),bp=proj(p.x,p.y,0);
+    c.beginPath();c.moveTo(tp[0],tp[1]);c.lineTo(bp[0],bp[1]);
+    c.strokeStyle=dk?`rgba(255,255,255,${.2*alpha})`:`rgba(0,0,0,${.12*alpha})`;c.lineWidth=1;c.setLineDash([2,3]);c.stroke();c.setLineDash([]);}}
+function drawIF(qi,alpha){const u=uL[qi],pts=isoP(u,120),col=uC2[qi];if(pts.length<2)return;
+  const pp=pts.map(p=>proj(p.x,p.y,0));
+  c.beginPath();pp.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));
+  c.strokeStyle=col;c.globalAlpha=alpha;c.lineWidth=isTop()?3:2.5;c.stroke();c.globalAlpha=1;
+  const mid=pp[Math.floor(pp.length*.25)];
+  if(mid){c.font=`500 ${isTop()?13:11}px var(--font-sans)`;c.fillStyle=col;c.globalAlpha=alpha;c.fillText('u='+u.toFixed(1),mid[0]-30,mid[1]-10);c.globalAlpha=1;}}
+
+function fmt(s2){return Math.floor(s2/60)+':'+String(Math.floor(s2%60)).padStart(2,'0');}
+function kxRender(el){
+  if(!el)return;
+  if(window.MathJax&&window.MathJax.typesetPromise){
+    window.MathJax.typesetPromise([el]).catch(e=>console.warn('MathJax render failed',e));
+  } else setTimeout(()=>kxRender(el),100);
+}
+kxRender(document.getElementById('formula'));
+
+function render(t){
+  const{s:sn,i:si}=gs(t);const lt=Math.max(0,Math.min(1,(t-sn.time)/sn.dur)),e=ease(lt);
+  if(si!==pi){narEl.style.opacity=0;setTimeout(()=>{narIn.innerHTML=sn.t;kxRender(narIn);narEl.style.opacity=1;},250);
+    Array.from(chEl.children).forEach((e2,k)=>e2.classList.toggle('active',k===si));
+    Array.from(mkEl.children).forEach((e2,k)=>e2.classList.toggle('active',k===si));
+    pi=si;}
+  if(!dg&&!camLock){const trx=lr(sn.cam.rx,sn.camTo.rx,e),try2=lr(sn.cam.ry,sn.camTo.ry,e),tz=lr(sn.cam.z,sn.camTo.z,e);
+    rx+=(trx-rx)*.07;ry+=(try2-ry)*.07;sz+=(tz-sz)*.07;}
+
+  fit(sn.plane>=0?uL[sn.plane]:null);
+  const sq=sn.seq;
+  const N=26,allQ=[];
+  if(sn.sF)allQ.push(...genQ((x,y)=>fv(x,y),N,0,sn.fA));
+  allQ.sort((a,b)=>a.d-b.d);
+
+  c.clearRect(0,0,W,H);
+  const bg=c.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,dk?'rgba(60,80,120,0.32)':'rgba(210,225,245,0.45)');
+  bg.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=bg;c.fillRect(0,0,W,H);
+  drawXYPlane();
+
+  for(const q of allQ){const[r,gb,b]=qC(q);
+    c.beginPath();c.moveTo(q.pp[0][0],q.pp[0][1]);c.lineTo(q.pp[1][0],q.pp[1][1]);c.lineTo(q.pp[2][0],q.pp[2][1]);c.lineTo(q.pp[3][0],q.pp[3][1]);c.closePath();
+    c.fillStyle=`rgba(${r},${gb},${b},${q.a})`;c.fill();
+    c.strokeStyle=dk?`rgba(255,255,255,${q.a*.07})`:`rgba(0,0,0,${q.a*.09})`;c.lineWidth=.5;c.stroke();}
+
+  // plane
+  if(sn.plane>=0){const pa=sq&&sq.pl?seqA(sq.pl,e):1;if(pa>0)drawPlane(sn.plane,pa);}
+
+  // 3D iso from sequence
+  if(sq&&sq.iso){const ia=seqA(sq.iso,e);if(ia>0&&sn.plane>=0)drawI3(sn.plane,ia);}
+  // static 3D isos
+  sn.iso.forEach(qi=>drawI3(qi,1));
+
+  // drop lines from sequence for new floor iso
+  const nf=sn.newF;
+  if(sq&&sq.drop&&nf!=null){const da=seqA(sq.drop,e);if(da>0)drawDrp(nf,da);}
+
+  // existing floor isos (always full)
+  sn.isoF.forEach(qi=>drawIF(qi,1));
+
+  // new floor iso from sequence
+  if(sq&&sq.floor&&nf!=null){const fa=seqA(sq.floor,e);if(fa>0)drawIF(nf,fa);}
+
+  drawAxes();
+  pbEl.style.width=(t/TD*100).toFixed(1)+'%';tlEl.textContent=fmt(t)+' / '+fmt(TD);}
+
+function loop(ts){if(lf===null)lf=ts;const dt=(ts-lf)/1000;lf=ts;if(pl)ct+=dt;if(ct>=TD){ct=0;pi=-1;}render(ct);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);window.addEventListener('resize',()=>rsz());
+})();
+</script>
+</body>
+</html>

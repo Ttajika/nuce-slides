@@ -308,13 +308,24 @@ body.print-mode .tikz-figure { cursor:default; }
 .slide-table td, .slide-table th {
   border:1px solid var(--border); padding:4px 12px; text-align:center;
 }
-/* マッチング表：列（買手と売手のペア）ごとに太線で囲む */
-.match-table td { border-left:3px solid var(--text); border-right:3px solid var(--text); }
-.match-table tr:first-child td { border-top:3px solid var(--text); }
-.match-table tr:last-child td { border-bottom:3px solid var(--text); }
-.match-table tr.match-gap td { height:2em; border-top:none; border-bottom:none; }
-.match-table tr.match-gap th { border:none; }
+/* マッチング表：縦に並んだ買手と売手が1つの組であることをカードで示す */
+.match-table { border-collapse:separate; border-spacing:10px 0; margin:8px auto; }
+.match-table th { border:none; padding:4px 8px; text-align:right; font-weight:600; white-space:nowrap; }
+.match-table td {
+  background:var(--accent-light); text-align:center; padding:4px 14px; min-width:4.5em;
+  border-left:2px solid #93c5fd; border-right:2px solid #93c5fd;
+}
+.match-table tr:first-child td { border-top:2px solid #93c5fd; border-radius:8px 8px 0 0; padding-top:8px; }
+.match-table tr:last-child td { border-bottom:2px solid #93c5fd; border-radius:0 0 8px 8px; padding-bottom:8px; }
+.match-table tr.name td { font-weight:700; }
+.match-table tr.match-link td { color:var(--accent); font-size:1.4em; line-height:1.3; padding:2px 0; }
+.match-table tr.match-link th { color:var(--accent); font-size:0.85em; font-weight:500; }
+.match-table tr.blank td { height:2.2em; background:var(--surface); border-top:1px dashed #93c5fd; }
+.match-table tr.blank-first td { border-top:1.5px dashed #93c5fd; }
 .match-table tr.match-surplus td { height:2em; background:var(--keyword-bg); }
+.match-table.compact { border-spacing:6px 0; margin:8px 0 8px -1.5em; } /* ul の字下げを打ち消して列の左端に揃える */
+.match-table.compact th { padding:4px 4px; }
+.match-table.compact td { min-width:0; padding-left:8px; padding-right:8px; }
 
 .multicols { column-count:2; column-gap:24px; }
 
@@ -2614,12 +2625,14 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 </template>
 
 <template class="slide-data" data-title="適当なマッチングを考える..." data-section="需要と供給" data-note="false" data-print-margin="0">
-<table class="slide-table match-table">
-<tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<table class="match-table">
+<tr class="name"><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
 <tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
-<tr class="match-gap"><th></th><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr class="match-link"><th>取引</th><td>↕</td><td>↕</td><td>↕</td><td>↕</td><td>↕</td></tr>
+<tr class="name"><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
 <tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+<tr class="blank blank-first"><th>取引の成否</th><td></td><td></td><td></td><td></td><td></td></tr>
+<tr class="blank"><th>取引<span class="keyword">余剰</span>（万円）</th><td></td><td></td><td></td><td></td><td></td></tr>
 </table>
 <div class="columns">
 <div class="column"><ul>
@@ -2724,12 +2737,12 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 
 <li>テキトーなマッチングと比較してみる</li>
 </ul>
-<table class="slide-table match-table">
-<tr><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
-<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
-<tr class="match-surplus"><th>取引による<span class="keyword">余剰</span>（万円）</th><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
-<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+<table class="match-table compact">
+<tr class="name"><th>家が欲しい人</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th><span class="keyword">支払意思額</span></th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr class="match-surplus"><th>取引<span class="keyword">余剰</span></th><td></td><td></td><td></td><td></td><td></td></tr>
+<tr class="name"><th>大工</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
 </table>
 </ul>
 </div>
@@ -3707,9 +3720,12 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <ul>
 <li>二つの消費プランが<span class="keyword">無差別</span> $\iff$ どちらの消費プランから得られる効用も同じ</li>
 <li><span class="keyword">無差別曲線</span>：無差別な消費プランの点を結んだ曲線</li>
-<a href="https://ttajika.github.io/micro-contents/anime_gallery.html#anime-indifference" target="_blank" class="qr-link">アニメーションによる説明</a>
-<li class="sub-item">次のページの特徴を仮定する</li>
 </ul>
+
+<div class="geogebra-embed">
+<iframe src="indifference_movie.html" title="効用関数と無差別曲線のアニメーション" loading="lazy" style="height:440px;max-width:720px;margin:0 auto;"></iframe>
+<div class="print-label">アニメーション：効用関数の3Dグラフを等高線で切ると無差別曲線になる（オンライン版を参照）</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="無差別曲線の仮定" data-section="消費者の行動" data-note="false" data-print-margin="300">
@@ -4348,11 +4364,10 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <p class="small">※縦軸・横軸に注意</p>
 <div class="columns">
 <div class="column">
-<ul><li><span class="keyword">等産出量曲線</span>: 同じ生産量を達成する点$(K,L)$を結んだ曲線</li></ul>
+<ul><li><span class="keyword">等量曲線</span>: 同じ生産量を達成する点$(K,L)$を結んだ曲線</li></ul>
 
-<a href="https://ttajika.github.io/micro-contents/anime_gallery.html#anime-isoquant" target="_blank" class="qr-link">アニメーション解説</a>
 
-<ul><li> 等産出量曲線の傾きは<span class="keyword">技術的限界代替率</span></li>
+<ul><li> 等量曲線の傾きは<span class="keyword">技術的限界代替率</span></li>
 </ul>
 </div>
 <div class="column">
@@ -4360,6 +4375,13 @@ $$C(q)= w\cdot L^*(q,\bar K)+r\cdot \bar K$$
 <div class="tikz-figure"><img src="img_micro/iso_cost_curve.svg" alt="等費用曲線"></div>
 <ul><li class="sub-item">等費用曲線の傾きは</li></ul>
 </div>
+</div>
+</template>
+
+<template class="slide-data" data-title="生産関数と等量曲線（アニメーション）" data-section="企業の行動" data-note="false" data-print-margin="0">
+<div class="geogebra-embed">
+<iframe src="isoquant_movie.html" title="生産関数と等量曲線のアニメーション" loading="lazy" style="height:440px;max-width:720px;margin:0 auto;"></iframe>
+<div class="print-label">アニメーション：生産関数の3Dグラフを等高線で切ると等量曲線になる（オンライン版を参照）</div>
 </div>
 </template>
 

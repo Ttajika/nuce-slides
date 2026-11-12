@@ -93,6 +93,10 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .notes-textarea { flex:1; background:transparent; border:none; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:14px; line-height:1.8; padding:12px; resize:none; outline:none; }
 .notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
 .columns { display:flex; gap:24px; }
+/* スライド内に直接表示する埋め込み（iframe.inline-embed[data-embed-tpl]、setupLinks で srcdoc を入れる）。
+   印刷ではアニメーションを載せず QR リンクだけ残す */
+iframe.inline-embed { display:block; width:100%; border:none; margin:12px 0 4px; background:transparent; }
+body.print-mode iframe.inline-embed { display:none; }
 .column { flex:1; min-width:0; }
 /* columns の間に薄い区切り線 */
 .columns > .column + .column { border-left:1px solid var(--border); padding-left:24px; }
@@ -1142,6 +1146,15 @@ function setupLinks(el) {
       imgDiv.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
       link.appendChild(imgDiv);
     } catch(e) {}
+  });
+  // スライド内の埋め込み：iframe.inline-embed[data-embed-tpl] にテンプレートを srcdoc で流し込む。
+  el.querySelectorAll('iframe.inline-embed[data-embed-tpl]').forEach(f => {
+    const tpl = document.getElementById(f.dataset.embedTpl);
+    if (!tpl || f.srcdoc) return;
+    f.onload = () => {   // 高さを中身に合わせる（srcdoc は同一オリジンなので読める）
+      try { const h = f.contentDocument.documentElement.scrollHeight; if (h > 50) f.style.height = h + 'px'; } catch (e) {}
+    };
+    f.srcdoc = '<style>body{margin:0 auto!important}.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>' + tpl.innerHTML;
   });
   // 埋め込みリンク：data-embed-tpl のテンプレートを srcdoc で開く（オフライン対応）。
   // テンプレートが無ければ href を iframe で開く。
@@ -3978,28 +3991,15 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
 
 <!-- ===== Slide 81: 制約付き最適化問題 / 直観 ===== -->
 <template class="slide-data" data-title="直観" data-section="制約付き最適化問題" data-note="false" data-print-margin="180">
-<div class="columns"> 
- <div class="column"> 
 <ul>
  <li> ラグランジュ関数 ${L}$ の直観的意味：
- 
  <li class="sub-item"><span style="color:#2563eb">»</span>  制約条件 $g(x,y)=0$ からはみだそうとすると，$\lambda$ だけの大きさで罰則を与える．
  <li class="sub-item"><span style="color:#2563eb">»</span>  罰則のことを考えながらなるべく $f$ を最大化しようとする．
  <li class="sub-item"><span style="color:#2563eb">»</span>  こういった意味でペナルティー付きの関数を最大化しようとしているとも考えられる．
 </ul>
- </div> 
- <div class="column"> 
- <a class="embed-link" data-embed-tpl="lagrangeMovieTpl" href="https://ttajika.github.io/nuce-slides/math-econ-text/Lagrange_movie.html">動画</a>
-
-
-
+<!-- math-econ-text/Lagrange_movie.html の内容（#lagrangeMovieTpl）をスライド内に直接表示 -->
+<iframe class="inline-embed" data-embed-tpl="lagrangeMovieTpl" title="ラグランジュ未定乗数法の3D動画解説" style="height:850px"></iframe>
 <a class="qr-link" href="https://ttajika.github.io/nuce-slides/math-econ-text/Lagrange_movie.html">🔗 QRリンク</a>
-
-
-
-
-  </div> 
- </div>
 </template>
 
 <!-- ===== Slide 82: 制約付き最適化問題 / 効用最大化問題 ===== -->
