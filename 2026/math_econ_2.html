@@ -93,6 +93,10 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
 .notes-textarea { flex:1; background:transparent; border:none; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:14px; line-height:1.8; padding:12px; resize:none; outline:none; }
 .notes-textarea::placeholder { color:#d4a017; opacity:0.6; }
 .columns { display:flex; gap:24px; }
+/* スライド内に直接表示する埋め込み（iframe.inline-embed[data-embed-tpl]、setupLinks で srcdoc を入れる）。
+   印刷ではアニメーションを載せず QR リンクだけ残す */
+iframe.inline-embed { display:block; width:100%; border:none; margin:12px 0 4px; background:transparent; }
+body.print-mode iframe.inline-embed { display:none; }
 .column { flex:1; min-width:0; }
 ul, ol { padding-left:1.5em; margin:0.3em 0; }
 li { margin:0.4em 0; }
@@ -919,7 +923,9 @@ function setupPartial3D(root) {
     const ctx = cv.getContext('2d');
 
     const N = 16;
-    const A = 0.375, B = -0.25;                    // 注目点 (a, b)：グリッド線上
+    // data-movable：切断なし。スライダー（と自動再生）で接点 (a, b) を動かし、接平面の変化を見せる
+    const movable = wrap.dataset.movable === '1';
+    let A = 0.375, B = -0.25;                      // 注目点 (a, b)：グリッド線上
     const f  = (x,y) => 0.4 - 0.45*x*x - 0.6*y*y;
     const fx = x => -0.9*x, fy = y => -1.2*y;
     const Z0 = -0.95;                              // 切断面の床
@@ -1013,9 +1019,11 @@ function setupPartial3D(root) {
         drawTangentPlane(0.5); drawTangentLine();
       } else {
         drawQuads();
-        // 切断位置のガイド線（薄く）
-        path(seg(48).map(x => proj(x, B, f(x,B))), 'rgba(37,99,235,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
-        path(seg(48).map(y => proj(A, y, f(A,y))), 'rgba(220,38,38,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
+        if (!movable) {
+          // 切断位置のガイド線（薄く）
+          path(seg(48).map(x => proj(x, B, f(x,B))), 'rgba(37,99,235,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
+          path(seg(48).map(y => proj(A, y, f(A,y))), 'rgba(220,38,38,0.5)', 1.1*dpr, [4*dpr, 3*dpr]);
+        }
         drawTangentPlane(0.42);
       }
       // 注目点
@@ -1026,7 +1034,8 @@ function setupPartial3D(root) {
       // モード表示
       ctx.font = (11.5*dpr) + 'px sans-serif';
       ctx.fillStyle = '#6b7280';
-      const label = mode === 'full' ? '点 (a, b) での接平面'
+      const label = movable ? '点 (a, b) = (' + A.toFixed(2) + ', ' + B.toFixed(2) + ') での接平面'
+                  : mode === 'full' ? '点 (a, b) での接平面'
                   : mode === 'cuty' ? 'y = b で切断：z = f(x, b) は x の関数'
                   : 'x = a で切断：z = f(a, y) は y の関数';
       ctx.fillText(label, 8*dpr, 16*dpr);
@@ -1062,6 +1071,32 @@ function setupPartial3D(root) {
     });
     cv.addEventListener('pointerup', () => { dragging = false; cv.style.cursor = 'grab'; });
     cv.addEventListener('pointercancel', () => { dragging = false; cv.style.cursor = 'grab'; });
+
+    if (movable) {
+      const sa_ = wrap.querySelector('.pd3d-a'), sb_ = wrap.querySelector('.pd3d-b');
+      const playBtn = wrap.querySelector('.pd3d-play');
+      let raf = 0, t0 = 0, th0 = 0;
+      const sync = () => { if (sa_) sa_.value = A; if (sb_) sb_.value = B; };
+      const stop = () => { if (raf) cancelAnimationFrame(raf); raf = 0; if (playBtn) playBtn.textContent = '▶ 自動で動かす'; };
+      if (sa_) sa_.addEventListener('input', () => { stop(); A = parseFloat(sa_.value); draw(); });
+      if (sb_) sb_.addEventListener('input', () => { stop(); B = parseFloat(sb_.value); draw(); });
+      // 自動再生：接点を楕円上でゆっくり一周させる
+      const step = ts => {
+        if (!cv.isConnected) { raf = 0; return; }   // スライドを離れたら止める
+        if (!t0) t0 = ts;
+        const th = th0 + (ts - t0) / 1000 * 0.7;
+        A = 0.6 * Math.cos(th); B = 0.55 * Math.sin(th);
+        sync(); draw();
+        raf = requestAnimationFrame(step);
+      };
+      if (playBtn) playBtn.addEventListener('click', () => {
+        if (raf) { stop(); return; }
+        th0 = Math.atan2(B / 0.55, A / 0.6); t0 = 0;
+        playBtn.textContent = '⏸ 止める';
+        raf = requestAnimationFrame(step);
+      });
+      sync();
+    }
     draw();
   });
 }
@@ -1131,6 +1166,15 @@ function setupLinks(el) {
       imgDiv.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
       link.appendChild(imgDiv);
     } catch(e) {}
+  });
+  // スライド内の埋め込み：iframe.inline-embed[data-embed-tpl] にテンプレートを srcdoc で流し込む。
+  el.querySelectorAll('iframe.inline-embed[data-embed-tpl]').forEach(f => {
+    const tpl = document.getElementById(f.dataset.embedTpl);
+    if (!tpl || f.srcdoc) return;
+    f.onload = () => {   // 高さを中身に合わせる（srcdoc は同一オリジンなので読める）
+      try { const h = f.contentDocument.documentElement.scrollHeight; if (h > 50) f.style.height = h + 'px'; } catch (e) {}
+    };
+    f.srcdoc = '<style>body{margin:0 auto!important}.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>' + tpl.innerHTML;
   });
   // 埋め込みリンク：data-embed-tpl のテンプレートを srcdoc で開く（オフライン対応）。
   // テンプレートが無ければ href を iframe で開く。
@@ -3477,9 +3521,18 @@ $\|a\|_p=\displaystyle \sum_{i=1}^n |a_i|^p $
 <template class="slide-data" data-title="多変数関数の微分のイメージ" data-section="多変数の微分" data-note="false" data-print-margin="180">
 
 <ul>
-<li> <a href="https://www.geogebra.org/m/tkjbbp3f">図解</a>
-
-<a class="qr-link" href="https://www.geogebra.org/m/tkjbbp3f">🔗 QRリンク</a>
+<li> 図解：接点 $(a,b)$ を動かすと，接平面（＝その点での線形近似）も変わる
+</ul>
+<div class="pd3d-wrap" data-movable="1" style="text-align:center;margin:8px 0;">
+<canvas class="partial3d" style="width:min(96%,560px);touch-action:none;cursor:grab;"></canvas>
+<div style="margin-top:4px;display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;font-size:13px;">
+<label>$a$ <input type="range" class="pd3d-a" min="-0.8" max="0.8" step="0.01" style="width:150px;vertical-align:middle;"></label>
+<label>$b$ <input type="range" class="pd3d-b" min="-0.8" max="0.8" step="0.01" style="width:150px;vertical-align:middle;"></label>
+<button type="button" class="pd3d-play" style="font-size:12px;padding:3px 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">▶ 自動で動かす</button>
+</div>
+<p style="font-size:0.8em;color:var(--text-dim);margin-top:2px;">（ドラッグで回転）</p>
+</div>
+<ul>
 
 <li> 基本は「線形関数」で近似するという話. 
 <li class="sub-item"><span style="color:#2563eb">»</span>  $ x$ をベクトルとすると以下を満たす行列 $ A$ が多変数関数の微分である．
@@ -3877,28 +3930,15 @@ $f$ が点 $(x^*,y^*)$ で最大値を取るとする．このとき，
 
 <!-- ===== Slide 81: 制約付き最適化問題 / 直観 ===== -->
 <template class="slide-data" data-title="直観" data-section="制約付き最適化問題" data-note="false" data-print-margin="180">
-<div class="columns"> 
- <div class="column"> 
 <ul>
  <li> ラグランジュ関数 ${L}$ の直観的意味：
- 
  <li class="sub-item"><span style="color:#2563eb">»</span>  制約条件 $g(x,y)=0$ からはみだそうとすると，$\lambda$ だけの大きさで罰則を与える．
  <li class="sub-item"><span style="color:#2563eb">»</span>  罰則のことを考えながらなるべく $f$ を最大化しようとする．
  <li class="sub-item"><span style="color:#2563eb">»</span>  こういった意味でペナルティー付きの関数を最大化しようとしているとも考えられる．
 </ul>
- </div> 
- <div class="column"> 
- <a class="embed-link" data-embed-tpl="lagrangeMovieTpl" href="https://ttajika.github.io/nuce-slides/math-econ-text/Lagrange_movie.html">動画</a>
-
-
-
+<!-- math-econ-text/Lagrange_movie.html の内容（#lagrangeMovieTpl）をスライド内に直接表示 -->
+<iframe class="inline-embed" data-embed-tpl="lagrangeMovieTpl" title="ラグランジュ未定乗数法の3D動画解説" style="height:850px"></iframe>
 <a class="qr-link" href="https://ttajika.github.io/nuce-slides/math-econ-text/Lagrange_movie.html">🔗 QRリンク</a>
-
-
-
-
-  </div> 
- </div>
 </template>
 
 <!-- ===== Slide 82: 制約付き最適化問題 / 効用最大化問題 ===== -->
