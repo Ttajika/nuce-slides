@@ -92,8 +92,8 @@ ol > li::marker { color:var(--accent); font-weight:700; }
   font-size:15px; color:rgba(255,255,255,0.65); letter-spacing:0.08em;
 }
 .slide-content.is-divider .divider-eyebrow .num {
-  font-size:15px; font-weight:700; color:#93c5fd;
-  padding-bottom:4px; border-bottom:2px solid #93c5fd;
+  font-size:15px; font-weight:700; color:var(--skin-accent, #93c5fd);
+  padding-bottom:4px; border-bottom:2px solid var(--skin-accent, #93c5fd);
 }
 .slide-content.is-divider .cover-sub { font-size:18px; color:rgba(255,255,255,0.7); margin-top:14px; }
 .slide-content.is-divider .cover-author { font-size:16px; color:#fff; margin-top:40px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.2); display:inline-block; }

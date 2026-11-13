@@ -66,7 +66,7 @@ window.MathJax = {
   --phantom-bg: #e0e7ff;
   --tikz-bg: #f0fdf4;
   --tikz-border: #86efac;
-  --header-bg: #1e293b;
+  --header-bg: #1e3a8a; --skin-accent: #93c5fd;
 }
 
 body {
@@ -104,7 +104,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
   font-family:inherit; cursor:pointer; max-width:200px;
 }
-.section-select option { background:#1e293b; color:#fff; }
+.section-select option { background:var(--header-bg); color:#fff; }
 
 /* Main layout */
 .main { display:flex; flex:1; overflow:hidden; }
@@ -613,6 +613,8 @@ body.print-mode .fab-pen { display: none !important; }
   .slide-area { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
   .understanding-bar { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
+/* 印刷用表示ボタンは表紙（1枚目）だけに出す */
+body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
 </style>
 <!-- 共通デザイン（slide-theme.css / slide-theme.js） -->
 <link rel="stylesheet" href="slide-theme.css">
@@ -1647,6 +1649,7 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   scheduleSave();
   current = idx;
+  document.body.classList.toggle('not-first-slide', idx !== 0);
   // Update URL hash without triggering hashchange
   history.replaceState(null, '', '#' + (idx + 1));
   renderSlide(idx);

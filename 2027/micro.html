@@ -66,7 +66,7 @@ window.MathJax = {
   --phantom-bg: #e0e7ff;
   --tikz-bg: #f0fdf4;
   --tikz-border: #86efac;
-  --header-bg: #1e293b;
+  --header-bg: #14532d; --skin-accent: #86efac;
   --title: #0f172a;
 }
 
@@ -109,7 +109,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   color:#fff; padding:4px 8px; border-radius:6px; height:30px; font-size:12px;
   font-family:inherit; cursor:pointer; max-width:200px;
 }
-.section-select option { background:#1e293b; color:#fff; }
+.section-select option { background:var(--header-bg); color:#fff; }
 
 /* Main layout */
 .main { display:flex; flex:1; overflow:hidden; }
@@ -333,8 +333,8 @@ body.print-mode .tikz-figure { cursor:default; }
   font-size:15px; color:rgba(255,255,255,0.65); letter-spacing:0.08em;
 }
 .slide-content.is-divider .divider-eyebrow .num {
-  font-size:15px; font-weight:700; color:#93c5fd;
-  padding-bottom:4px; border-bottom:2px solid #93c5fd;
+  font-size:15px; font-weight:700; color:var(--skin-accent, #93c5fd);
+  padding-bottom:4px; border-bottom:2px solid var(--skin-accent, #93c5fd);
 }
 .slide-content.is-divider .cover-sub { font-size:18px; color:rgba(255,255,255,0.7); margin-top:14px; }
 .slide-content.is-divider .cover-author { font-size:16px; color:#fff; margin-top:40px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.2); display:inline-block; }
@@ -707,6 +707,8 @@ body.print-mode .fab-pen { display: none !important; }
   .slide-area { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
   .understanding-bar { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
+/* 印刷用表示ボタンは表紙（1枚目）だけに出す */
+body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
 </style>
 </head>
 <body class="slide-mode">
@@ -1540,6 +1542,7 @@ function showSlide(idx) {
   notes[current] = document.getElementById('noteArea').value;
   scheduleSave();
   current = idx;
+  document.body.classList.toggle('not-first-slide', idx !== 0);
   // Update URL hash without triggering hashchange
   history.replaceState(null, '', '#' + (idx + 1));
   renderSlide(idx);
@@ -2769,10 +2772,10 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <li class="sub-item">「均衡」は選択の次に経済学にとって大事な要素</li>
 
 <table class="slide-table">
-<tr><th>家が欲しい人（買手）</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
-<tr><th><span class="keyword">支払意思額</span>（万円）</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
-<tr><th>大工（売手）</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
-<tr><th>費用（万円）</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
+<tr><th>買手</th><td>天照</td><td>出雲</td><td>高木</td><td>月読</td><td>大和</td></tr>
+<tr><th>支払意思額</th><td>5000</td><td>3500</td><td>2000</td><td>1000</td><td>800</td></tr>
+<tr><th>売手</th><td>アダム</td><td>イヴ</td><td>ルツ</td><td>ヤコブ</td><td>ヨセフ</td></tr>
+<tr><th>費用</th><td>4500</td><td>3200</td><td>1800</td><td>950</td><td>850</td></tr>
 </table>
 
 <li>市場均衡で取引できるのは？</li>
@@ -3102,7 +3105,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </ul>
 </template>
 
-<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="150">
+<template class="slide-data" data-title="価格弾力性のつづき③" data-section="需要と供給" data-note="false" data-print-margin="350">
 <div class="columns">
 <div class="column">
 <ul>
