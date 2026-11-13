@@ -191,6 +191,7 @@
   function drawDot(ctx, pt, W) {   // 本番のポインターと同じ見た目
     if (!pt) return;
     const k = W / REF_W, x = pt.x * W, y = pt.y * W;
+    if (window.drawPointerMark) { window.drawPointerMark(ctx, x, y, k); return; }
     ctx.beginPath(); ctx.arc(x, y, 12 * k, 0, Math.PI * 2); ctx.fillStyle = 'rgba(233,69,96,0.7)'; ctx.fill();
     ctx.beginPath(); ctx.arc(x, y, 5 * k, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
   }

@@ -657,6 +657,13 @@ body.print-mode .sage-cell-print {
 }
 .sage-cell-print { display:none; }
 </style>
+<!-- 共通デザイン（slide-theme.css / slide-theme.js） -->
+<link rel="stylesheet" href="slide-theme.css">
+<style>
+/* 入れ子の <ul> もサブアイテムと同じ「♦」 */
+ul ul > li:not(.sub-item):not(.spacer):not(.custom-label) { list-style:none; }
+ul ul > li:not(.sub-item):not(.spacer):not(.custom-label)::before { content:'♦\FE0E\00a0'; font-size:0.6em; vertical-align:0.2em; }
+</style>
 </head>
 <body class="slide-mode">
 
@@ -2248,12 +2255,10 @@ document.addEventListener('keydown', e => {
 <!-- ===== Slide data ===== -->
 <!-- ===== Slide 1:  /  ===== -->
 <template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
-<div style="text-align:center;">
-<h1 style="font-size:2em;margin-bottom:0.3em;">金融公共分析手法入門1</h1>
-<p style="font-size:0.9em;color:#666;">2027年度版</p>
-<p style="margin-top:1.5em;">多鹿 智哉</p>
-<p style="font-size:0.8em;color:#888;margin-top:1em;"><code id="lastUpdated"></code></p>
-</div>
+<div class="section-title-big" style="padding:40px 0 10px">金融公共分析手法入門1</div>
+<div class="cover-sub">2027年度版</div>
+<div><div class="cover-author">多鹿 智哉</div></div>
+<p class="cover-sub" style="font-size:0.8em;"><code id="lastUpdated"></code></p>
 </template>
 
 <!-- ===== Slide 2: はじめに / はじめに ===== -->
@@ -4234,3 +4239,5 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </div>
 </div>
 </template>
+
+<script src="slide-theme.js"></script>

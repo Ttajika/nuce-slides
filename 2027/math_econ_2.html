@@ -298,6 +298,8 @@ body.print-mode .fab-pen { display: none !important; }
   .understanding-bar { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 </style>
+<!-- 共通デザイン（slide-theme.css / slide-theme.js） -->
+<link rel="stylesheet" href="slide-theme.css">
 </head>
 <body class="slide-mode">
 
@@ -2165,7 +2167,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ===== Slide 0:  /  ===== -->
 <template class="slide-data" data-title="" data-section="" data-note="false" data-print-margin="0">
-<div style="text-align:center; padding:40px 0;"><h1 style="font-size:32px; color:var(--accent); font-family:'Noto Serif JP',serif;">経済数学II</h1><p style="color:var(--text-dim); margin-top:8px;">2027年度版</p><p style="margin-top:16px;">多鹿 智哉</p></div>
+<div class="section-title-big" style="padding:40px 0 10px">経済数学II</div>
+<div class="cover-sub">2027年度版</div>
+<div><div class="cover-author">多鹿 智哉</div></div>
 </template>
 
 <!-- ===== Slide 1: はじめに / はじめに ===== -->
@@ -4379,5 +4383,7 @@ $w_{h}=\frac{1}{\lambda_{h}}$, $\lambda_{1}=p_{1}$, $\lambda_{2}=p_{2}$ と考�
 </template>
 
 
+
+<script src="slide-theme.js"></script>
 </body>
 </html>

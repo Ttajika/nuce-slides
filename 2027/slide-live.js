@@ -684,6 +684,7 @@
     drawList(ctx, L.s[adapter.getCurrent()], W);
     if (L.p && adapter.getCurrent() === L.i) {
       const x = L.p[0] * W, y = L.p[1] * W;
+      if (window.drawPointerMark) { window.drawPointerMark(ctx, x, y, 1); return; }
       ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(233,69,96,0.7)'; ctx.fill();
       ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
     }
