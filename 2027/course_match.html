@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>講義科目配分の市場</title>
+<script>
+// iframe埋め込み時はスライドに合わせてライトテーマ・余白なしにする
+try{if(window.self!==window.top)document.documentElement.setAttribute('data-embed','');}catch(e){document.documentElement.setAttribute('data-embed','');}
+</script>
+<style>
+:root{
+  color-scheme:light;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+  --surface-0:#ffffff;
+  --surface-1:#f7f7f5;
+  --surface-2:#efefec;
+  --border:#dcdcd8;
+  --accent:#3568d6;
+  --text-primary:#1a1a1a;
+  --text-secondary:#52514e;
+  --text-muted:#8a8984;
+  --grid:#e4e3df;
+  --axis:#b9b8b2;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;
+  --good:#0ca30c;--warn:#b37a00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-embed]){
+    color-scheme:dark;
+    --surface-0:#1a1a19;--surface-1:#232322;--surface-2:#2e2e2c;
+    --border:#444442;--accent:#85b7eb;
+    --text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#8f8e88;
+    --grid:#353533;--axis:#5a5955;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;
+    --good:#2fc12f;--warn:#fab219;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--surface-0);color:var(--text-primary);font-family:var(--font-sans);}
+body{max-width:900px;margin:2rem auto;padding:0 16px;}
+:root[data-embed] body{margin:0;max-width:none;padding:6px;}
+#app{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;}
+@media (min-width:700px){
+  #app{grid-template-columns:minmax(0,1fr) 236px;}
+  :root[data-embed] #app{height:calc(100vh - 12px);}
+}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+.tabs{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.tabs button,.ctrl button{font-family:inherit;cursor:pointer;outline:none;transition:all .15s;}
+.tabs button{border:1px solid var(--border);border-radius:14px;padding:4px 12px;font-size:12px;background:transparent;color:var(--text-secondary);}
+.tabs button:hover{border-color:var(--accent);color:var(--text-primary);}
+.tabs button.active{background:var(--accent);border-color:transparent;color:#fff;}
+:root:not([data-embed]) .tabs button.active{color:var(--surface-0);}
+.view{flex:1;min-height:0;position:relative;display:none;}
+.view.active{display:block;}
+.view svg{width:100%;height:100%;display:block;overflow:visible;}
+#view-bars,#view-price{min-height:300px;}
+#view-price.active{display:flex;flex-direction:column;}
+#view-price svg{flex:1;min-height:0;height:auto;}
+#view-table{overflow:auto;}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0;}
+#nar{font-size:13px;line-height:1.6;padding:9px 12px;background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;min-height:120px;}
+#nar b{font-weight:600;}
+.status{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.status .ic{display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;color:#fff;}
+.stats{font-size:12px;color:var(--text-secondary);display:grid;grid-template-columns:auto 1fr;gap:2px 10px;}
+.stats span:nth-child(even){color:var(--text-primary);font-variant-numeric:tabular-nums;text-align:right;}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;}
+.ctrl button{border:1px solid var(--border);border-radius:16px;padding:6px 12px;font-size:12px;background:var(--surface-2);color:var(--text-primary);}
+.ctrl button:hover{border-color:var(--accent);color:var(--accent);}
+.ctrl button.primary{background:var(--accent);color:#fff;border-color:transparent;}
+:root:not([data-embed]) .ctrl button.primary{color:var(--surface-0);}
+.ctrl button:disabled{opacity:.45;cursor:default;}
+.note{font-size:11px;color:var(--text-muted);line-height:1.5;}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--text-secondary);margin:2px 0 4px;}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px;}
+#tip{position:absolute;pointer-events:none;background:var(--surface-0);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:5;white-space:nowrap;color:var(--text-primary);}
+#tip .k{color:var(--text-secondary);}
+table{border-collapse:collapse;width:100%;font-size:11.5px;font-variant-numeric:tabular-nums;}
+th,td{padding:2px 5px;text-align:center;border-bottom:1px solid var(--grid);}
+th{font-weight:600;color:var(--text-secondary);position:sticky;top:0;background:var(--surface-1);font-size:11px;}
+td.pick{font-weight:700;border-radius:4px;}
+td.no{color:var(--text-muted);}
+td.left,th.left{text-align:left;}
+tr.price td{border-top:1.5px solid var(--axis);color:var(--text-secondary);}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+</head>
+<body>
+<h2 class="sr-only">講義科目配分の市場：価格の調整による履修者の割り当て</h2>
+<div id="app">
+  <div class="main">
+    <div class="tabs" role="tablist">
+      <button class="active" data-view="bars" role="tab">履修者数と定員</button>
+      <button data-view="price" role="tab">価格の推移</button>
+      <button data-view="table" role="tab">学生ごとの選択</button>
+    </div>
+    <div class="view active" id="view-bars"><svg id="bars" role="img" aria-label="科目ごとの履修希望者数と定員"></svg></div>
+    <div class="view" id="view-price">
+      <div class="legend" id="legend"></div>
+      <svg id="price" role="img" aria-label="科目ごとの価格の推移"></svg>
+    </div>
+    <div class="view" id="view-table"><table id="tbl"></table></div>
+    <div id="tip"></div>
+  </div>
+  <div class="side">
+    <div id="nar"></div>
+    <div class="status" id="status"></div>
+    <div class="stats">
+      <span>調整の回数</span><span id="st-t">0</span>
+      <span>定員超過の合計</span><span id="st-over">0人</span>
+      <span>空きがあるのに価格&gt;0</span><span id="st-under">0人</span>
+    </div>
+    <div class="ctrl">
+      <button class="primary" id="b-play">▶ 自動で調整</button>
+      <button id="b-step">1回調整</button>
+      <button id="b-reset">価格を0に戻す</button>
+      <button id="b-new">別の学生で試す</button>
+    </div>
+    <div class="note">学生16人・5科目・各自最大2科目．予算は全員ほぼ100（くじで0.0〜0.9の差．まったく同じだと学生が一斉に動き，価格が決まらない）．</div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const COURSES=['ゲーム理論','計量経済学','行動経済学','労働経済学','産業組織論'];
+const SHORT=['ゲーム','計量','行動','労働','産組'];
+const CAP=[4,5,7,6,6];
+const POP=[65,50,40,55,35];
+const N=16, M=5, MAXK=2, TMAX=60, DELAY=320;
+// 価格・予算は0.1単位の整数で持つ（表示は1/10）
+const BASE=1000, LOT=10, LAM=80;
+const fmt=v=>(v/10).toFixed(1);
+const COLORS=()=>{const cs=getComputedStyle(document.documentElement);return [1,2,3,4,5].map(i=>cs.getPropertyValue('--s'+i).trim());};
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeStudents(seed){
+  const r=rng(seed),lot=rng(seed*31+7),st=[];
+  for(let i=0;i<N;i++){
+    st.push({name:'学生'+(i+1),
+      u:POP.map(m=>{const v=Math.round(m+(r()-0.5)*80);return v<15?0:Math.min(99,v);})});
+  }
+  // 予算：全員100に，くじでわずかな差（0.0〜0.9）
+  st.forEach(s=>{s.b=BASE+Math.floor(lot()*LOT);});
+  return st;
+}
+// 科目の組（0〜2科目）をすべて列挙
+const BUNDLES=[[]];
+for(let a=0;a<M;a++){BUNDLES.push([a]);for(let b=a+1;b<M;b++)BUNDLES.push([a,b]);}
+// 消費者問題：予算内で効用の合計が最大の組（同点なら安い方）
+function choose(s,p){
+  let best=[],bu=0,bc=0;
+  for(const B of BUNDLES){
+    if(B.some(j=>s.u[j]<=0))continue;
+    const c=B.reduce((x,j)=>x+p[j],0);
+    if(c>s.b)continue;
+    const u=B.reduce((x,j)=>x+s.u[j],0);
+    if(u>bu||(u===bu&&c<bc)){best=B;bu=u;bc=c;}
+  }
+  return best;
+}
+function evaluate(st,p){
+  const picks=st.map(s=>choose(s,p));
+  const d=Array(M).fill(0);picks.forEach(B=>B.forEach(j=>d[j]++));
+  let over=0,under=0,err=0;
+  for(let j=0;j<M;j++){const z=d[j]-CAP[j];if(z>0){over+=z;err+=z*z;}else if(p[j]>0&&z<0){under+=-z;err+=z*z;}}
+  return {p:p.slice(),d,picks,over,under,err};
+}
+
+let seed=22, students, hist, cur, timer=null, done=false, fallback=false, phase='tat';
+
+function reset(newSeed){
+  stop();
+  if(newSeed!=null)seed=newSeed;
+  students=makeStudents(seed);
+  hist=[evaluate(students,Array(M).fill(0))];
+  cur=0;done=hist[0].err===0;fallback=false;phase='tat';
+  render('start');
+}
+// 定員オーバーをなくす（値上げ）→ 空き席を減らす（値下げ）を一気に行う（出発点の比較用）
+function raiseStep(e){return evaluate(students,e.p.map((x,j)=>e.d[j]>CAP[j]?x+1:x));}
+function lowerAll(e){
+  let changed=true;const lowered=new Set();
+  while(changed){
+    changed=false;
+    for(let j=0;j<M;j++){
+      if(e.p[j]>0&&e.d[j]<CAP[j]){
+        const p=e.p.slice();p[j]--;const t=evaluate(students,p);
+        if(t.over===0){e=t;changed=true;lowered.add(j);}
+      }
+    }
+  }
+  return {e,lowered:[...lowered]};
+}
+function repair(e){while(e.over>0)e=raiseStep(e);return lowerAll(e).e;}
+function push(e,kind){hist.push(e);cur=hist.length-1;render(kind);}
+function stepOnce(){
+  if(done)return false;
+  const s=hist[hist.length-1];
+  if(phase==='tat'){
+    const lam=LAM/Math.sqrt(1+(hist.length-1)/4);
+    const p=s.p.map((x,j)=>{const z=s.d[j]-CAP[j];if(z<0&&x===0)return 0;return Math.max(0,Math.round(x+lam*z));});
+    const e=evaluate(students,p);
+    if(e.err===0){done=true;push(e,'clear');return false;}
+    if(hist.length>=TMAX){
+      // ぴったり一致しない：ずれが最小の価格に戻し，そこから定員オーバーをなくす
+      hist.push(e);
+      // これまで通ったどの価格から始めると，定員オーバーをなくした後の空き席が最も少ないか
+      let bi=0,bu=Infinity;
+      hist.forEach((h,i)=>{const u=repair(h).under;if(u<bu){bu=u;bi=i;}});
+      fallback=true;phase='raise';
+      push(Object.assign({},hist[bi],{fromBest:bi}),'back');return true;
+    }
+    push(e,'step');return true;
+  }
+  if(phase==='raise'){
+    if(s.over>0){
+      // 定員オーバーの科目を1ずつ値上げし，履修者数が変わったところで1コマ
+      const raised=new Set();let e=s;
+      do{
+        e.d.forEach((v,j)=>{if(v>CAP[j])raised.add(j);});
+        e=raiseStep(e);
+      }while(e.over>0&&e.d.every((v,j)=>v===s.d[j]));
+      e.raised=[...raised];
+      push(e,'raise');return true;
+    }
+    phase='lower';
+  }
+  // 空きがあって価格が正の科目を，定員オーバーが出ない範囲で値下げ
+  const r=lowerAll(s),e=r.e;
+  done=true;
+  if(r.lowered.length){e.lowered=r.lowered;push(e,'final');}else render('final');
+  return false;
+}
+function play(){
+  if(timer){stop();return;}
+  if(done)return;
+  setPlay(true);
+  const tick=()=>{if(stepOnce())timer=setTimeout(tick,DELAY);else stop();};
+  timer=setTimeout(tick,60);
+}
+function stop(){if(timer)clearTimeout(timer);timer=null;setPlay(false);}
+function setPlay(on){
+  const b=document.getElementById('b-play');
+  b.textContent=on?'⏸ 一時停止':'▶ 自動で調整';
+}
+
+// ---------- 描画 ----------
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const tip=$('tip');
+function showTip(html,evt){
+  const host=tip.parentElement.getBoundingClientRect();
+  tip.innerHTML=html;tip.style.display='block';
+  let x=evt.clientX-host.left+12,y=evt.clientY-host.top+12;
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  if(x+w>host.width-4)x=evt.clientX-host.left-w-12;
+  if(y+h>host.height-4)y=evt.clientY-host.top-h-12;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+function hideTip(){tip.style.display='none';}
+
+function drawBars(){
+  const svg=$('bars');svg.innerHTML='';
+  const W=svg.clientWidth||480,H=svg.clientHeight||300;
+  const C=COLORS(),e=hist[cur];
+  const m={l:30,r:8,t:22,b:48},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const ytop=Math.ceil(Math.max(...hist[0].d,...CAP,10)/2)*2+2;
+  const y=v=>m.t+ih-ih*v/ytop;
+  const defs=el('defs',{},svg);
+  // 格子
+  for(let v=0;v<=ytop;v+=2){
+    el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid'),'stroke-width':1},svg);
+    el('text',{x:m.l-6,y:y(v)+4,'text-anchor':'end','font-size':10,fill:css('--text-muted')},svg,v);
+  }
+  el('text',{x:m.l-6,y:m.t-10,'text-anchor':'end','font-size':10,fill:css('--text-muted')},svg,'人');
+  const slot=iw/M,bw=Math.min(54,slot*0.5);
+  for(let j=0;j<M;j++){
+    const cx=m.l+slot*(j+0.5),x0=cx-bw/2,d=e.d[j],cap=CAP[j];
+    const pat=el('pattern',{id:'h'+j,width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+    el('rect',{width:6,height:6,fill:css('--surface-1')},pat);
+    el('line',{x1:0,y1:0,x2:0,y2:6,stroke:C[j],'stroke-width':3},pat);
+    const g=el('g',{},svg);
+    // 定員までの部分（塗り）と超過部分（斜線）
+    const inCap=Math.min(d,cap);
+    if(d>0){
+      const top=y(d),r=4;
+      const path=`M${x0},${y(0)} V${top+r} Q${x0},${top} ${x0+r},${top} H${x0+bw-r} Q${x0+bw},${top} ${x0+bw},${top+r} V${y(0)} Z`;
+      el('clipPath',{id:'c'+j},defs).appendChild(el('path',{d:path}));
+      el('rect',{x:x0,y:y(inCap),width:bw,height:y(0)-y(inCap),fill:C[j],'clip-path':`url(#c${j})`},g);
+      if(d>cap)el('rect',{x:x0,y:y(d),width:bw,height:y(cap)-y(d)-2,fill:`url(#h${j})`,'clip-path':`url(#c${j})`},g);
+    }
+    // 定員の線
+    el('line',{x1:x0-8,x2:x0+bw+8,y1:y(cap),y2:y(cap),stroke:css('--text-primary'),'stroke-width':2,'stroke-linecap':'round'},g);
+    el('text',{x:x0+bw+10,y:y(cap)+3.5,'font-size':9.5,fill:css('--text-secondary')},g,'定員'+cap);
+    // 人数ラベル
+    const lab=d>cap?`${d}人（+${d-cap}）`:`${d}人`;
+    el('text',{x:cx,y:y(Math.max(d,cap))-8,'text-anchor':'middle','font-size':11,'font-weight':600,fill:css('--text-primary')},g,lab);
+    // 科目名と価格
+    el('text',{x:cx,y:H-m.b+16,'text-anchor':'middle','font-size':11,fill:css('--text-primary')},g,COURSES[j]);
+    el('text',{x:cx,y:H-m.b+32,'text-anchor':'middle','font-size':11,fill:css('--text-secondary')},g,'価格 '+fmt(e.p[j]));
+    // ホバー領域
+    const hit=el('rect',{x:m.l+slot*j,y:m.t,width:slot,height:ih+m.b,fill:'transparent'},g);
+    hit.addEventListener('mousemove',ev=>showTip(
+      `<b>${COURSES[j]}</b><br><span class="k">価格</span> ${fmt(e.p[j])}<br><span class="k">履修希望</span> ${d}人 ／ <span class="k">定員</span> ${cap}人<br>`+
+      (d>cap?`定員を${d-cap}人超過 → 値上げ`:(d<cap&&e.p[j]>0)?`空き${cap-d}人 → 値下げ`:(d<cap)?`空き${cap-d}人（価格0なのでそのまま）`:'ちょうど定員'),ev));
+    hit.addEventListener('mouseleave',hideTip);
+  }
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--axis'),'stroke-width':1},svg);
+}
+
+function drawPrice(){
+  const svg=$('price');svg.innerHTML='';
+  const W=svg.clientWidth||480,H=svg.clientHeight||280;
+  const C=COLORS();
+  const series=hist;
+  const T=Math.max(series.length-1,10);
+  const pmax=Math.max(200,...series.flatMap(h=>h.p));
+  const ytop=Math.ceil(pmax/200)*200;
+  const m={l:34,r:64,t:10,b:34},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const x=t=>m.l+iw*t/T,y=v=>m.t+ih-ih*v/ytop;
+  for(let v=0;v<=ytop;v+=ytop/4){
+    el('line',{x1:m.l,x2:m.l+iw,y1:y(v),y2:y(v),stroke:css('--grid'),'stroke-width':1},svg);
+    el('text',{x:m.l-6,y:y(v)+4,'text-anchor':'end','font-size':10,fill:css('--text-muted')},svg,v/10);
+  }
+  el('line',{x1:m.l,x2:m.l+iw,y1:y(0),y2:y(0),stroke:css('--axis')},svg);
+  const step=T<=20?5:T<=60?10:20;
+  for(let t=0;t<=T;t+=step)el('text',{x:x(t),y:H-m.b+16,'text-anchor':'middle','font-size':10,fill:css('--text-muted')},svg,t);
+  el('text',{x:m.l+iw,y:H-2,'text-anchor':'end','font-size':10,fill:css('--text-muted')},svg,'調整の回数');
+  const ends=[];
+  for(let j=0;j<M;j++){
+    const pts=series.map((h,t)=>`${x(t)},${y(h.p[j])}`).join(' ');
+    el('polyline',{points:pts,fill:'none',stroke:C[j],'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+    const last=series.length-1;
+    el('circle',{cx:x(last),cy:y(series[last].p[j]),r:4,fill:C[j],stroke:css('--surface-1'),'stroke-width':2},svg);
+    ends.push({j,y:y(series[last].p[j]),x:x(last)});
+  }
+  // 端のラベル（重なりを避ける）
+  ends.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<12)ends[i].y=ends[i-1].y+12;
+  ends.forEach(o=>el('text',{x:o.x+8,y:o.y+4,'font-size':10.5,fill:css('--text-primary')},svg,SHORT[o.j]+' '+fmt(series[series.length-1].p[o.j])));
+  // クロスヘア
+  const cross=el('line',{y1:m.t,y2:m.t+ih,stroke:css('--axis'),'stroke-width':1,visibility:'hidden'},svg);
+  const hit=el('rect',{x:m.l,y:m.t,width:iw,height:ih,fill:'transparent'},svg);
+  hit.addEventListener('mousemove',ev=>{
+    const r=svg.getBoundingClientRect();
+    let t=Math.round((ev.clientX-r.left-m.l)/iw*T);t=Math.max(0,Math.min(series.length-1,t));
+    cross.setAttribute('x1',x(t));cross.setAttribute('x2',x(t));cross.setAttribute('visibility','visible');
+    const h=series[t];
+    showTip(`<b>${t}回目</b><br>`+COURSES.map((c,j)=>`<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${C[j]};margin-right:5px"></span><span class="k">${c}</span> 価格 ${fmt(h.p[j])}（${h.d[j]}/${CAP[j]}人）`).join('<br>'),ev);
+  });
+  hit.addEventListener('mouseleave',()=>{cross.setAttribute('visibility','hidden');hideTip();});
+}
+
+function drawTable(){
+  const C=COLORS(),e=hist[cur];
+  let h='<thead><tr><th class="left">学生</th><th>予算</th>'+COURSES.map((c,j)=>`<th><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${C[j]};margin-right:3px"></span>${SHORT[j]}</th>`).join('')+'<th>支払</th></tr></thead><tbody>';
+  students.forEach((s,i)=>{
+    const B=e.picks[i];const pay=B.reduce((x,j)=>x+e.p[j],0);
+    h+=`<tr><td class="left">${s.name}</td><td>${fmt(s.b)}</td>`;
+    for(let j=0;j<M;j++){
+      if(s.u[j]<=0){h+='<td class="no">–</td>';continue;}
+      if(B.includes(j))h+=`<td class="pick" style="background:color-mix(in srgb, ${C[j]} 22%, transparent);box-shadow:inset 0 0 0 1.5px ${C[j]}">✓ ${s.u[j]}</td>`;
+      else h+=`<td>${s.u[j]}</td>`;
+    }
+    h+=`<td>${fmt(pay)}</td></tr>`;
+  });
+  h+=`<tr class="price"><td class="left">価格</td><td></td>${e.p.map(v=>`<td>${fmt(v)}</td>`).join('')}<td></td></tr>`;
+  h+=`<tr><td class="left" colspan="7" style="border:none;color:var(--text-muted);padding-top:4px">数字は各科目を履修することの効用（–は履修したくない）．✓が現在の価格のもとでの選択．</td></tr></tbody>`;
+  $('tbl').innerHTML=h;
+}
+
+function narration(kind){
+  const e=hist[cur];
+  if(kind==='start'){
+    return '<b>はじめは全科目が価格0</b>．各学生は予算内で効用の合計が最大になる科目の組を選ぶ（<b>消費者問題</b>）．<br>定員を超えた科目は値上げ，空きがあって価格が正の科目は値下げする．';
+  }
+  if(kind==='clear'){
+    return `<b>${cur}回の調整で，すべての科目で履修者数が定員以下になった</b>．空きのある科目は価格0．<br>各学生は予算内で最適な選択をしていて，需給も一致している＝<b>市場均衡</b>．`;
+  }
+  if(kind==='back'){
+    return `<b>${TMAX}回調整しても，ぴったり一致する価格は見つからなかった</b>（科目は1人単位でしか分けられないため）．<br>これまでの価格のうち，定員オーバーをなくした後の空き席が最も少なくなるもの（${e.fromBest}回目）に戻し，ここから<b>定員オーバーをなくす</b>．`;
+  }
+  if(kind==='raise'){
+    return `<b>定員オーバーをなくす</b><br>値上げ：${e.raised.map(j=>SHORT[j]).join('・')}<br>定員を超えている科目を，履修者数が変わるまで少しずつ値上げする．`;
+  }
+  if(kind==='final'){
+    const low=e.lowered?`値下げ：${e.lowered.map(j=>SHORT[j]).join('・')}（定員オーバーが出ない範囲で）<br>`:'';
+    return e.under===0
+      ?`${low}<b>定員オーバーも空き席の問題もなくなった</b>＝需給一致．`
+      :`${low}<b>どの科目も定員オーバーはない</b>．ただし価格が正なのに<b>空き席が${e.under}席</b>残る．<br>科目は1人単位でしか分けられないので，ぴったり一致させる価格がないことがある（近似的な均衡）．`;
+  }
+  const prev=hist[cur-1];const up=[],down=[];
+  for(let j=0;j<M;j++){if(e.p[j]>prev.p[j])up.push(SHORT[j]);else if(e.p[j]<prev.p[j])down.push(SHORT[j]);}
+  return `<b>${cur}回目の調整</b><br>`+(up.length?`値上げ：${up.join('・')}<br>`:'')+(down.length?`値下げ：${down.join('・')}<br>`:'')+
+    '新しい価格のもとで，各学生が選び直す．'+(cur>=4?'<br><span style="color:var(--text-muted)">調整の幅は回を重ねるごとに小さくしている．</span>':'');
+}
+let lastKind='start';
+function render(kind){
+  if(kind==null)kind=lastKind;else lastKind=kind;
+  const e=hist[cur];
+  $('nar').innerHTML=narration(kind);
+  $('st-t').textContent=cur;
+  $('st-over').textContent=e.over+'人';
+  $('st-under').textContent=e.under+'人';
+  const st=$('status');
+  if(e.err===0)st.innerHTML=`<span class="ic" style="background:var(--good)">✓</span><span>需給が一致（市場均衡）</span>`;
+  else if(done&&fallback)st.innerHTML=`<span class="ic" style="background:var(--warn)">!</span><span>定員オーバーなし（空き席あり）</span>`;
+  else if(fallback)st.innerHTML=`<span class="ic" style="background:var(--warn)">!</span><span>定員オーバーを解消中</span>`;
+  else st.innerHTML=`<span class="ic" style="background:var(--accent)">…</span><span>調整中</span>`;
+  $('b-play').disabled=done;$('b-step').disabled=done;
+  drawBars();drawPrice();drawTable();
+}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+b.dataset.view));
+  hideTip();render(null);
+}));
+$('b-play').addEventListener('click',play);
+$('b-step').addEventListener('click',()=>{stop();stepOnce();});
+$('b-reset').addEventListener('click',()=>reset());
+$('b-new').addEventListener('click',()=>reset(1+Math.floor(Math.random()*100000)));
+$('legend').innerHTML=COLORS().map((c,j)=>`<span><i style="background:${c}"></i>${COURSES[j]}</span>`).join('');
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>render(null),100);});
+reset(22);
+})();
+</script>
+</body>
+</html>
