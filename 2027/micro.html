@@ -192,6 +192,7 @@ li.sub-item::before { content:''; }
 ul ul > li:empty { list-style:none; }
 .icon-mail { width:1em; height:1em; vertical-align:-0.12em; margin-right:0.2em; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 li.spacer { list-style:none; height:0.8em; display:block; } /* block: ol の番号を数えない */
+.write-space { height:5em; } /* 授業で書き込む余白 */
 li.jarm-item { list-style:none; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; }
 li.custom-label { list-style:none; }
 li.custom-label .label { font-weight:500; margin-right:4px; }
@@ -635,9 +636,65 @@ body.print-mode .mode-toggle { bottom:12px; }
 .filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 .filter-count { color:var(--text-dim); margin-left:auto; font-size:11px; }
 
+/* ═══ 使い方ツアー ═══ */
+.tour-spot {
+  position:fixed; z-index:20000; border-radius:8px; pointer-events:none;
+  box-shadow:0 0 0 3px #fbbf24, 0 0 0 9999px rgba(15,23,42,0.6);
+}
+.tour-spot.center { width:0 !important; height:0 !important; box-shadow:0 0 0 9999px rgba(15,23,42,0.6); }
+.tour-card {
+  position:fixed; z-index:20001; width:min(360px, calc(100vw - 32px));
+  background:#fff; color:var(--text); border-radius:10px; padding:14px 16px 12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3); font-size:14px; line-height:1.7;
+}
+.tour-card h4 { margin:0 0 6px; font-size:15px; color:var(--title); }
+.tour-card p { margin:0; }
+.tour-card kbd { background:#e5e7eb; color:var(--text); border-color:#d1d5db; }
+.tour-card .tour-nav { display:flex; align-items:center; gap:8px; margin-top:12px; }
+.tour-card .tour-count { font-size:12px; color:var(--text-dim); margin-right:auto; }
+.tour-card button {
+  font:inherit; font-size:13px; padding:5px 12px; border-radius:6px; cursor:pointer;
+  border:1px solid var(--border); background:#fff; color:var(--text);
+}
+.tour-card button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tour-start {
+  font:inherit; font-size:16px; font-weight:700; padding:10px 20px; border-radius:10px; cursor:pointer;
+  border:none; background:var(--accent); color:#fff; box-shadow:0 3px 10px rgba(0,0,0,0.2);
+}
+body.print-mode .tour-start { display:none; }
+
+/* ═══ SEARCH ═══ */
+.search-bar {
+  display:none; position:relative; align-items:center; gap:8px; padding:6px 16px;
+  background:#f1f5f9; border-bottom:1px solid var(--border); flex-shrink:0; font-size:12px;
+}
+.search-bar.show { display:flex; }
+.search-bar input {
+  flex:1; max-width:420px; padding:5px 10px; border:1px solid var(--border); border-radius:6px;
+  font-size:14px; font-family:inherit; background:#fff;
+}
+.search-bar input:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+.search-count { color:var(--text-dim); font-size:11px; }
+.search-results {
+  display:none; position:absolute; left:16px; top:100%; z-index:300; width:min(560px, calc(100vw - 32px));
+  max-height:60vh; overflow-y:auto; background:#fff; border:1px solid var(--border);
+  border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.12);
+}
+.search-results.show { display:block; }
+.search-item { padding:7px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; line-height:1.45; }
+.search-item:last-child { border-bottom:none; }
+.search-item:hover, .search-item.sel { background:var(--accent-light); }
+.search-item .si-head { font-size:13px; font-weight:600; }
+.search-item .si-num { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-right:6px; }
+.search-item .si-sec { font-size:11px; color:var(--text-dim); font-weight:400; margin-left:6px; }
+.search-item .si-snip { font-size:12px; color:#475569; margin-top:2px; }
+.search-item mark { background:#fde68a; color:inherit; padding:0 1px; border-radius:2px; }
+.search-empty { padding:10px 12px; color:var(--text-dim); font-size:12px; }
+
 /* hide in print */
 body.print-mode .understanding-bar,
 body.print-mode .bookmark-btn,
+body.print-mode .search-bar,
 body.print-mode .filter-bar { display:none !important; }
 body.hide-understanding .understanding-bar,
 body.hide-understanding .bookmark-btn { display:none !important; }
@@ -727,6 +784,7 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
@@ -755,18 +813,23 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
     <button class="nav-btn" onclick="toggleNotes()" title="メモ欄 (N)"><svg class="ic"><use href="#i-note"/></svg></button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()" title="書き込みモード (D)"><svg class="ic"><use href="#i-pen"/></svg></button>
     <span class="nav-sep sp-hide"></span>
-    <button class="nav-btn sp-hide" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去"><svg class="ic"><use href="#i-trash"/></svg></button>
-    <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し"><svg class="ic"><use href="#i-download"/></svg></button>
-    <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み"><svg class="ic"><use href="#i-upload"/></svg></button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <span class="nav-sep sp-hide"></span>
+    <!-- 保存データの消去ボタンは URL に ?delete=1 を付けたときだけ表示 -->
+    <button class="nav-btn" id="clearLocalBtn" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="display:none"><svg class="ic"><use href="#i-trash"/></svg></button>
     <button class="nav-btn sp-hide" onclick="zoomStep(-1)" title="スライドを縮小 (−)"><svg class="ic"><use href="#i-minus"/></svg></button>
     <button class="nav-btn sp-hide" id="zoomInfo" onclick="zoomReset()" title="等倍に戻す (0)" style="font-size:11px;min-width:44px;font-family:'JetBrains Mono',monospace">100%</button>
     <button class="nav-btn sp-hide" onclick="zoomStep(1)" title="スライドを拡大 (+)"><svg class="ic"><use href="#i-plus"/></svg></button>
     <span class="nav-sep sp-hide"></span>
+    <button class="nav-btn" onclick="toggleSearch()" title="キーワード検索 (/)"><svg class="ic"><use href="#i-search"/></svg></button>
     <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示"><svg class="ic"><use href="#i-filter"/></svg></button>
-    <button class="nav-btn sp-hide" onclick="toggleHints()" title="キーボード操作"><svg class="ic"><use href="#i-help"/></svg></button>
+    <button class="nav-btn" onclick="toggleHints()" title="使い方"><svg class="ic"><use href="#i-help"/></svg></button>
   </div>
+</div>
+
+<!-- Search bar -->
+<div class="search-bar" id="searchBar">
+  <input type="search" id="searchInput" placeholder="キーワードで検索（例：弾力性，ナッシュ均衡）" autocomplete="off">
+  <span class="search-count" id="searchCount"></span>
+  <div class="search-results" id="searchResults"></div>
 </div>
 
 <!-- Filter bar -->
@@ -831,6 +894,7 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
   <kbd>B</kbd> 板書スペース &nbsp;
   <kbd>N</kbd> メモ欄 &nbsp;
   <kbd>R</kbd> 空欄を表示 &nbsp;
+  <kbd>/</kbd> キーワード検索 &nbsp;
   <kbd>+</kbd><kbd>-</kbd><kbd>0</kbd> スライドの拡大/縮小/等倍 &nbsp;
   <kbd>Ctrl+Z</kbd> 取り消し
 </div>
@@ -948,7 +1012,8 @@ window.addEventListener('storage', (e) => {
 });
 
 function clearLocal() {
-  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
+  if (confirm('保存されたメモ・手書き・ブックマークをすべて削除しますか？\n\n※ この操作は取り消せません。'
+      + (window.SlideSync ? '\n※ ログインしている場合は、クラウドに保存した内容も消え、ほかの端末でも消えます。' : ''))) {
     notes = {};
     strokes = {};
     boardStrokes = {};
@@ -1555,8 +1620,9 @@ function showSlide(idx) {
   document.getElementById('noteSlideNum').textContent = idx+1;
   document.getElementById('noteArea').value = notes[idx] || '';
   // Update section select
+  // セクションのないスライド（表紙など）では「— 目次 —」に戻す（直前の章を出さない）
   let secIdx = '';
-  for (let i = SECTIONS.length-1; i >= 0; i--) {
+  if (SLIDES[idx].section) for (let i = SECTIONS.length-1; i >= 0; i--) {
     if (idx >= SECTIONS[i].slide) { secIdx = SECTIONS[i].slide; break; }
   }
   sel.value = secIdx;
@@ -1589,6 +1655,7 @@ function toggleNotes() {
   document.getElementById('notesPanel').classList.toggle('collapsed');
 }
 function toggleHints() {
+  if (mode === 'slide') { startTour(); return; }
   document.getElementById('hints').classList.toggle('show');
 }
 function clearNote() {
@@ -1862,7 +1929,7 @@ function enterPrintMode() {
 
   SLIDES.forEach((s, i) => {
     // Skip Note frames and title slide (first slide) in print mode
-    if (s.is_note) return;
+    if (s.is_note || s.printHide) return;
     if (i === 0) return;
 
     const isSectionTitle = s.html.includes('section-title-big');
@@ -1951,6 +2018,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'b' || e.key === 'B') { if (drawMode || boardMode) toggleBoard(); }
   else if (e.key === 'n' || e.key === 'N') toggleNotes();
   else if (e.key === 'r' || e.key === 'R') revealAllPhantoms();
+  else if (e.key === '/') { e.preventDefault(); openSearch(); }
   else if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomStep(1); }
   else if (e.key === '-') { e.preventDefault(); zoomStep(-1); }
   else if (e.key === '0') { e.preventDefault(); zoomReset(); }
@@ -2056,119 +2124,204 @@ function prevFiltered() {
   else showSlide(filteredIndices[filteredIndices.length - 1]); // wrap
 }
 
-// ═══ EXPORT / IMPORT ═══
-function exportData() {
-  notes[current] = document.getElementById('noteArea').value;
-  const canvas = getCanvas();
-  const cw = canvas ? canvas.width : 1;
-  const ch = canvas ? canvas.height : 1;
-
-  const normalizeStrokes = (src) => {
-    const out = {};
-    for (const [k, arr] of Object.entries(src || {})) {
-      out[k] = arr.map(s => ({
-        ...s,
-        points: s.points.map(p => ({ x: p.x / cw, y: p.y / ch }))
-      }));
-    }
-    return out;
-  };
-
-  const data = {
-    version: 1,
-    title: document.querySelector('.topbar-title')?.textContent || '',
-    exportDate: new Date().toISOString(),
-    slideCount: SLIDES.length,
-    canvasSize: { w: cw, h: ch },
-    notes,
-    understanding,
-    bookmarks,
-    strokes: normalizeStrokes(strokes),
-    boardStrokes: normalizeStrokes(boardStrokes),
-    lastSlide: current,
-  };
-
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const dateStr = new Date().toISOString().slice(0, 10);
-  a.download = `micro_econ_study_${dateStr}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!data.version) { alert('形式が不正です'); return; }
-
-      const merge = confirm(
-        '読み込みモードを選んでください:\n\n' +
-        '「OK」→ 既存データに上書き（マージ）\n' +
-        '「キャンセル」→ 読み込み中止'
-      );
-      if (!merge) return;
-
-      const canvas = getCanvas();
-      const cw = canvas ? canvas.width : (data.canvasSize?.w || 1);
-      const ch = canvas ? canvas.height : (data.canvasSize?.h || 1);
-
-      const denormalizeStrokes = (src) => {
-        const out = {};
-        for (const [k, arr] of Object.entries(src || {})) {
-          out[k] = arr.map(s => ({
-            ...s,
-            points: s.points.map(p => ({
-              x: p.x <= 1.5 ? p.x * cw : p.x,
-              y: p.y <= 1.5 ? p.y * ch : p.y,
-            }))
-          }));
-        }
-        return out;
-      };
-
-      if (data.notes) Object.assign(notes, data.notes);
-      if (data.understanding) Object.assign(understanding, data.understanding);
-      if (data.bookmarks) Object.assign(bookmarks, data.bookmarks);
-      if (data.strokes) {
-        const dn = denormalizeStrokes(data.strokes);
-        Object.assign(strokes, dn);
-      }
-      if (data.boardStrokes) {
-        const dn = denormalizeStrokes(data.boardStrokes);
-        Object.assign(boardStrokes, dn);
-      }
-
-      saveLocal();
-      showSlide(current);
-      alert('読み込み完了しました (' + (data.exportDate || '') + ')');
-    } catch(err) {
-      alert('読み込みエラー: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = ''; // reset file input
-}
-
-// Export notes as Markdown
-function exportNotes() {
-  notes[current] = document.getElementById('noteArea').value;
-  let text = '# 基礎ミクロ経済学 メモ\n\n';
-  for (let i = 0; i < SLIDES.length; i++) {
-    if (notes[i] && notes[i].trim()) {
-      text += `## スライド ${i+1}: ${SLIDES[i].title || ''}\n${notes[i]}\n\n`;
-    }
+// ═══ 使い方ツアー ═══
+// ボタンを 1 つずつ照らして説明する。対象が画面にない（スマホで隠れている，データがなく出ていない）
+// ときは中央にカードだけを出す。説明文は TOUR_STEPS（デッキごとに書き換える）
+const TOUR_STEPS = [
+  { title: 'スライドの使い方', body: 'ボタンを順番に説明します．<kbd>→</kbd> か「次へ」で進みます．' },
+  { sel: '#sectionSelect', title: '目次', body: '章を選ぶと，その章の最初のスライドに移ります．' },
+  { sel: '[onclick="prevSlide()"]', title: 'スライドの移動', body: '前後のスライドへ．キーボードの <kbd>←</kbd><kbd>→</kbd>，スマホでは左右のスワイプでも移動できます．' },
+  { sel: '#drawToggleBtn', title: '書き込み', body: '授業中はスライドに直接書き込んでノートを取れます（iPad では Apple Pencil を使うと自動でオンになります）．' },
+  { sel: '[onclick="toggleNotes()"]', title: 'メモ欄', body: 'スライドごとにメモを書けます．' },
+  { sel: '.understanding-bar', title: '理解度', body: 'スライドごとに理解度を記録できます．復習のときの目印に使ってください．' },
+  { sel: '.slide-content .bookmark-btn', title: 'ブックマーク', body: '★ で大事なスライドに印をつけます．' },
+  { sel: '[onclick="toggleFilter()"]', title: '絞り込み', body: 'ブックマークしたスライドなどだけを表示します．' },
+  { sel: '[onclick="toggleSearch()"]', title: 'キーワード検索', body: 'スライドの本文を検索します（<kbd>/</kbd> キーでも開きます）．検索中は <kbd>←</kbd><kbd>→</kbd> で該当スライドだけを順に見られます．' },
+  { sel: '#ssAuthBtn', title: 'ログイン（任意）', body: '書き込みやメモはこのブラウザに保存されます．ブラウザによっては消えることがあるので，残したい人や端末を替える人はログインしてください．' },
+  { title: '印刷', body: '1枚目のスライドの右下にある「印刷用表示」から，書き込み欄つきの印刷用ページを開けます．' },
+  { sel: '[onclick="toggleHints()"]', title: 'この説明', body: 'この説明は右上の「?」からいつでも見られます．<br>キー操作：' + '<kbd>←</kbd><kbd>→</kbd> 移動，<kbd>/</kbd> 検索，<kbd>D</kbd> 書き込み（<kbd>P</kbd> ペン・<kbd>H</kbd> 蛍光ペン・<kbd>E</kbd> 消しゴム），<kbd>N</kbd> メモ，<kbd>R</kbd> 空欄をすべて表示，<kbd>+</kbd><kbd>-</kbd><kbd>0</kbd> 拡大・縮小' },
+];
+let tourIdx = -1, tourEls = null;
+function tourTarget(sel) {
+  if (!sel) return null;
+  for (const el of document.querySelectorAll(sel)) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden') return el;
   }
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'micro_econ_notes.md';
-  a.click();
+  return null;
 }
+function startTour() {
+  if (mode !== 'slide') return;
+  if (drawMode) toggleDraw();
+  document.getElementById('hints').classList.remove('show');
+  if (!tourEls) {
+    const spot = document.createElement('div'); spot.className = 'tour-spot';
+    const card = document.createElement('div'); card.className = 'tour-card';
+    card.addEventListener('click', e => {
+      const a = e.target.dataset.act;
+      if (a === 'next') tourGo(tourIdx + 1); else if (a === 'prev') tourGo(tourIdx - 1); else if (a === 'end') endTour();
+    });
+    tourEls = { spot, card };
+  }
+  document.body.appendChild(tourEls.spot); document.body.appendChild(tourEls.card);
+  tourGo(0);
+}
+function endTour() {
+  tourIdx = -1;
+  if (tourEls) { tourEls.spot.remove(); tourEls.card.remove(); }
+}
+function tourGo(i) {
+  if (i < 0) return;
+  if (i >= TOUR_STEPS.length) { endTour(); return; }
+  tourIdx = i;
+  const st = TOUR_STEPS[i], { spot, card } = tourEls;
+  const el = tourTarget(st.sel);
+  const last = i === TOUR_STEPS.length - 1;
+  card.innerHTML = `<h4>${st.title}</h4><p>${st.body}</p>` +
+    `<div class="tour-nav"><span class="tour-count">${i + 1} / ${TOUR_STEPS.length}</span>` +
+    (i > 0 ? '<button data-act="prev">戻る</button>' : '<button data-act="end">閉じる</button>') +
+    `<button class="primary" data-act="${last ? 'end' : 'next'}">${last ? '終わる' : '次へ'}</button></div>`;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const cw = card.offsetWidth, ch = card.offsetHeight;
+  if (el) {
+    const r = el.getBoundingClientRect(), pad = 4;
+    spot.classList.remove('center');
+    Object.assign(spot.style, { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+    let top = r.bottom + 12;
+    if (top + ch > vh - 8) top = Math.max(8, r.top - ch - 12);
+    let left = Math.min(Math.max(8, r.left + r.width / 2 - cw / 2), vw - cw - 8);
+    Object.assign(card.style, { left: left + 'px', top: top + 'px' });
+  } else {
+    spot.classList.add('center');
+    Object.assign(spot.style, { left: (vw / 2) + 'px', top: (vh / 2) + 'px' });
+    Object.assign(card.style, { left: ((vw - cw) / 2) + 'px', top: Math.max(8, (vh - ch) / 2) + 'px' });
+  }
+}
+// ツアー中のキー操作（スライドを動かさない）
+document.addEventListener('keydown', e => {
+  if (tourIdx < 0) return;
+  if (e.key === 'ArrowRight' || e.key === 'Enter') tourGo(tourIdx + 1);
+  else if (e.key === 'ArrowLeft') tourGo(tourIdx - 1);
+  else if (e.key === 'Escape') endTour();
+  else return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
+window.addEventListener('resize', () => { if (tourIdx >= 0) tourGo(tourIdx); });
+
+// ═══ SEARCH ═══
+// スライドは <template> 内にあるのでブラウザのページ内検索が効かない．本文テキストから自前で検索する．
+// 入力中は結果を一覧表示し，同時に一致スライドで絞り込む（←→ で一致スライドだけを順に移動）．
+let searchHits = [], searchSel = -1;
+const normSearch = t => t.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+function searchPlain(t) {
+  // 表示用：TeX の $ や \コマンドを軽く落とす
+  return t.replace(/\\([%&#_])/g, '$1').replace(/\\[a-zA-Z]+/g, '').replace(/[${}]/g, '').replace(/\s+/g, ' ');
+}
+function escSearch(t) { return t.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toggleSearch() {
+  const bar = document.getElementById('searchBar');
+  if (bar.classList.contains('show')) closeSearch(); else openSearch();
+}
+function openSearch() {
+  if (mode !== 'slide') return;
+  document.getElementById('searchBar').classList.add('show');
+  const inp = document.getElementById('searchInput');
+  inp.focus(); inp.select();
+  if (inp.value) runSearch();
+}
+function closeSearch() {
+  document.getElementById('searchBar').classList.remove('show');
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchCount').textContent = '';
+  searchHits = [];
+  if (activeFilter === 'search') { activeFilter = 'all'; filteredIndices = null; updateFilterCount(); showSlide(current); }
+}
+function runSearch() {
+  const raw = document.getElementById('searchInput').value;
+  const q = normSearch(raw);
+  const box = document.getElementById('searchResults');
+  const cnt = document.getElementById('searchCount');
+  if (!q) {
+    searchHits = []; box.classList.remove('show'); cnt.textContent = '';
+    if (activeFilter === 'search') { activeFilter = 'all'; filteredIndices = null; updateFilterCount(); showSlide(current); }
+    return;
+  }
+  if (!SLIDES[0].searchText) SLIDES.forEach(s => {
+    s.searchTitle = normSearch(s.title);
+    // 本文テキスト（表示用は空白を残す）
+    const tp = document.createElement('template'); tp.innerHTML = s.html;
+    s.dispText = tp.content.textContent.normalize('NFKC').replace(/\s+/g, ' ').trim();
+    s.searchText = normSearch(s.dispText);
+  });
+  // 複数語はスペース区切りで AND 検索
+  const terms = raw.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);
+  searchHits = [];
+  SLIDES.forEach((s, i) => {
+    if (terms.every(t => s.searchTitle.includes(t) || s.searchText.includes(t))) searchHits.push(i);
+  });
+  // タイトル一致を先に
+  searchHits.sort((a, b) => (SLIDES[b].searchTitle.includes(terms[0]) - SLIDES[a].searchTitle.includes(terms[0])) || (a - b));
+  cnt.textContent = searchHits.length ? searchHits.length + ' 件' : '該当なし';
+  searchSel = searchHits.length ? 0 : -1;
+  // 絞り込み（←→ 用）はスライド順
+  activeFilter = 'search';
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  filteredIndices = searchHits.length ? [...searchHits].sort((a, b) => a - b) : null;
+  updateFilterCount();
+  const re = new RegExp(terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi');
+  const mark = t => escSearch(t).replace(new RegExp(re.source, 'gi'), m => '<mark>' + m + '</mark>');
+  box.innerHTML = searchHits.length ? searchHits.slice(0, 60).map((i, k) => {
+    const s = SLIDES[i];
+    const body = s.dispText;
+    const pos = body.toLowerCase().indexOf(terms[0]);
+    let snip = '';
+    if (pos >= 0) {
+      const a = Math.max(0, pos - 24), b = Math.min(body.length, pos + terms[0].length + 36);
+      snip = (a > 0 ? '…' : '') + body.slice(a, b) + (b < body.length ? '…' : '');
+    } else snip = body.slice(0, 60) + (body.length > 60 ? '…' : '');
+    return `<div class="search-item${k === 0 ? ' sel' : ''}" data-idx="${i}">` +
+      `<div class="si-head"><span class="si-num">${i + 1}</span>${mark(s.title || s.dispText.slice(0, 30) || '（無題）')}<span class="si-sec">${escSearch(s.section)}</span></div>` +
+      `<div class="si-snip">${mark(searchPlain(snip))}</div></div>`;
+  }).join('') + (searchHits.length > 60 ? `<div class="search-empty">ほか ${searchHits.length - 60} 件（語を増やして絞り込んでください）</div>` : '')
+    : '<div class="search-empty">該当するスライドはありません</div>';
+  box.classList.add('show');
+}
+function pickSearch(i) {
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('searchInput').blur();
+  showSlide(i);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('searchInput');
+  const box = document.getElementById('searchResults');
+  inp.addEventListener('input', runSearch);
+  inp.addEventListener('focus', () => { if (inp.value) box.classList.add('show'); });
+  inp.addEventListener('keydown', e => {
+    const items = box.querySelectorAll('.search-item');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (!items.length) return;
+      e.preventDefault();
+      searchSel = (searchSel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items.forEach((it, k) => it.classList.toggle('sel', k === searchSel));
+      items[searchSel].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (items[searchSel]) pickSearch(parseInt(items[searchSel].dataset.idx));
+    } else if (e.key === 'Escape') {
+      e.preventDefault(); e.stopPropagation();
+      if (box.classList.contains('show') && inp.value) { box.classList.remove('show'); inp.blur(); }
+      else closeSearch();
+    }
+  });
+  box.addEventListener('mousedown', e => {
+    const it = e.target.closest('.search-item');
+    if (it) { e.preventDefault(); pickSearch(parseInt(it.dataset.idx)); }
+  });
+  inp.addEventListener('blur', () => setTimeout(() => box.classList.remove('show'), 100));
+});
+
+// 学習データの JSON 書き出し・読み込みは廃止（端末間の引き継ぎは slide-sync.js のログイン同期で行う）
 
 // URL-based page navigation: ?page=N or #N (1-based)
 function getPageFromURL() {
@@ -2193,6 +2346,7 @@ document.addEventListener('DOMContentLoaded', () => {
     section: t.dataset.section || '',
     html: t.innerHTML,
     is_note: t.dataset.note === 'true',
+    printHide: t.dataset.print === 'false',   // data-print="false"：印刷用表示に出さない
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
   // Build sections dynamically from slide data
@@ -2214,6 +2368,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLocal();
   initZoom();
   // URL page specification: ?page=N or #N (1-based)
+  if (new URLSearchParams(location.search).get('delete') === '1') document.getElementById('clearLocalBtn').style.display = '';
   const urlPage = getPageFromURL();
   if (urlPage !== null) current = urlPage;
   // Wait for MathJax to load
@@ -2373,6 +2528,16 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 </div>
 </template>
+
+<!-- ===== スライドの使い方（ボタンでツアーを開始。印刷しない） ===== -->
+<template class="slide-data" data-print="false" data-title="このスライドの使い方" data-section="はじめに" data-note="false" data-print-margin="0">
+<ul>
+<li>ボタンや機能を，画面上で順番に説明します．</li>
+<li class="sub-item">あとで見たいときは右上の「?」から．</li>
+</ul>
+<div style="margin:28px 0;"><button class="tour-start" onclick="startTour()">▶ 使い方を見る</button></div>
+</template>
+
 
 <!-- ============ SECTION: ミクロ経済学の方法 ============ -->
 
@@ -3280,8 +3445,12 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li><span class="keyword">従量税</span>を考える．一単位購入するごとに税が$t$円課される．</li>
 <li>財を一単位購入するとき，</li>
 <li class="sub-item">消費者の支払額:</li>
+<li class="spacer"></li>
 <li class="sub-item">生産者の受け取る額:</li>
+<li class="spacer"></li>
 <li>実質的な価格は?</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div>
 <div class="column">
@@ -3326,10 +3495,34 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </template>
 
 <template class="slide-data" data-title="課税の効果のつづき③ どの財に課税すべきか?" data-section="需要と供給" data-note="false" data-print-margin="0">
-<div class="tikz-figure"><img src="img_micro/optax1-ch1.svg" alt="死荷重損失の比較：非弾力的な需要（左, 死荷重小）と弾力的な需要（右, 死荷重大）"></div>
 <ul>
 <li>需要曲線の傾き（弾力性）に注目</li>
+</ul>
+<div class="tikz-figure"><img src="img_micro/optax1-ch1.svg" alt="死荷重損失の比較：非弾力的な需要（左, 死荷重小）と弾力的な需要（右, 死荷重大）"></div>
+<!-- 図の左＝急な需要曲線（弾力性が低い），右＝緩やかな需要曲線（弾力性が高い）に合わせて2列 -->
+<div class="columns">
+<div class="column">
+<ul>
+<li class="sub-item">弾力性が低い ➯</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div>
+<div class="column">
+<ul>
+<li class="sub-item">弾力性が高い ➯</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div>
+</div>
+<ul>
 <li><span class="keyword">ラムゼイ・ルール</span>(Ramsey, 1927，逆弾力性ルールとも):</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </template>
 
@@ -3491,8 +3684,11 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li>良いものと悪いものが半々だとする</li>
 <li class="sub-item">買い手の評価は</li>
+<li class="spacer"></li>
 <li class="sub-item">買ってもらうためには価格は最大でも</li>
+<li class="spacer"></li>
 <li class="sub-item">上記の価格で売り手は売りたいか？<br>良い売り手：<br>悪い売り手：</li>
+<li class="spacer"></li>
 <li class="sub-item arrow">→ 市場には悪いものしか残らない！</li>
 <li><span class="keyword">逆淘汰</span>（逆選抜，逆選択とも）</li>
 <li class="sub-item">良いものが駆逐される</li>
@@ -3934,11 +4130,24 @@ $$\underbrace{MRS_{xy}=\frac{MU_x}{MU_y}}_{\text{$x$の$y$に対する限界代�
 </template>
 
 <template class="slide-data" data-title="所得による需要の変化" data-section="消費者の行動" data-note="false" data-print-margin="0">
-<div class="tikz-figure"><img src="img_micro/income_effect.svg" alt="正常財と劣等財"></div>
+<div class="tikz-figure"><img src="img_micro/income_effect.svg" alt="正常財（左）と劣等財（右）"></div>
+<!-- 図の左＝正常財，右＝劣等財に合わせて2列 -->
+<div class="columns">
+<div class="column">
 <ul>
 <li><span class="keyword">正常財</span>（あるいは<span class="keyword">上級財</span>）</li>
-<li><span class="keyword">劣等財</span>（あるいは<span class="keyword">下級財</span>）</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
+</div>
+<div class="column">
+<ul>
+<li><span class="keyword">劣等財</span>（あるいは<span class="keyword">下級財</span>）</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+</ul>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="所得消費曲線" data-section="消費者の行動" data-note="false" data-print-margin="0">
@@ -4255,11 +4464,21 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </ul>
 </template>
 
-<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="300">
-<ul>
+<template class="slide-data" data-title="練習問題" data-section="企業の行動" data-note="false" data-print-margin="40">
+<div class="columns">
+<div class="column">
+<ol>
 <li>$C(q)=q^2+q$とする．供給関数を求めなさい．</li>
+</ol>
+<div class="write-space" style="height:14em"></div>
+</div>
+<div class="column">
+<ol start="2">
 <li>$C(q)=4\cdot q$だとする．供給関数を求めなさい（微分では解けない）．</li>
-</ul>
+</ol>
+<div class="write-space" style="height:14em"></div>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="費用の種類と構造" data-section="企業の行動" data-note="false" data-print-margin="200">
@@ -4268,14 +4487,22 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <ul>
 <li>総費用関数のより細かい構造を見る．例として$C(q)=q^2+q+5$</li>
 <li class="sub-item"><span class="keyword">可変費用</span>とは</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="sub-item"><span class="keyword">固定費用</span>とは</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div>
 <div class="column">
 <ul>
 <li>経済学における短期と長期</li>
 <li class="sub-item">短期とは</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="sub-item">長期とは</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li>固定費用 $\neq$ 埋没費用</li>
 </ul>
 </div>
@@ -4287,8 +4514,15 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 <li>どのようなときに利益が黒字か（赤字か）？</li>
 <li class="sub-item arrow">→ <span class="keyword">損益分岐点</span>を求める．</li>
 <li>黒字と赤字の境目＝利潤が0の条件は</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="sub-item">損益分岐点での価格は</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li>利潤最大化条件を使うと...</li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </template>
 
@@ -4307,20 +4541,40 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 </template>
 
-<template class="slide-data" data-title="例題1" data-section="企業の行動" data-note="false" data-print-margin="300">
+<template class="slide-data" data-title="例題1" data-section="企業の行動" data-note="false" data-print-margin="40">
 <p>費用関数が$C(q)=q^{2}+q+4$だとする．</p>
+<div class="columns">
+<div class="column">
 <ol>
 <li>損益分岐点の価格と生産量を求めなさい．</li>
+</ol>
+<div class="write-space" style="height:14em"></div>
+</div>
+<div class="column">
+<ol start="2">
 <li>操業停止点の価格と生産量を求めなさい．</li>
 </ol>
+<div class="write-space" style="height:14em"></div>
+</div>
+</div>
 </template>
 
-<template class="slide-data" data-title="例題2" data-section="企業の行動" data-note="false" data-print-margin="300">
+<template class="slide-data" data-title="例題2" data-section="企業の行動" data-note="false" data-print-margin="40">
 <p>費用関数が$C(q)=q^3-3q^{2}+5q+4$だとする．図を描いて次の問いに答えなさい</p>
+<div class="columns">
+<div class="column">
 <ol>
 <li>損益分岐点の価格と生産量を求めなさい．</li>
+</ol>
+<div class="write-space" style="height:18em"></div>
+</div>
+<div class="column">
+<ol start="2">
 <li>操業停止点の価格と生産量を求めなさい．</li>
 </ol>
+<div class="write-space" style="height:18em"></div>
+</div>
+</div>
 </template>
 
 <template class="slide-data" data-title="企業の参入・退出" data-section="企業の行動" data-note="false" data-print-margin="0">
