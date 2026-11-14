@@ -1619,7 +1619,7 @@ window.addEventListener('storage', (e) => {
 });
 
 function clearLocal() {
-  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。\n残したい内容があれば先に「💾」で書き出してください。')) {
+  if (confirm('保存されたメモ・手書きデータをすべて削除しますか？\n\n※ この操作は取り消せません。')) {
     notes = {};
     strokes = {};
     boardStrokes = {};
