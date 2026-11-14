@@ -79,7 +79,8 @@ body {
 }
 
 /* ═══ SLIDE VIEW MODE ═══ */
-body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+body.slide-mode { height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
+/* 100dvh＝実際に見えている高さ。iPad の Safari では 100vh がツールバーの裏まで含むため，下端が隠れて見切れる */
 
 .topbar {
   display:flex; align-items:center; justify-content:space-between;
@@ -119,6 +120,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   overflow:auto; background:var(--bg); padding:24px 32px;
   position:relative;
 }
+.slide-area { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }   /* iPad のホームバー分 */
 /* Content-only zoom: scales the slide and its annotation canvas together,
    leaving the topbar and toolbars at their original size. */
 .zoom-layer {
@@ -133,7 +135,7 @@ body.slide-mode { height:100vh; overflow:hidden; display:flex; flex-direction:co
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:8px;
-  padding:28px 36px;
+  padding:28px 36px 72px;   /* 下端の余白：スクロールしたとき最後の行が画面の端などに隠れないように（画面表示だけ） */
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
 }
 
@@ -745,7 +747,7 @@ body.print-mode .fab-pen { display: none !important; }
   .topbar-nav { gap: 4px; flex-wrap: wrap; }
 
   .slide-area { padding: 8px 10px; }
-  .slide-content { padding: 14px 16px; border-radius: 6px; }
+  .slide-content { padding: 14px 16px 56px; border-radius: 6px; }
   .slide-content .frame-title { font-size: 17px; }
 
   .notes-panel:not(.collapsed) {
@@ -766,6 +768,14 @@ body.print-mode .fab-pen { display: none !important; }
 }
 /* 印刷用表示ボタンは表紙（1枚目）だけに出す */
 body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
+
+/* 縦向きの iPad など（幅 900px 以下）：列を縦に並べる（左右 2 列だと表がはみ出す） */
+@media screen and (max-width: 900px) {
+  .columns { flex-direction:column; gap:12px; }
+  .columns > .column + .column { border-left:none; padding-left:0; border-top:1px solid var(--border); padding-top:12px; }
+}
+/* 縦向きの iPad（769〜900px）ではツールバーで幅が埋まるのでタイトルを隠す（スマホ幅は 2 段表示なので別扱い） */
+@media screen and (min-width: 769px) and (max-width: 900px) { .topbar-title { display:none; } }
 </style>
 </head>
 <body class="slide-mode">
@@ -2708,7 +2718,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <ul>
 <li>合理的であるとは以下の二条件が満たされること</li>
 <li class="sub-item">どんな選択肢でも比較できる（完備性）</li>
-<li class="spacer">
+<li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
@@ -2945,12 +2955,12 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <li>均衡価格では"ある意味"不満がない</li>
 <ul>
 <li>誰も既に成立した取引を壊すことができない</li>
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 
 </li>
 </ul>
@@ -2977,11 +2987,11 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <li>取引できたことによる「利益」の総額を考える</li>
 <ul>
 <li>市場均衡での余剰は？</li>
-<li class="spacer"> 
-<li class="spacer"> 
-<li class="spacer"> 
-<li class="spacer"> 
-<li class="spacer"> 
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 
 <li>テキトーなマッチングと比較してみる</li>
 </ul>
@@ -3211,40 +3221,40 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li class="sub-item">駄菓子の価格が$100$円から$110$円に値上がりしたところ，需要量が$120$万個から$110$万個に減った．</li>
 
 
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 
 <li class="sub-item">車の価格が$100$万円から$110$万円に値上がりしたところ，需要量が$12$万台から$11$万台に減った．</li>
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 </ul>
 </div>
 </div>
@@ -3256,9 +3266,9 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <li>価格弾力性が$1$より大きいとき，その財は<span class="keyword">弾力的</span>，$1$より小さいとき<span class="keyword">非弾力的</span>という．</li>
 <li> どのような財が弾力的でどのような財がそうではないか？</li>
 <li class="sub-item">弾力的な財の例</li>
-<li class="spacer">
 <li class="spacer"></li>
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="spacer"></li>
 
 <li class="sub-item">非弾力的な財の例</li>
@@ -3971,25 +3981,25 @@ $$m= p_{x}\cdot q_{x}+p_{y}\cdot q_{y}$$
 <div class="column">
 <ul>
 <li>$p_{x}$が上昇したとき</li>
-<li class="spacer"> 
-<li class="spacer">
-<li class="spacer">
 <li class="spacer"></li>
 <li class="spacer"></li>
-<li class="spacer"> 
-<li class="spacer">
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
 <li>$p_{y}$が上昇したとき</li>
-<li class="spacer"> 
-<li class="spacer">
-<li class="spacer">
 <li class="spacer"></li>
 <li class="spacer"></li>
-<li class="spacer"> 
-<li class="spacer">
-<li class="spacer">
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
+<li class="spacer"></li>
 <li class="spacer"></li>
 <li class="spacer"></li>
 </ul>
