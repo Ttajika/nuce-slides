@@ -820,7 +820,6 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
     <button class="nav-btn sp-hide" onclick="zoomStep(1)" title="スライドを拡大 (+)"><svg class="ic"><use href="#i-plus"/></svg></button>
     <span class="nav-sep sp-hide"></span>
     <button class="nav-btn" onclick="toggleSearch()" title="キーワード検索 (/)"><svg class="ic"><use href="#i-search"/></svg></button>
-    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示"><svg class="ic"><use href="#i-filter"/></svg></button>
     <button class="nav-btn" onclick="toggleHints()" title="使い方"><svg class="ic"><use href="#i-help"/></svg></button>
   </div>
 </div>
@@ -832,13 +831,7 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
   <div class="search-results" id="searchResults"></div>
 </div>
 
-<!-- Filter bar -->
-<div class="filter-bar" id="filterBar">
-  <span style="font-weight:500;color:var(--text-dim);">フィルタ:</span>
-  <button class="filter-chip" onclick="setFilter('all',this)">すべて</button>
-  <button class="filter-chip" onclick="setFilter('bookmark',this)"><svg class="ic"><use href="#i-star"/></svg> ブックマーク</button>
-  <span class="filter-count" id="filterCount"></span>
-</div>
+<!-- フィルタの帯（すべて／ブックマーク）は廃止。絞り込みは検索だけが使う（filteredIndices） -->
 
 <!-- Draw toolbar — below topbar/filter, above main -->
 <div class="draw-toolbar" id="drawToolbar">
@@ -2077,9 +2070,6 @@ function toggleBookmark(idx) {
 }
 
 // ═══ FILTER ═══
-function toggleFilter() {
-  document.getElementById('filterBar').classList.toggle('show');
-}
 
 function setFilter(type, el) {
   activeFilter = type;
@@ -2134,8 +2124,7 @@ const TOUR_STEPS = [
   { sel: '#drawToggleBtn', title: '書き込み', body: '授業中はスライドに直接書き込んでノートを取れます（iPad では Apple Pencil を使うと自動でオンになります）．' },
   { sel: '[onclick="toggleNotes()"]', title: 'メモ欄', body: 'スライドごとにメモを書けます．' },
   { sel: '.understanding-bar', title: '理解度', body: 'スライドごとに理解度を記録できます．復習のときの目印に使ってください．' },
-  { sel: '.slide-content .bookmark-btn', title: 'ブックマーク', body: '★ で大事なスライドに印をつけます．' },
-  { sel: '[onclick="toggleFilter()"]', title: '絞り込み', body: 'ブックマークしたスライドなどだけを表示します．' },
+  { sel: '.slide-content .bookmark-btn', title: 'ブックマーク', body: '★ で大事なスライドに印をつけます．印をつけたスライドは，検索欄を空のまま開くと一覧で出ます．' },
   { sel: '[onclick="toggleSearch()"]', title: 'キーワード検索', body: 'スライドの本文を検索します（<kbd>/</kbd> キーでも開きます）．検索中は <kbd>←</kbd><kbd>→</kbd> で該当スライドだけを順に見られます．' },
   { sel: '#ssAuthBtn', title: 'ログイン（任意）', body: '書き込みやメモはこのブラウザに保存されます．ブラウザによっては消えることがあるので，残したい人や端末を替える人はログインしてください．' },
   { title: '印刷', body: '1枚目のスライドの右下にある「印刷用表示」から，書き込み欄つきの印刷用ページを開けます．' },
@@ -2227,7 +2216,7 @@ function openSearch() {
   document.getElementById('searchBar').classList.add('show');
   const inp = document.getElementById('searchInput');
   inp.focus(); inp.select();
-  if (inp.value) runSearch();
+  runSearch();   // 空欄ならブックマーク一覧
 }
 function closeSearch() {
   document.getElementById('searchBar').classList.remove('show');
@@ -2243,8 +2232,15 @@ function runSearch() {
   const box = document.getElementById('searchResults');
   const cnt = document.getElementById('searchCount');
   if (!q) {
-    searchHits = []; box.classList.remove('show'); cnt.textContent = '';
+    searchHits = []; cnt.textContent = '';
     if (activeFilter === 'search') { activeFilter = 'all'; filteredIndices = null; updateFilterCount(); showSlide(current); }
+    // 空欄のときはブックマーク（★）したスライドの一覧を出す
+    const bm = SLIDES.map((_, i) => i).filter(i => bookmarks[i]);
+    if (!bm.length) { box.classList.remove('show'); return; }
+    searchSel = 0;
+    box.innerHTML = '<div class="search-empty">★ ブックマークしたスライド</div>' + bm.map((i, k) =>
+      `<div class="search-item${k === 0 ? ' sel' : ''}" data-idx="${i}"><div class="si-head"><span class="si-num">${i + 1}</span>${escSearch(SLIDES[i].title || SLIDES[i].section || '（無題）')}<span class="si-sec">${escSearch(SLIDES[i].section)}</span></div></div>`).join('');
+    box.classList.add('show');
     return;
   }
   if (!SLIDES[0].searchText) SLIDES.forEach(s => {
@@ -2296,7 +2292,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inp = document.getElementById('searchInput');
   const box = document.getElementById('searchResults');
   inp.addEventListener('input', runSearch);
-  inp.addEventListener('focus', () => { if (inp.value) box.classList.add('show'); });
+  inp.addEventListener('focus', () => { if (inp.value) box.classList.add('show'); else runSearch(); });
   inp.addEventListener('keydown', e => {
     const items = box.querySelectorAll('.search-item');
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
