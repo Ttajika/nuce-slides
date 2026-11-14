@@ -3,6 +3,7 @@
    ・ツールバー等の絵文字ボタンを線画アイコンに差し替える
    ・扉（section-title-big）を紺の全面にし，章番号・章名を添える
    ・ポインターを指差しマークにする
+   ・右上の「?」で使い方ツアーを出す
    </body> の直前（各スライドのスクリプトの後）で読み込む。
    ═══════════════════════════════════════════════════════════════ */
 (function () {
@@ -207,9 +208,111 @@
     };
   }
 
+  // ─── 使い方ツアー（右上の「?」） ───
+  // ボタンを 1 つずつ照らして説明する。ページにないボタンの説明は飛ばし，
+  // あっても画面に出ていない（スマホで隠れている等）ときは中央にカードだけを出す。
+  // デッキごとに変えたいときは，ページ側で window.TOUR_STEPS を定義すれば置き換わる。
+  const DEFAULT_TOUR = [
+    { title: 'スライドの使い方', body: 'ボタンを順番に説明します．<kbd>→</kbd> か「次へ」で進みます．' },
+    { sel: '#sectionSelect', title: '目次', body: '章を選ぶと，その章の最初のスライドに移ります．' },
+    { sel: '[onclick="prevSlide()"]', title: 'スライドの移動', body: '前後のスライドへ．キーボードの <kbd>←</kbd><kbd>→</kbd>，スマホでは左右のスワイプでも移動できます．' },
+    { sel: '#drawToggleBtn, #drawBtn', title: '書き込み', body: '授業中はスライドに直接書き込んでノートを取れます（iPad では Apple Pencil を使うと自動でオンになります）．' },
+    { sel: '[onclick="toggleNotes()"]', title: 'メモ欄', body: 'スライドごとにメモを書けます．' },
+    { sel: '.slide-content .bookmark-btn', title: 'ブックマーク', body: '★ で大事なスライドに印をつけます．', always: true },
+    { sel: '[onclick="toggleSearch()"]', title: 'キーワード検索', body: 'スライドの本文を検索します（<kbd>/</kbd> キーでも開きます）．' },
+    { sel: '#ssAuthBtn', title: 'ログイン（任意）', body: '書き込みやメモはこのブラウザに保存されます．ブラウザによっては消えることがあるので，残したい人や端末を替える人はログインしてください．' },
+    { sel: '#modeToggle', title: '印刷', body: '1枚目のスライドの右下にある「印刷用表示」から，書き込み欄つきの印刷用ページを開けます．', center: true },
+    { sel: '[onclick="toggleHints()"]', title: 'この説明', body: 'この説明は右上の「?」からいつでも見られます．', keys: true },
+  ];
+  let tourSteps = null, tourIdx = -1, tourEls = null;
+  function visibleEl(sel) {
+    if (!sel) return null;
+    for (const el of document.querySelectorAll(sel)) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden') return el;
+    }
+    return null;
+  }
+  function buildSteps() {
+    const src = Array.isArray(window.TOUR_STEPS) ? window.TOUR_STEPS : DEFAULT_TOUR;
+    const hints = document.getElementById('hints');
+    const keys = hints ? '<br>キー操作：' + hints.innerHTML.replace(/&nbsp;/g, ' ').trim() : '';
+    // sel のあるステップは，その要素がページにあるときだけ残す（always はスライドごとの欄なので常に残す）
+    return src.filter(st => !st.sel || st.always || document.querySelector(st.sel))
+      .map(st => Object.assign({}, st, { body: st.body + (st.keys ? keys : '') }));
+  }
+  function startTour() {
+    if (document.body.classList.contains('print-mode')) return;
+    try { if (drawMode && typeof toggleDraw === 'function') toggleDraw(); } catch (e) {}   // eslint-disable-line no-undef
+    const h = document.getElementById('hints'); if (h) h.classList.remove('show');
+    tourSteps = buildSteps();
+    if (!tourEls) {
+      const spot = document.createElement('div'); spot.className = 'tour-spot';
+      const card = document.createElement('div'); card.className = 'tour-card';
+      card.addEventListener('click', e => {
+        const a = e.target.dataset.act;
+        if (a === 'next') tourGo(tourIdx + 1); else if (a === 'prev') tourGo(tourIdx - 1); else if (a === 'end') endTour();
+      });
+      tourEls = { spot, card };
+    }
+    document.body.appendChild(tourEls.spot); document.body.appendChild(tourEls.card);
+    tourGo(0);
+  }
+  function endTour() {
+    tourIdx = -1;
+    if (tourEls) { tourEls.spot.remove(); tourEls.card.remove(); }
+  }
+  function tourGo(i) {
+    if (i < 0) return;
+    if (i >= tourSteps.length) { endTour(); return; }
+    tourIdx = i;
+    const st = tourSteps[i], { spot, card } = tourEls;
+    const el = st.center ? null : visibleEl(st.sel);
+    const last = i === tourSteps.length - 1;
+    card.innerHTML = `<h4>${st.title}</h4><p>${st.body}</p>` +
+      `<div class="tour-nav"><span class="tour-count">${i + 1} / ${tourSteps.length}</span>` +
+      (i > 0 ? '<button data-act="prev">戻る</button>' : '<button data-act="end">閉じる</button>') +
+      `<button class="primary" data-act="${last ? 'end' : 'next'}">${last ? '終わる' : '次へ'}</button></div>`;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const cw = card.offsetWidth, ch = card.offsetHeight;
+    if (el) {
+      const r = el.getBoundingClientRect(), pad = 4;
+      spot.classList.remove('center');
+      Object.assign(spot.style, { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+      let top = r.bottom + 12;
+      if (top + ch > vh - 8) top = Math.max(8, r.top - ch - 12);
+      const left = Math.min(Math.max(8, r.left + r.width / 2 - cw / 2), vw - cw - 8);
+      Object.assign(card.style, { left: left + 'px', top: top + 'px' });
+    } else {
+      spot.classList.add('center');
+      Object.assign(spot.style, { left: (vw / 2) + 'px', top: (vh / 2) + 'px' });
+      Object.assign(card.style, { left: ((vw - cw) / 2) + 'px', top: Math.max(8, (vh - ch) / 2) + 'px' });
+    }
+  }
+  function setupTour() {
+    window.startTour = startTour;
+    // 「?」：スライド表示ではツアー，印刷用表示では従来のキー一覧
+    const origHints = window.toggleHints;
+    window.toggleHints = function () {
+      if (!document.body.classList.contains('print-mode')) { startTour(); return; }
+      if (typeof origHints === 'function') return origHints.apply(this, arguments);
+    };
+    // ツアー中のキー操作（スライドを動かさない）
+    window.addEventListener('keydown', e => {
+      if (tourIdx < 0) return;
+      if (e.key === 'ArrowRight' || e.key === 'Enter') tourGo(tourIdx + 1);
+      else if (e.key === 'ArrowLeft') tourGo(tourIdx - 1);
+      else if (e.key === 'Escape') endTour();
+      else return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
+    window.addEventListener('resize', () => { if (tourIdx >= 0) tourGo(tourIdx); });
+  }
+
   function init() {
     decorateChrome();
     patchPointer();
+    setupTour();
     let queued = false;
     new MutationObserver(() => {
       if (queued) return;

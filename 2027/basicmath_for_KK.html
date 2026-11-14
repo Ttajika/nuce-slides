@@ -721,11 +721,7 @@ ul ul > li:not(.sub-item):not(.spacer):not(.custom-label)::before { content:'♦
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" onclick="toggleDraw()" id="drawBtn">✏️</button>
     <button class="nav-btn sp-hide" onclick="clearStorage()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
-    <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
-    <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
-    <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
+    <button class="nav-btn" onclick="toggleHints()" title="使い方">?</button>
   </div>
 </div>
 
@@ -1059,6 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
     section: t.dataset.section || '',
     html: t.innerHTML,
     is_note: t.dataset.note === 'true',
+    printHide: t.dataset.print === 'false',   // data-print="false"：印刷用表示に出さない
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
   
@@ -2462,7 +2459,7 @@ function enterPrintMode() {
 
   let html = '<div class="print-header"><h1>金融公共分析手法入門1</h1><p>配布用ハンドアウト</p><button class="page-break-toggle" onclick="togglePageBreak()">改ページ区切り: OFF</button></div>';
   SLIDES.forEach((s, idx) => {
-    if (s.is_note) return;
+    if (s.is_note || s.printHide) return;
     if (idx === 0) return;
     const isSectionTitle = s.html.includes('section-title-big');
     const margin = s.printMargin;
@@ -2622,6 +2619,15 @@ document.addEventListener('keydown', e => {
 <div class="cover-sub">2027年度版</div>
 <div><div class="cover-author">多鹿 智哉</div></div>
 <p class="cover-sub" style="font-size:0.8em;"><code id="lastUpdated"></code></p>
+</template>
+
+<!-- ===== スライドの使い方（ボタンでツアーを開始。印刷しない） ===== -->
+<template class="slide-data" data-print="false" data-title="このスライドの使い方" data-section="はじめに" data-note="false" data-print-margin="0">
+<ul>
+<li>ボタンや機能を，画面上で順番に説明します．</li>
+<li class="sub-item">あとで見たいときは右上の「?」から．</li>
+</ul>
+<div style="margin:28px 0;"><button class="tour-start" onclick="startTour()">▶ 使い方を見る</button></div>
 </template>
 
 <!-- ===== Slide 2: はじめに / はじめに ===== -->

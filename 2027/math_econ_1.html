@@ -638,11 +638,7 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
     <button class="nav-btn" onclick="toggleNotes()">📝</button>
     <button class="nav-btn" id="drawToggleBtn" onclick="toggleDraw()">✏️</button>
     <button class="nav-btn sp-hide" onclick="clearLocal()" title="メモ・手書きの保存データをすべて消去" style="font-size:11px">🗑️</button>
-    <button class="nav-btn sp-hide" onclick="exportData()" title="学習データを書き出し" style="font-size:11px">💾</button>
-    <button class="nav-btn sp-hide" onclick="document.getElementById('importFile').click()" title="学習データを読み込み" style="font-size:11px">📂</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="nav-btn" onclick="toggleFilter()" title="フィルタ表示" style="font-size:11px">🔍</button>
-    <button class="nav-btn sp-hide" onclick="toggleHints()">?</button>
+    <button class="nav-btn" onclick="toggleHints()" title="使い方">?</button>
   </div>
 </div>
 
@@ -1855,7 +1851,7 @@ function enterPrintMode() {
   
   SLIDES.forEach((s, i) => {
     // Skip Note frames and title slide (first slide) in print mode
-    if (s.is_note) return;
+    if (s.is_note || s.printHide) return;
     if (i === 0) return;
     
     const isSectionTitle = s.html.includes('section-title-big');
@@ -2220,6 +2216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     section: t.dataset.section || '',
     html: t.innerHTML,
     is_note: t.dataset.note === 'true',
+    printHide: t.dataset.print === 'false',   // data-print="false"：印刷用表示に出さない
     printMargin: parseInt(t.dataset.printMargin) || 80,
   }));
   // Build sections dynamically from slide data
@@ -2296,6 +2293,15 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="section-title-big" style="padding:40px 0 10px">経済数学 I</div>
 <div class="cover-sub">2027年度版</div>
 <div><div class="cover-author">多鹿 智哉</div></div>
+</template>
+
+<!-- ===== スライドの使い方（ボタンでツアーを開始。印刷しない） ===== -->
+<template class="slide-data" data-print="false" data-title="このスライドの使い方" data-section="はじめに" data-note="false" data-print-margin="0">
+<ul>
+<li>ボタンや機能を，画面上で順番に説明します．</li>
+<li class="sub-item">あとで見たいときは右上の「?」から．</li>
+</ul>
+<div style="margin:28px 0;"><button class="tour-start" onclick="startTour()">▶ 使い方を見る</button></div>
 </template>
 
 <!-- ===== Slide 2: はじめに / はじめに ===== -->
