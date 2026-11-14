@@ -1772,17 +1772,22 @@ function addAnimControls(fig, svg, state) {
   const range = bar.querySelector('input');
   const time = bar.querySelector('.anim-time');
   const fmt = t => t.toFixed(1) + ' / ' + dur + 's';
-  let playing = true;
+  let playing = false;                     // 既定は最初のコマで停止（▶ で再生）
   function setPlaying(on) {
     playing = on;
     btn.textContent = on ? '⏸' : '▶';
     if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
   }
   btn.addEventListener('click', () => setPlaying(!playing));
-  if (state) {
+  svg.pauseAnimations();
+  if (state) {                             // ライブ配信などで状態を引き継ぐとき
     svg.setCurrentTime(state.t);
-    if (state.paused) setPlaying(false);
+    setPlaying(!state.paused);
+  } else {
+    svg.setCurrentTime(0);
+    setPlaying(false);
   }
+  range.value = state ? state.t % dur : 0; time.textContent = fmt(parseFloat(range.value));
   range.addEventListener('input', () => {
     if (playing) setPlaying(false);        // シーク中は一時停止（動画プレーヤーと同じ）
     svg.setCurrentTime(parseFloat(range.value));
@@ -1814,7 +1819,7 @@ function parseVimeoUrl(url) {
   // Handles vimeo.com/ID and vimeo.com/ID/HASH
   const m = url.match(/vimeo\.com\/([\d]+)(?:\/([a-zA-Z0-9]+))?/);
   if (!m) return null;
-  let src = 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1';
+  let src = 'https://player.vimeo.com/video/' + m[1] + '?autoplay=0';   // 開いても自動では再生しない（▶ で再生）
   if (m[2]) src += '&h=' + m[2];
   return src;
 }
