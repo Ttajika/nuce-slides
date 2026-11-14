@@ -216,7 +216,7 @@
     { title: 'スライドの使い方', body: 'ボタンを順番に説明します．<kbd>→</kbd> か「次へ」で進みます．' },
     { sel: '#sectionSelect', title: '目次', body: '章を選ぶと，その章の最初のスライドに移ります．' },
     { sel: '[onclick="prevSlide()"]', title: 'スライドの移動', body: '前後のスライドへ．キーボードの <kbd>←</kbd><kbd>→</kbd>，スマホでは左右のスワイプでも移動できます．' },
-    { sel: '#drawToggleBtn, #drawBtn', title: '書き込み', body: '授業中はスライドに直接書き込んでノートを取れます（iPad では Apple Pencil を使うと自動でオンになります）．' },
+    { sel: '#drawToggleBtn, #drawBtn', title: '書き込み', body: '授業中はスライドに直接書き込んでノートを取れます（iPad では Apple Pencil を使うと自動でオンになります）．<br>書き込みはこのブラウザに保存されるだけなので，ブラウザの履歴やデータを消したときなどに<b>消えることがあります</b>．残したい人はログインしてください（あとで説明します）．' },
     { sel: '[onclick="toggleNotes()"]', title: 'メモ欄', body: 'スライドごとにメモを書けます．' },
     { sel: '.slide-content .bookmark-btn', title: 'ブックマーク', body: '★ で大事なスライドに印をつけます．', always: true },
     { sel: '[onclick="toggleSearch()"]', title: 'キーワード検索', body: 'スライドの本文を検索します（<kbd>/</kbd> キーでも開きます）．' },
