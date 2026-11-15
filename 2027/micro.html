@@ -918,16 +918,16 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
 <div class="board-popup" id="boardPopup" onclick="if(event.target===this)toggleBoard()">
   <div class="board-popup-inner">
     <div class="board-popup-header">
-      <span>📋 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
+      <span><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 板書スペース（スライド <span id="boardSlideNum">1</span>）</span>
       <div style="display:flex;gap:6px;align-items:center;">
         <div class="color-dot" style="background:#e63946;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#e63946',this)"></div>
         <div class="color-dot" style="background:#2563eb;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#2563eb',this)"></div>
         <div class="color-dot active" style="background:#333;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#333',this)"></div>
         <div class="color-dot" style="background:#16a34a;width:16px;height:16px;border-width:2px;" onclick="setBoardColor('#16a34a',this)"></div>
         <input type="range" class="size-range" min="1" max="16" value="3" id="boardSizeSlider" style="width:60px;">
-        <button id="boardEraserBtn" onclick="toggleBoardEraser()" title="消しゴム">🧹</button>
+        <button id="boardEraserBtn" onclick="toggleBoardEraser()" title="消しゴム"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button>
         <button onclick="undoBoardStroke()">↩️</button>
-        <button onclick="clearBoardStrokes()">🗑️</button>
+        <button onclick="clearBoardStrokes()" title="全消去"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
         <button onclick="toggleBoard()">✕</button>
       </div>
     </div>
@@ -1763,7 +1763,7 @@ function addAnimControls(fig, svg, state) {
   const bar = document.createElement('div');
   bar.className = 'anim-ctrl';
   bar.innerHTML = `
-    <button class="anim-play" title="再生 / 一時停止">⏸</button>
+    <button class="anim-play" title="再生 / 一時停止"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg></button>
     <input type="range" min="0" max="${dur}" step="0.05" value="0" title="シーク">
     <span class="anim-time"></span>`;
   bar.addEventListener('click', e => e.stopPropagation());  // 図クリック（拡大表示）と分離
@@ -1775,7 +1775,7 @@ function addAnimControls(fig, svg, state) {
   let playing = false;                     // 既定は最初のコマで停止（▶ で再生）
   function setPlaying(on) {
     playing = on;
-    btn.textContent = on ? '⏸' : '▶';
+    btn.innerHTML = on ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>' : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>';
     if (on) svg.unpauseAnimations(); else svg.pauseAnimations();
   }
   btn.addEventListener('click', () => setPlaying(!playing));
@@ -1851,16 +1851,16 @@ function setupLinks(container) {
     if (!url) return;
     const isVimeo = /vimeo\.com/.test(url);
 
-    // Preserve original label text
-    const originalText = link.textContent.trim();
+    // Preserve original label (アイコンを含む)
+    const originalHTML = link.innerHTML.trim();
 
     // Clear old content, rebuild
-    const label = isVimeo ? '▶ 動画を再生' : (originalText || '🔗 QRリンク');
+    const label = isVimeo ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 動画を再生' : (originalHTML || '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク');
     link.textContent = '';
 
     // Main button
     const btn = document.createElement('span');
-    btn.textContent = label;
+    btn.innerHTML = label;
     btn.style.cursor = 'pointer';
     link.appendChild(btn);
 
@@ -1870,7 +1870,7 @@ function setupLinks(container) {
       btn.addEventListener('click', () => openVideo(url));
       // Also add a small QR toggle
       const qrBtn = document.createElement('span');
-      qrBtn.textContent = ' 📱';
+      qrBtn.innerHTML = ' <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>';
       qrBtn.style.cursor = 'pointer';
       qrBtn.title = 'QRコード表示';
       link.appendChild(qrBtn);
@@ -1886,7 +1886,7 @@ function setupLinks(container) {
     } else {
       // Non-Vimeo: keep the link clickable, add a separate QR toggle button
       const qrBtn = document.createElement('span');
-      qrBtn.textContent = ' 📱';
+      qrBtn.innerHTML = ' <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>';
       qrBtn.style.cursor = 'pointer';
       qrBtn.title = 'QRコード表示';
       link.appendChild(qrBtn);
@@ -2477,7 +2477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li>共通教科書：嶋村紘輝他『入門ミクロ経済学』中央経済社，2002年</li>
 <li>参考書ガイド</li>
 </ol>
-<a href="https://tomoyatajika.notion.site/microecon-ref?pvs=74" target="_blank" class="qr-link">🔗 QRリンク</a>
+<a href="https://tomoyatajika.notion.site/microecon-ref?pvs=74" target="_blank" class="qr-link"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク</a>
 </ul>
 </div>
 </div>
@@ -2545,7 +2545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <li>ボタンや機能を，画面上で順番に説明します．</li>
 <li class="sub-item">あとで見たいときは右上の「?」から．</li>
 </ul>
-<div style="margin:28px 0;"><button class="tour-start" onclick="startTour()">▶ 使い方を見る</button></div>
+<div style="margin:28px 0;"><button class="tour-start" onclick="startTour()"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 使い方を見る</button></div>
 </template>
 
 
@@ -3031,7 +3031,7 @@ $$\text{効用}=\text{便益}-\text{費用}$$
 <ul>
 <li>実験はスマホ（or PC）を使って行います．</li>
 <li class="sub-item">以下のQRコードからアクセスしてみましょう（授業中のみ有効）</li>
-<a href="https://class-experiments-basicmicro-tomoyatajika.onrender.com/" target="_blank" class="qr-link">🔗 QRリンク</a>
+<a href="https://class-experiments-basicmicro-tomoyatajika.onrender.com/" target="_blank" class="qr-link"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク</a>
 <li>まずは練習してみましょう．</li>
 </ul>
 </div>
@@ -3373,7 +3373,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 </div>
 <div class="column">
 <p style="text-align:center;">データ出典</p>
-<a href="https://ourworldindata.org/grapher/world-crude-oil-price-vs-oil-consumption" target="_blank" class="qr-link">🔗 QRリンク</a>
+<a href="https://ourworldindata.org/grapher/world-crude-oil-price-vs-oil-consumption" target="_blank" class="qr-link"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク</a>
 </div>
 </div>
 </template>
@@ -3449,7 +3449,7 @@ $$\text{需要の価格弾力性}= -\frac{\text{需要量の変化率}}{\text{�
 <ul>
 <li class="sub-item">生産できる量が増えた（豊作の）結果，収入はどうなるか？</li>
 </ul>
-<a href="https://youtu.be/HMIVlvWZg5o?t=105" target="_blank" class="qr-link">🔗 QRリンク</a>
+<a href="https://youtu.be/HMIVlvWZg5o?t=105" target="_blank" class="qr-link"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク</a>
 </div>
 </div>
 </template>
@@ -4413,7 +4413,7 @@ $$q_{Ly}+q_{Ky}=e_{Ly}+e_{Ky}$$
 </div>
 <div class="column">
 <ul><li>利潤最大化してなさそうな例</li></ul>
-<a href="https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf" target="_blank" class="qr-link">🔗 QRリンク</a>
+<a href="https://www.harimayahonten.co.jp/tenpo/aisatsu.pdf" target="_blank" class="qr-link"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> QRリンク</a>
 </div>
 </div>
 </template>

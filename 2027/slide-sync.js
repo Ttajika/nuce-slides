@@ -113,7 +113,7 @@
     btn.id = 'ssAuthBtn';
     btn.title = 'ログイン / クラウド同期';
     btn.style.fontSize = '11px';
-    btn.textContent = '🔑';
+    btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>';
     btn.onclick = SS.openModal;
     const status = document.createElement('span');
     status.id = 'ssSyncStatus';
@@ -129,7 +129,7 @@
     div.innerHTML = `
       <div class="ss-modal">
         <div id="ssLoginView">
-          <h3>🔑 ログイン</h3>
+          <h3><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg> ログイン</h3>
           <div style="font-size:12.5px;color:#6b7280;">ログインすると、メモ・手書き・ブックマークが他の端末とも同期されます。</div>
           <label for="ssId">ID（例: 学籍番号）</label>
           <input type="text" id="ssId" autocomplete="username" placeholder="a1234567">
@@ -145,7 +145,7 @@
           <button class="ss-close" id="ssCloseBtn">閉じる</button>
         </div>
         <div id="ssUserView" style="display:none;">
-          <h3>🔑 ログイン中</h3>
+          <h3><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg> ログイン中</h3>
           <div>ID: <span class="ss-email" id="ssUserId"></span></div>
           <div class="ss-msg" style="color:#6b7280;">この端末のデータはクラウドと同期されます。</div>
           <div class="ss-btns">
@@ -169,7 +169,7 @@
     const el = document.getElementById('ssSyncStatus');
     if (!el) return;
     el.className = state || '';
-    el.textContent = { saving: '同期中…', synced: '✓ 同期済み', error: '⚠ 同期エラー' }[state] || '';
+    el.innerHTML = { saving: '同期中…', synced: '✓ 同期済み', error: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> 同期エラー' }[state] || '';
   }
   function setMsg(text, kind) {
     const el = document.getElementById('ssMsg');

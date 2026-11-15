@@ -113,7 +113,7 @@ tr.price td{border-top:1.5px solid var(--axis);color:var(--text-secondary);}
       <span>空きがあるのに価格&gt;0</span><span id="st-under">0人</span>
     </div>
     <div class="ctrl">
-      <button class="primary" id="b-play">▶ 自動で調整</button>
+      <button class="primary" id="b-play"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 自動で調整</button>
       <button id="b-step">1回調整</button>
       <button id="b-reset">価格を0に戻す</button>
       <button id="b-new">別の学生で試す</button>
@@ -244,7 +244,7 @@ function play(){
 function stop(){if(timer)clearTimeout(timer);timer=null;setPlay(false);}
 function setPlay(on){
   const b=document.getElementById('b-play');
-  b.textContent=on?'⏸ 一時停止':'▶ 自動で調整';
+  b.innerHTML=on?'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg> 一時停止':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 自動で調整';
 }
 
 // ---------- 描画 ----------

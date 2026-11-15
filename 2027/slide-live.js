@@ -303,7 +303,7 @@
   function updatePresBtn(p) {
     const b = $('slPresBtn'); if (!b) return;
     b.classList.toggle('live', live);
-    b.textContent = live ? ('📡 配信中' + (p ? ' (' + p.viewers + ')' : '')) : '📡 配信';
+    b.innerHTML = live ? ('<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg> 配信中' + (p ? ' (' + p.viewers + ')' : '')) : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg> 配信';
     b.title = live ? 'クリックで配信停止' : '配信を開始（要ログイン）';
   }
 
@@ -314,7 +314,7 @@
     const paused = p.recPaused === p.recorders;
     b.style.display = '';
     b.classList.toggle('paused', paused);
-    b.textContent = paused ? '▶ 録画再開' : '⏸ 録画';
+    b.innerHTML = paused ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 録画再開' : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg> 録画';
     b.title = paused ? '録画は一時停止中 — クリックで再開' : '録画中 — クリックで一時停止（書き写しの間など）';
   }
   function presRecToggle() {
@@ -322,7 +322,7 @@
     if (!p.recorders) return;
     const pause = p.recPaused !== p.recorders;
     send({ t: 'rec', pause });
-    const b = $('slPresRecBtn'); if (b) b.textContent = pause ? '⏸ 停止中…' : '▶ 再開中…';
+    const b = $('slPresRecBtn'); if (b) b.innerHTML = pause ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg> 停止中…' : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 再開中…';
   }
   SL.recPause = presRecToggle;
 
@@ -434,7 +434,7 @@
     };
     const qr = document.createElement('button');
     qr.className = 'nav-btn'; qr.id = 'slQrBtn'; qr.style.fontSize = '11px';
-    qr.textContent = '📱'; qr.title = '受信用 URL / QR を表示';
+    qr.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>'; qr.title = '受信用 URL / QR を表示';
     qr.onclick = showViewerUrl;
     const rb = document.createElement('button');
     rb.className = 'nav-btn'; rb.id = 'slPresRecBtn'; rb.style.fontSize = '11px'; rb.style.display = 'none';
@@ -468,7 +468,7 @@
     }
     ov.innerHTML = `
       <div class="sl-modal">
-        <h3>📡 受信用 URL（学生・録画 PC 向け）</h3>
+        <h3><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg> 受信用 URL（学生・録画 PC 向け）</h3>
         <div class="url">${url}</div>
         <div class="qr">${qrHtml}</div>
         <div class="sl-note">録画 PC では末尾に <code>&amp;rec=1</code> を付けると録画ボタンが出ます。</div>
@@ -724,7 +724,7 @@
     else if (L.ended || (!L.presenter && L.i < 0)) { text = L.ended ? '配信終了' : '配信待ち'; cls = 'off'; }
     else if (!L.presenter) { text = '配信者オフライン'; cls = 'off'; }
     else { text = following ? '配信中・追従' : '配信中'; cls = 'on'; }
-    b.textContent = '📡 ' + text;
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg> ' + text;
     b.className = cls;
     if (f) f.textContent = following ? '追従解除' : '追従する';
   }
@@ -742,7 +742,7 @@
       setBadge();
     };
     const sbtn = document.createElement('button');
-    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.textContent = '✍';
+    sbtn.className = 'nav-btn'; sbtn.id = 'slScrollBtn'; sbtn.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></svg>';
     sbtn.title = '書いている所へ（自動スクロールを再開）';
     sbtn.setAttribute('aria-label', '書いている所へ');
     sbtn.onclick = () => { setScrollFollow(true); followLive(L.i, lastPt || L.p, true); };
@@ -779,11 +779,11 @@
     }
     const btn = document.createElement('button');
     btn.className = 'nav-btn'; btn.id = 'slRecBtn'; btn.style.fontSize = '11px';
-    btn.textContent = '🔴 録画'; btn.title = 'このタブを録画（PC 用）';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.125em" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="#dc2626"/></svg> 録画'; btn.title = 'このタブを録画（PC 用）';
     btn.onclick = () => { if (rec) { if (confirm('録画を停止して保存しますか？')) recStop(); } else openRecDialog(); };
     const pb = document.createElement('button');
     pb.className = 'nav-btn'; pb.id = 'slRecPauseBtn'; pb.style.fontSize = '11px'; pb.style.display = 'none';
-    pb.title = '録画を一時停止 / 再開（配信側の「⏸ 録画」ボタンからも操作できます）';
+    pb.title = '録画を一時停止 / 再開（配信側の録画ボタンからも操作できます）';
     pb.onclick = () => setRecPaused(!recPausedAt);
     nav.appendChild(btn); nav.appendChild(pb);
 
@@ -806,17 +806,17 @@
     const canPick = !!window.showSaveFilePicker;
     ov.innerHTML = `
       <div class="sl-modal">
-        <h3>🔴 録画の開始</h3>
+        <h3><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.125em" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="#dc2626"/></svg> 録画の開始</h3>
         <p style="margin:0 0 6px">次の画面で<strong>「このタブ」</strong>を選んでください（タブの音声共有も ON にすると動画の音が入ります）。マイク音声も同時に録音します。</p>
-        <div style="margin:10px 0 4px;font-size:13px">🎤 マイク：
+        <div style="margin:10px 0 4px;font-size:13px"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg> マイク：
           <select id="slMicSel" style="max-width:100%;font-size:13px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px"></select>
         </div>
         <div class="sl-meter"><div id="slMicLevel"></div></div>
         <div id="slMicStatus" class="sl-note">マイクを確認中…</div>
         <div id="slRecFileStatus" class="sl-note">${canPick ? '保存先：未選択（終了時にダウンロード。長時間の場合は保存先の指定を推奨）' : '保存先：終了時にダウンロード'}</div>
         <div class="sl-btns">
-          ${canPick ? '<button id="slRecPickBtn">📁 保存先を指定</button>' : ''}
-          <button class="primary" id="slRecGoBtn">▶ 録画開始</button>
+          ${canPick ? '<button id="slRecPickBtn"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> 保存先を指定</button>' : ''}
+          <button class="primary" id="slRecGoBtn"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 録画開始</button>
           <button id="slRecCancelBtn">キャンセル</button>
         </div>
         <div class="sl-note">止め忘れ防止：配信が終了すると ${CONFIG.recAutoStopSec} 秒後に自動停止、最長 ${CONFIG.recMaxMin} 分で自動停止します。</div>
@@ -865,7 +865,7 @@
     const st = $('slMicStatus'); if (!st) return;
     const n = e && e.name;
     let msg = 'マイクを取得できません（' + (n || e) + '）。';
-    if (n === 'NotAllowedError') msg += ' ブラウザのアドレスバー左の 🔒 → マイクを「許可」にし、OS のプライバシー設定でもブラウザにマイクを許可してください。';
+    if (n === 'NotAllowedError') msg += ' ブラウザのアドレスバー左の鍵のマーク → マイクを「許可」にし、OS のプライバシー設定でもブラウザにマイクを許可してください。';
     else if (n === 'NotFoundError') msg += ' マイクが見つかりません。接続を確認してください。';
     else if (n === 'NotReadableError') msg += ' 他のアプリ（Zoom 等）がマイクを占有している可能性があります。';
     st.textContent = msg; st.style.color = '#dc2626';
@@ -911,7 +911,7 @@
     const mc = micConstraint();
     if (mc) {
       try { mic = await navigator.mediaDevices.getUserMedia({ audio: mc }); }
-      catch (e) { console.warn('[slide-live] mic', e); showBanner('⚠ マイクを取得できなかったため、マイク音声なしで録画しています。'); }
+      catch (e) { console.warn('[slide-live] mic', e); showBanner('<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.125em" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> マイクを取得できなかったため、マイク音声なしで録画しています。'); }
     }
 
     const tracks = [display.getVideoTracks()[0]];
@@ -996,14 +996,14 @@
   function updateRecBtn() {
     const b = $('slRecBtn'); if (!b) return;
     const pb = $('slRecPauseBtn');
-    if (!rec) { b.textContent = '🔴 録画'; b.classList.remove('rec', 'paused'); if (pb) pb.style.display = 'none'; return; }
+    if (!rec) { b.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.125em" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="#dc2626"/></svg> 録画'; b.classList.remove('rec', 'paused'); if (pb) pb.style.display = 'none'; return; }
     // 表示は一時停止していた時間を除いた「動画の長さ」
     const sec = Math.floor(((recPausedAt || Date.now()) - recStart - recPausedTotal) / 1000);
     const z = n => String(n).padStart(2, '0');
-    b.textContent = (recPausedAt ? '⏸ ' : '⏹ ') + z(Math.floor(sec / 3600)) + ':' + z(Math.floor(sec / 60) % 60) + ':' + z(sec % 60);
+    b.innerHTML = (recPausedAt ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg> ' : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="5.5" y="5.5" width="13" height="13" rx="1.5"/></svg> ') + z(Math.floor(sec / 3600)) + ':' + z(Math.floor(sec / 60) % 60) + ':' + z(sec % 60);
     b.title = (recPausedAt ? '一時停止中' : '録画中') + '（音声：' + recMicLabel + '）— クリックで停止して保存';
     b.classList.toggle('rec', !recPausedAt); b.classList.toggle('paused', !!recPausedAt);
-    if (pb) { pb.style.display = ''; pb.textContent = recPausedAt ? '▶ 再開' : '⏸'; pb.classList.toggle('paused', !!recPausedAt); }
+    if (pb) { pb.style.display = ''; pb.innerHTML = recPausedAt ? '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg> 再開' : '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>'; pb.classList.toggle('paused', !!recPausedAt); }
   }
 
   function showBanner(html, withButtons) {

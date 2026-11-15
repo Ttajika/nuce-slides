@@ -54,7 +54,7 @@ body { font-family: var(--font-sans); max-width: 840px; margin: 2rem auto; paddi
 <div id="lv" style="display:none;"></div>
 <canvas id="cv" style="width:100%;height:440px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);cursor:grab;"></canvas>
 <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-  <button id="pp" aria-label="Play/Pause">⏸</button>
+  <button id="pp" aria-label="Play/Pause"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg></button>
   <button id="cl">Camera: lock</button>
   <div style="flex:1;position:relative;height:28px;">
     <div style="position:absolute;top:12px;left:0;right:0;height:4px;background:var(--color-background-tertiary);border-radius:2px;">
@@ -163,14 +163,14 @@ sc.forEach((s,i)=>{const p=(s.time/TD*100).toFixed(1);
   const m=document.createElement('div');m.style.cssText='position:absolute;top:4px;width:9px;height:9px;border-radius:50%;background:var(--color-border-secondary);cursor:pointer;transform:translateX(-4.5px);';
   m.style.left=p+'%';m.dataset.idx=i;m.onclick=()=>{ct=s.time+.01;};mkEl.appendChild(m);
   const b=document.createElement('button');b.textContent=s.title;
-  b.onclick=()=>{ct=s.time+.01;if(!pl){pl=true;ppB.textContent='\u23f8';}};chEl.appendChild(b);});
+  b.onclick=()=>{ct=s.time+.01;if(!pl){pl=true;ppB.innerHTML='<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>';}};chEl.appendChild(b);});
 
 let pl=true,ct=0,lf=null,pi=-1,rx=-.55,ry=.5,sz=1,dg=false,dmx,dmy,camLock=true;
 cv.addEventListener('pointerdown',e=>{dg=true;dmx=e.clientX;dmy=e.clientY;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
 cv.addEventListener('pointermove',e=>{if(!dg)return;ry+=(e.clientX-dmx)*.008;rx+=(e.clientY-dmy)*.008;rx=Math.max(-Math.PI/2,Math.min(.1,rx));dmx=e.clientX;dmy=e.clientY;});
 cv.addEventListener('pointerup',()=>{dg=false;cv.style.cursor='grab';});
 cv.addEventListener('wheel',e=>{e.preventDefault();sz*=e.deltaY>0?.93:1.07;sz=Math.max(.4,Math.min(3,sz));},{passive:false});
-ppB.addEventListener('click',()=>{pl=!pl;ppB.textContent=pl?'\u23f8':'\u25b6';});
+ppB.addEventListener('click',()=>{pl=!pl;ppB.innerHTML=pl?'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.125em" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>';});
 clB.addEventListener('click',()=>{camLock=!camLock;clB.textContent=camLock?'Camera: lock':'Camera: auto';});
 
 function lr(a,b,t){return a+(b-a)*t;}
