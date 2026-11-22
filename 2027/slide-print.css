@@ -42,3 +42,52 @@ body.print-mode .slide-area { background: #fff; }
 
 /* 板書の再生中に印刷用表示へ切り替えても，スライド表示に戻るボタンを出す */
 @media screen { body.print-mode.sb-playing .mode-toggle { display:inline-flex !important; } }
+
+/* QR コード：本文の流れに縦長で入るとページの境目で切れるので，
+   右端に回り込ませて（横に逃がして）小さくし，ページをまたがせない */
+body.print-mode .qr-link {
+  float: right; clear: right;
+  flex-direction: column; align-items: center; flex-wrap: nowrap;
+  max-width: 150px; margin: 2px 0 8px 16px; padding: 4px 6px;
+  font-size: 11px; text-align: center; overflow-wrap: anywhere;
+  break-inside: avoid; page-break-inside: avoid;
+}
+body.print-mode .qr-link .qr-img { width: 104px; margin-top: 2px; padding: 2px; }
+body.print-mode .qr-link .qr-img svg { display: block; width: 100%; height: auto; }
+body.print-mode .qr-link .qr-toggle { display: none; }
+/* 回り込ませた QR が次のスライドに食い込まないようにする */
+body.print-mode .print-slide::after { content: ""; display: block; clear: both; }
+
+/* 2 列（.columns）：各ファイルの「幅 768px 以下なら縦に並べる」指定は印刷（A4 で約 700px）
+   にも効いてしまうので，印刷では横並び（区切り線つき）に戻す。.print-stack は縦のまま */
+/* print-measure：slide-print.js が印刷直前に数式の幅を測るとき（画面用の指定のもとで測るので，印刷と同じ並びにする） */
+@media print {
+  body.print-mode .columns:not(.print-stack) { flex-direction: row; gap: 24px; }
+  body.print-mode .columns:not(.print-stack) > .column + .column {
+    border-left: 1px solid var(--border); padding-left: 24px; border-top: none; padding-top: 0;
+  }
+}
+body.print-mode.print-measure .columns:not(.print-stack) { flex-direction: row; gap: 24px; }
+body.print-mode.print-measure .columns:not(.print-stack) > .column + .column {
+  border-left: 1px solid var(--border); padding-left: 24px; border-top: none; padding-top: 0;
+}
+/* 縦に並ぶとき（.print-stack，画面の幅が狭いとき）は 2 列目の区切り線と余白を消す（右にずれるため） */
+body.print-mode .columns.print-stack > .column + .column { border-left: none; padding-left: 0; }
+@media screen and (max-width: 900px) {
+  body.print-mode .columns > .column + .column { border-left: none; padding-left: 0; }
+}
+
+/* 行間：スライド用の広い間隔は紙では間延びするので詰める（メモ欄 data-print-margin はそのまま） */
+body.print-mode .print-slide li { margin: 0.45em 0; }
+body.print-mode .print-slide li.spacer { height: 0.4em; }
+body.print-mode .print-slide .frame-title { margin-bottom: 6px; }
+body.print-mode .print-slide mjx-container[display="true"] { margin: 0.5em 0; }
+body.print-mode .print-slide .math-display { margin: 6px 0; }
+/* 各ファイルの .print-slide は margin:-30px で前のスライドのメモ欄に食い込ませているが，
+   メモ欄のないスライドでは本文に重なるので，0 にしてスライドの間を少しだけ空ける */
+body.print-mode .print-slide { margin: 0 auto 14px; }
+
+/* slide-print.js が印刷直前に数式の幅を測るときだけ，スライドの幅を印刷幅（A4 − 左右余白）にする */
+body.print-mode.print-measure .print-slide { max-width: 186mm; }
+/* 印刷では数式を切らずに見せる（はみ出す数式は slide-print.js が縮小する） */
+@media print { body.print-mode .print-slide .math-display { overflow: visible; } }

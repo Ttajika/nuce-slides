@@ -1860,14 +1860,14 @@ function enterPrintMode() {
     if (i === 0) return;
     
     const isSectionTitle = s.html.includes('section-title-big');
-    const margin = s.printMargin || 80;  // default 80px, editable per slide
+    const margin = s.printMargin;  // data-print-margin（未指定なら 80px、0 ならメモ欄なし）
 
     html += `<div class="print-slide${isSectionTitle ? ' print-slide-title' : ''}">`;
     html += `<span class="slide-number">${i+1} / ${SLIDES.length}</span>`;
     if (s.section) html += `<div class="section-badge">${s.section}</div>`;
     if (s.title && s.title !== 'Note') html += `<div class="frame-title">${s.title}</div>`;
     html += s.html;
-    if (!isSectionTitle) {
+    if (!isSectionTitle && margin > 0) {
       html += `<div class="print-note-area" style="min-height:${margin}px"></div>`;
     }
     html += '</div>';
@@ -2223,7 +2223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     html: t.innerHTML,
     is_note: t.dataset.note === 'true',
     printHide: t.dataset.print === 'false',   // data-print="false"：印刷用表示に出さない
-    printMargin: parseInt(t.dataset.printMargin) || 80,
+    printMargin: isNaN(parseInt(t.dataset.printMargin)) ? 80 : parseInt(t.dataset.printMargin),   // 0 はメモ欄なし
   }));
   // Build sections dynamically from slide data
   let lastSection = '';

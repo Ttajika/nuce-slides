@@ -34,6 +34,31 @@
     window.print();
   }
 
+  // ─── 幅の広い数式を印刷幅に収める ───
+  // .math-display は overflow-x:auto なので，紙でははみ出した部分が切れる。
+  // 印刷の直前に，印刷幅（A4 から左右の余白を引いた 186mm）で並べ直して測り，
+  // はみ出す数式だけを zoom で縮小する。印刷が終わったら元に戻す。
+  const MATH_SEL = '.print-slide .math-display, .print-slide mjx-container[display="true"]';
+  function fitWideMath() {
+    if (!document.body.classList.contains('print-mode')) return;
+    document.body.classList.add('print-measure');
+    const els = Array.from(document.querySelectorAll(MATH_SEL))
+      .filter(el => !(el.tagName === 'MJX-CONTAINER' && el.closest('.math-display')));
+    els.forEach(el => { el.style.zoom = ''; });
+    // 先にすべて測ってから書き換える（測る・書くを交互にすると毎回レイアウトし直しになる）
+    const zooms = els.map(el => {
+      const avail = el.clientWidth, need = el.scrollWidth;
+      return (avail > 0 && need > avail + 1) ? Math.max(0.5, avail / need * 0.98) : 0;
+    });
+    els.forEach((el, i) => { if (zooms[i]) { el.style.zoom = zooms[i]; el.dataset.printZoom = '1'; } });
+    document.body.classList.remove('print-measure');
+  }
+  function unfitWideMath() {
+    document.querySelectorAll('[data-print-zoom]').forEach(el => { el.style.zoom = ''; delete el.dataset.printZoom; });
+  }
+  window.addEventListener('beforeprint', fitWideMath);
+  window.addEventListener('afterprint', unfitWideMath);
+
   window.addEventListener('keydown', e => {
     if (e.key !== 'p' && e.key !== 'P') return;
     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
