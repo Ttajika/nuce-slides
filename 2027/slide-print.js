@@ -67,4 +67,48 @@
     e.stopImmediatePropagation();
     printHandout();
   }, true);
+
+  // ─── 配布用 PDF のダウンロードボタン ───
+  // <meta name="handout-pdf" content="pdf/xxx.pdf"> があれば，
+  //   ・表紙（1 枚目）の右下，「印刷用表示」ボタンの左（スマートフォンでは右下）
+  //   ・印刷用表示のヘッダー（改ページ区切りボタンの横）
+  // に「PDF」ボタンを出す。PDF の作り直しは make-pdf.sh
+  const ICON_DL = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>';
+  function setupPdfButton() {
+    const meta = document.querySelector('meta[name="handout-pdf"]');
+    if (!meta || !meta.content) return;
+    const href = encodeURI(meta.content);
+    const name = meta.content.split('/').pop();
+    const make = cls => {
+      const a = document.createElement('a');
+      a.className = cls; a.href = href; a.download = name;
+      a.title = '配布用 PDF（' + name + '）をダウンロード';
+      a.innerHTML = ICON_DL + ' PDF';
+      return a;
+    };
+    // 表紙の右下
+    const fixed = make('pdf-download');
+    document.body.appendChild(fixed);
+    const toggle = document.getElementById('modeToggle');
+    const place = () => {
+      const shown = toggle && getComputedStyle(toggle).display !== 'none';
+      fixed.style.right = shown ? (12 + toggle.offsetWidth + 8) + 'px' : '12px';
+    };
+    place();
+    new MutationObserver(place).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('resize', place);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    // 印刷用表示のヘッダー（enterPrintMode がヘッダーを作るたびに付け直す）
+    const orig = window.enterPrintMode;
+    if (typeof orig === 'function') {
+      window.enterPrintMode = function () {
+        const r = orig.apply(this, arguments);
+        const btn = document.querySelector('.print-header .page-break-toggle');
+        if (btn && !btn.parentNode.querySelector('.pdf-download-inline')) btn.after(make('pdf-download-inline'));
+        return r;
+      };
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupPdfButton);
+  else setupPdfButton();
 })();

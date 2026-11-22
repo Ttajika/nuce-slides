@@ -91,3 +91,26 @@ body.print-mode .print-slide { margin: 0 auto 14px; }
 body.print-mode.print-measure .print-slide { max-width: 186mm; }
 /* 印刷では数式を切らずに見せる（はみ出す数式は slide-print.js が縮小する） */
 @media print { body.print-mode .print-slide .math-display { overflow: visible; } }
+
+/* ─── 配布用 PDF のダウンロードボタン（slide-print.js が作る） ─── */
+.pdf-download {
+  position: fixed; bottom: 12px; right: 12px; z-index: 200;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--header-bg); color: #fff; text-decoration: none;
+  padding: 8px 16px; border-radius: 6px; font-size: 13px; line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.pdf-download:hover { color: #fff; filter: brightness(1.15); }
+.pdf-download svg { width: 18px; height: 18px; flex: none; }   /* 「印刷用表示」ボタンと高さをそろえる */
+/* 表紙（1 枚目）だけに出す。印刷用表示ではヘッダーのボタンを使う */
+body.not-first-slide .pdf-download,
+body.print-mode .pdf-download,
+body.sb-playing .pdf-download { display: none !important; }
+.print-header .pdf-download-inline {
+  display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;
+  margin: 8px 0 0 6px; padding: 4px 12px; font-size: 12px; text-decoration: none;
+  border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #333;
+}
+.print-header .pdf-download-inline:hover { background: #e8e8e8; }
+.print-header .page-break-toggle, .print-header .pdf-download-inline { vertical-align: top; line-height: 1.4; }
+@media print { .pdf-download, .pdf-download-inline { display: none !important; } }
