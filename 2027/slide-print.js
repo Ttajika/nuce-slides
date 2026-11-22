@@ -73,29 +73,43 @@
   //   ・表紙（1 枚目）の右下，「印刷用表示」ボタンの左（スマートフォンでは右下）
   //   ・印刷用表示のヘッダー（改ページ区切りボタンの横）
   // に「PDF」ボタンを出す。PDF の作り直しは make-pdf.sh
+  // PDF が複数あるときは <meta> を並べ，data-label にボタンの名前を書く（「PDF（ミクロ1）」など）。
   const ICON_DL = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>';
+  // 表紙（1 枚目）か：スライドの番号 current があればそれで，なければ not-first-slide クラスで判定
+  function onCover() {
+    try { return current === 0; }   // eslint-disable-line no-undef
+    catch (e) { return !document.body.classList.contains('not-first-slide'); }
+  }
   function setupPdfButton() {
-    const meta = document.querySelector('meta[name="handout-pdf"]');
-    if (!meta || !meta.content) return;
-    const href = encodeURI(meta.content);
-    const name = meta.content.split('/').pop();
-    const make = cls => {
+    const metas = Array.from(document.querySelectorAll('meta[name="handout-pdf"]')).filter(m => m.content);
+    if (!metas.length) return;
+    const make = (m, cls) => {
       const a = document.createElement('a');
-      a.className = cls; a.href = href; a.download = name;
+      const name = m.content.split('/').pop();
+      a.className = cls; a.href = encodeURI(m.content); a.download = name;
       a.title = '配布用 PDF（' + name + '）をダウンロード';
-      a.innerHTML = ICON_DL + ' PDF';
+      a.innerHTML = ICON_DL + ' PDF' + (m.dataset.label ? '（' + m.dataset.label + '）' : '');
       return a;
     };
-    // 表紙の右下
-    const fixed = make('pdf-download');
-    document.body.appendChild(fixed);
+    // 表紙の右下（複数あるときは右から並べる）
+    const box = document.createElement('div');
+    box.className = 'pdf-download-box';
+    metas.forEach(m => box.appendChild(make(m, 'pdf-download')));
+    document.body.appendChild(box);
     const toggle = document.getElementById('modeToggle');
     const place = () => {
+      const slideMode = document.body.classList.contains('slide-mode');
+      box.style.display = (slideMode && onCover()) ? '' : 'none';
       const shown = toggle && getComputedStyle(toggle).display !== 'none';
-      fixed.style.right = shown ? (12 + toggle.offsetWidth + 8) + 'px' : '12px';
+      box.style.right = shown ? (12 + toggle.offsetWidth + 8) + 'px' : '12px';
     };
     place();
-    new MutationObserver(place).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // スライドの切り替えで変わるもの（body のクラス，印刷用表示ボタンの表示）を見て置き直す
+    const mo = new MutationObserver(place);
+    mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    if (toggle) mo.observe(toggle, { attributes: true, attributeFilter: ['style', 'class'] });
+    const info = document.getElementById('pageInfo');
+    if (info) mo.observe(info, { childList: true, characterData: true, subtree: true });
     window.addEventListener('resize', place);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
     // 印刷用表示のヘッダー（enterPrintMode がヘッダーを作るたびに付け直す）
@@ -103,8 +117,15 @@
     if (typeof orig === 'function') {
       window.enterPrintMode = function () {
         const r = orig.apply(this, arguments);
-        const btn = document.querySelector('.print-header .page-break-toggle');
-        if (btn && !btn.parentNode.querySelector('.pdf-download-inline')) btn.after(make('pdf-download-inline'));
+        const head = document.querySelector('.print-header');
+        if (head && !head.querySelector('.pdf-download-inline')) {
+          const btns = head.querySelectorAll('.page-break-toggle');
+          let last = btns.length ? btns[btns.length - 1] : null;
+          metas.forEach(m => {
+            const a = make(m, 'pdf-download-inline');
+            if (last) { last.after(a); last = a; } else head.appendChild(a);
+          });
+        }
         return r;
       };
     }
