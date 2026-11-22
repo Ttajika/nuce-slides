@@ -777,6 +777,8 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
 /* 縦向きの iPad（769〜900px）ではツールバーで幅が埋まるのでタイトルを隠す（スマホ幅は 2 段表示なので別扱い） */
 @media screen and (min-width: 769px) and (max-width: 900px) { .topbar-title { display:none; } }
 </style>
+<!-- 印刷用表示の共通設定（slide-print.css / slide-print.js） -->
+<link rel="stylesheet" href="slide-print.css">
 </head>
 <body class="slide-mode">
 
@@ -1927,7 +1929,8 @@ function enterPrintMode() {
   mode = 'print';
   if (drawMode) toggleDraw();
   notes[current] = document.getElementById('noteArea').value;
-  document.body.className = 'print-mode';
+  document.body.classList.remove('slide-mode', 'page-break-on');
+  document.body.classList.add('print-mode');
   document.getElementById('modeToggle').innerHTML = '<svg class="ic"><use href="#i-monitor"/></svg> スライド表示';
 
   const main = document.getElementById('mainArea');
@@ -1999,7 +2002,8 @@ function enterPrintMode() {
 
 function enterSlideMode() {
   mode = 'slide';
-  document.body.className = 'slide-mode';
+  document.body.classList.remove('print-mode', 'page-break-on');
+  document.body.classList.add('slide-mode');
   document.getElementById('modeToggle').innerHTML = '<svg class="ic"><use href="#i-printer"/></svg> 印刷用表示';
 
   const area = document.getElementById('slideArea');
@@ -4846,5 +4850,6 @@ $$\frac{w}{MP_L}= \frac{r}{MP_K} \Rightarrow \frac{MP_K}{MP_L}= \frac{r}{w}$$
 </div>
 </template>
 
+<script src="slide-print.js"></script>
 </body>
 </html>

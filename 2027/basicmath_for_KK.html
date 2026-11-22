@@ -697,6 +697,8 @@ body.print-mode .sage-cell-print {
 </style>
 <!-- 共通デザイン（slide-theme.css / slide-theme.js） -->
 <link rel="stylesheet" href="slide-theme.css">
+<!-- 印刷用表示の共通設定（slide-print.css / slide-print.js） -->
+<link rel="stylesheet" href="slide-print.css">
 <style>
 /* 入れ子の <ul> もサブアイテムと同じ「♦」 */
 ul ul > li:not(.sub-item):not(.spacer):not(.custom-label) { list-style:none; }
@@ -2455,7 +2457,8 @@ function enterPrintMode() {
   if (drawMode) toggleDraw();
   const na = document.getElementById('noteArea');
   if (na) notes[current] = na.value;
-  document.body.className = 'print-mode';
+  document.body.classList.remove('slide-mode', 'page-break-on');
+  document.body.classList.add('print-mode');
   document.getElementById('modeToggle').textContent = '🖥 スライド表示';
   const area = document.getElementById('slideArea');
 
@@ -2508,7 +2511,8 @@ function enterPrintMode() {
 
 function enterSlideMode() {
   mode = 'slide';
-  document.body.className = 'slide-mode';
+  document.body.classList.remove('print-mode', 'page-break-on');
+  document.body.classList.add('slide-mode');
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
   const area = document.getElementById('slideArea');
   area.innerHTML = `
@@ -4607,4 +4611,5 @@ print(f"回帰直線: y = {result[a]}x + {result[b]}")
 </div>
 </template>
 
+<script src="slide-print.js"></script>
 <script src="slide-theme.js"></script>

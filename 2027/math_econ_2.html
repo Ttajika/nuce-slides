@@ -302,6 +302,8 @@ body.slide-mode.not-first-slide .mode-toggle { display:none !important; }
 </style>
 <!-- 共通デザイン（slide-theme.css / slide-theme.js） -->
 <link rel="stylesheet" href="slide-theme.css">
+<!-- 印刷用表示の共通設定（slide-print.css / slide-print.js） -->
+<link rel="stylesheet" href="slide-print.css">
 </head>
 <body class="slide-mode">
 
@@ -1808,7 +1810,7 @@ function togglePageBreak() {
 
 function enterPrintMode() {
   mode = 'print';
-  document.body.classList.remove('slide-mode');
+  document.body.classList.remove('slide-mode', 'page-break-on');
   document.body.classList.add('print-mode');
   document.getElementById('modeToggle').textContent = '🖥 スライド表示';
   const area = document.getElementById('slideArea');
@@ -1856,8 +1858,8 @@ function enterPrintMode() {
 
 function enterSlideMode() {
   mode = 'slide';
+  document.body.classList.remove('print-mode', 'page-break-on');
   document.body.classList.add('slide-mode');
-  document.body.classList.remove('print-mode');
   document.getElementById('modeToggle').textContent = '📄 印刷用表示';
   const area = document.getElementById('slideArea');
   area.innerHTML = '<div class="zoom-layer" id="zoomLayer"><div class="slide-content" id="slideContent"></div><canvas class="draw-canvas" id="drawCanvas"></canvas></div>';
@@ -4393,6 +4395,7 @@ $w_{h}=\frac{1}{\lambda_{h}}$, $\lambda_{1}=p_{1}$, $\lambda_{2}=p_{2}$ と考�
 
 
 
+<script src="slide-print.js"></script>
 <script src="slide-theme.js"></script>
 </body>
 </html>

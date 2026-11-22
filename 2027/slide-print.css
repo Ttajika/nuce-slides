@@ -1,0 +1,44 @@
+/* ═══════════════════════════════════════════════════════════════
+   slide-print.css — 印刷用表示（ハンドアウト）の共通設定
+   micro / math_econ_1 / math_econ_2 / basicmath_for_KK で読み込む。
+   各スライドの <style> の後で読み込む。
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 改ページで空いたところに .slide-area の灰色の背景が見えないように白にする */
+body.print-mode .slide-area { background: #fff; }
+
+/* 用紙と余白 */
+@page { size: A4; margin: 15mm 12mm; }
+
+/* タイトルだけがページ末尾に取り残されないようにする */
+.print-slide .frame-title,
+.print-slide .section-badge { break-after: avoid; page-break-after: avoid; }
+
+/* セクションの扉は新しいページから（表紙見出しの直後の扉は除く） */
+.print-slide.print-slide-title { break-before: page; page-break-before: always; }
+/* 各スライドは margin-top が負なので，扉は 0 にしないと見出しの一部が前のページに残る */
+@media print { .print-slide.print-slide-title { margin-top: 0; } }
+.print-header + .print-slide.print-slide-title { break-before: auto; page-break-before: auto; }
+
+@media print {
+  /* 画面用のボタンを紙に出さない（fixed の要素は全ページに出てしまう） */
+  .mode-toggle, .page-break-toggle, .fab-pen, .hints, .tour-start { display: none !important; }
+
+  /* 空欄・キーワードの背景色を印刷する（既定では背景が落ちて空欄の位置が分からなくなる） */
+  body.print-mode .phantom,
+  body.print-mode .keyword {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  /* モノクロ印刷でも空欄の枠が見えるように濃くする */
+  body.print-mode .phantom { border-color: #6b7280; }
+
+  /* スライド表示のまま印刷したとき：今のスライドではなく案内を出す */
+  body.slide-mode > * { display: none !important; }
+  body.slide-mode::before {
+    content: "このページを印刷するには、表紙の「印刷用表示」ボタンでハンドアウトに切り替えてから印刷してください（Ctrl+P / ⌘P で自動的に切り替わります）。";
+    display: block; padding: 40px 20px; font-size: 14pt; line-height: 1.8; color: #000;
+  }
+}
+
+/* 板書の再生中に印刷用表示へ切り替えても，スライド表示に戻るボタンを出す */
+@media screen { body.print-mode.sb-playing .mode-toggle { display:inline-flex !important; } }
