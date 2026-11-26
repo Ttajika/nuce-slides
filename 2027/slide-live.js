@@ -482,6 +482,7 @@
   // ═══════════════════════════════════════════════════════════════════════
   const L = { i: -1, s: {}, b: {}, h: {}, bo: false, p: null, m: null, ended: false, presenter: false };
   let following = true;
+  let mediaSynced = false;   // 配信者の埋め込み状態を一度でも反映したか
   let liveCanvas = null, liveBoardCanvas = null;
 
   function onMessage(m) {
@@ -498,8 +499,12 @@
         if (m.i !== L.i) setScrollFollow(true);
         if (m.h) L.h[m.i] = m.h;
         L.i = m.i; L.s[m.i] = m.s; L.bo = m.bo; L.b[m.i] = m.b; L.p = m.p; L.ended = false;
-        if ('m' in m) L.m = m.m;
-        applySlide(); applyBoard(); applyMedia(); redrawLive(); redrawLiveBoard();
+        // 埋め込み（動くグラフ・動画など）は配信者が開閉したときだけ反映する。
+        // 定期スナップショットのたびに当て直すと、学生が自分で開いて操作中のグラフが閉じられたり
+        // 開き直されたりしてリセットされるため。
+        let mediaChanged = !mediaSynced;
+        if ('m' in m) { mediaChanged = mediaChanged || m.m !== L.m; L.m = m.m; }
+        applySlide(); applyBoard(); if (mediaChanged) applyMedia(); redrawLive(); redrawLiveBoard();
         setBadge();
         break;
       case 'list': {
@@ -554,6 +559,7 @@
   }
   function applyMedia() {
     if (!following) return;
+    mediaSynced = true;
     try { setMedia(L.m); } catch (e) { console.warn('[slide-live] setMedia', e); }
   }
 
