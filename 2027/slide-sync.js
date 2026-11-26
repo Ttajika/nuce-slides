@@ -274,7 +274,13 @@
   }
   SS.syncFromRemote = syncFromRemote;
 
+  function contentKey(st) {
+    st = st || {};
+    return JSON.stringify([st.notes, st.understanding, st.bookmarks, st.strokes, st.boardStrokes]);
+  }
+
   function applyRemote(remote) {
+    const before = contentKey(adapter.getState());
     const { cw, ch } = canvasSize();
     adapter.applyState({
       notes: remote.notes,
@@ -286,7 +292,9 @@
     });
     // クラウドの更新時刻で保存 → すぐに再アップロードされないようにする
     adapter.saveLocal(remote.updatedAt || Date.now());
-    if (adapter.refresh) adapter.refresh();
+    // 内容が変わったときだけ描き直す。ログイン状態の再確認（タブに戻ったときなど）のたびに
+    // 同期が走るため、毎回描き直すとスライド内の動くグラフなどが初期状態に戻ってしまう。
+    if (adapter.refresh && contentKey(adapter.getState()) !== before) adapter.refresh();
   }
 
   SS.scheduleRemoteSave = function () {

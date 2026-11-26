@@ -328,6 +328,11 @@
   }
   SS.syncFromRemote = syncFromRemote;
 
+  function contentKey(st) {
+    st = st || {};
+    return JSON.stringify([st.notes, st.understanding, st.bookmarks, st.strokes, st.boardStrokes]);
+  }
+
   // remoteWins: 更新時刻が同じ項目について、クラウド側を採用するか
   async function applyRemote(remote, local, remoteWins) {
     const st = adapter.getState();
@@ -347,6 +352,7 @@
       });
     }
     const merged = mergeStates(localState, remote, remoteWins);
+    const before = contentKey(adapter.getState());
     adapter.applyState({
       notes: merged.notes,
       understanding: merged.understanding,
@@ -355,7 +361,9 @@
       boardStrokes: merged.boardStrokes,
       lastSlide: merged.lastSlide,
     });
-    if (adapter.refresh) adapter.refresh();
+    // 内容が変わったときだけ描き直す。ログイン状態の再確認（タブに戻ったときなど）のたびに
+    // 同期が走るため、毎回描き直すとスライド内の動くグラフなどが初期状態に戻ってしまう。
+    if (adapter.refresh && contentKey(adapter.getState()) !== before) adapter.refresh();
     if (sameContent(merged, remote)) {
       // クラウドと同じ内容 → クラウドの更新時刻で保存し、再アップロードしない
       adapter.saveLocal(remote.updatedAt || Date.now());

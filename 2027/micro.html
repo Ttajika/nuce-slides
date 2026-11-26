@@ -1007,6 +1007,9 @@ window.addEventListener('storage', (e) => {
   if (e.key !== STORAGE_KEY || !e.newValue) return;
   try {
     const data = JSON.parse(e.newValue);
+    // 内容が変わったときだけスライドを描き直す（ページ送りだけの保存で、動くグラフなどがリセットされないように）
+    const snap = () => JSON.stringify([notes, strokes, boardStrokes, understanding, bookmarks]);
+    const before = snap();
     notes = data.notes || {};
     strokes = data.strokes || {};
     boardStrokes = data.boardStrokes || {};
@@ -1014,7 +1017,7 @@ window.addEventListener('storage', (e) => {
     bookmarks = data.bookmarks || {};
     const ta = document.getElementById('noteArea');
     if (ta) ta.value = notes[current] || '';
-    showSlide(current);
+    if (snap() !== before) showSlide(current);
   } catch(err) { /* parse error */ }
 });
 
